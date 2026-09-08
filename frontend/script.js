@@ -5,14 +5,14 @@ if(!API_KEY){
   if(API_KEY) localStorage.setItem('jarvis_key', API_KEY);
 }
 
-// ===== 2. SMART MODELS (ఒకటి fail అయితే next auto try) =====
-const MODELS = ["gemini-2.5-flash-lite", "gemini-2.0-flash", "gemini-2.5-flash"];
+// ===== 2. SMART MODELS (కొత్త model first) =====
+const MODELS = ["gemini-3.6-flash", "gemini-flash-latest"];
 
 const chat=document.getElementById('chat');
 const input=document.getElementById('msg');
 const micBtn=document.getElementById('mic-btn');
 
-// ===== 3. GEMINI BRAIN (auto-fallback తో) =====
+// ===== 3. GEMINI BRAIN (auto-fallback) =====
 async function callGemini(p){
   let lastErr;
   for(const m of MODELS){
@@ -24,8 +24,7 @@ async function callGemini(p){
       const data=await res.json();
       if(data.error){
         lastErr=new Error(data.error.message);
-        // high demand అయితే → next model try చేయి
-        if(/high demand|temporar|quota|rate|unavailable/i.test(data.error.message)) continue;
+        if(/high demand|temporar|quota|rate|unavailable|no longer available|deprecated/i.test(data.error.message)) continue;
         throw lastErr;
       }
       return data.candidates[0].content.parts[0].text;
