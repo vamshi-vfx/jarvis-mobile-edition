@@ -5,28 +5,43 @@ if(!API_KEY){
   if(API_KEY) localStorage.setItem('jarvis_key', API_KEY);
 }
 
-// ===== 2. MODEL (error వస్తే ఇక్కడ మార్చండి) =====
-const MODEL = "gemini-flash-latest"; // లేదా gemini-2.5-flash / gemini-2.0-flash
+// ===== 2. SMART MODELS (ఒకటి fail అయితే next auto try) =====
+const MODELS = ["gemini-2.5-flash-lite", "gemini-2.0-flash", "gemini-2.5-flash"];
 
 const chat=document.getElementById('chat');
 const input=document.getElementById('msg');
 const micBtn=document.getElementById('mic-btn');
 
-// ===== 3. GEMINI BRAIN (real error చూపిస్తుంది) =====
+// ===== 3. GEMINI BRAIN (auto-fallback తో) =====
+async function callGemini(p){
+  let lastErr;
+  for(const m of MODELS){
+    try{
+      const res=await fetch(
+        "https://generativelanguage.googleapis.com/v1beta/models/"+m+":generateContent?key="+API_KEY,
+        {method:"POST",headers:{"Content-Type":"application/json"},
+         body:JSON.stringify({contents:[{parts:[{text:p}]}]})});
+      const data=await res.json();
+      if(data.error){
+        lastErr=new Error(data.error.message);
+        // high demand అయితే → next model try చేయి
+        if(/high demand|temporar|quota|rate|unavailable/i.test(data.error.message)) continue;
+        throw lastErr;
+      }
+      return data.candidates[0].content.parts[0].text;
+    }catch(e){ lastErr=e; }
+  }
+  throw lastErr;
+}
+
 async function askGemini(p){
   add('J.A.R.V.I.S: Thinking...','ai');
   try{
-    const res=await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/"+MODEL+":generateContent?key="+API_KEY,
-      {method:"POST",headers:{"Content-Type":"application/json"},
-       body:JSON.stringify({contents:[{parts:[{text:p}]}]})});
-    const data=await res.json();
-    if(data.error){ throw new Error(data.error.message); }
-    const reply=data.candidates[0].content.parts[0].text;
+    const reply=await callGemini(p);
     chat.lastChild.innerText='J.A.R.V.I.S: '+reply;
     speak(reply); // ✅ reply వచ్చిన వెంటనే VOICE
   }catch(e){
-    chat.lastChild.innerText='J.A.R.V.I.S: ERROR - '+e.message; // 🔍 నిజమైన కారణం
+    chat.lastChild.innerText='J.A.R.V.I.S: ERROR - '+e.message;
   }
 }
 
