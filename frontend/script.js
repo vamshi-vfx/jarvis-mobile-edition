@@ -14,10 +14,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function readMemory() {
         try {
-            return JSON.parse(
-                localStorage.getItem(MEMORY_KEY) || "[]"
-            );
-        } catch {
+            return JSON.parse(localStorage.getItem(MEMORY_KEY) || "[]");
+        } catch (error) {
             return [];
         }
     }
@@ -31,13 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function addToMemory(sender, text, type) {
         const memory = readMemory();
-
-        memory.push({
-            sender: sender,
-            text: text,
-            type: type
-        });
-
+        memory.push({ sender, text, type });
         saveMemory(memory);
     }
 
@@ -50,17 +42,12 @@ document.addEventListener("DOMContentLoaded", () => {
         const senderElement = document.createElement("strong");
         senderElement.textContent = `${sender}: `;
 
-        const textElement = document.createTextNode(text);
-
         message.appendChild(senderElement);
-        message.appendChild(textElement);
-
+        message.appendChild(document.createTextNode(text));
         chatBox.appendChild(message);
         chatBox.scrollTop = chatBox.scrollHeight;
 
-        if (save) {
-            addToMemory(sender, text, type);
-        }
+        if (save) addToMemory(sender, text, type);
     }
 
     function loadSavedChat() {
@@ -76,12 +63,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         memory.forEach((item) => {
-            showMessage(
-                item.sender,
-                item.text,
-                item.type,
-                false
-            );
+            showMessage(item.sender, item.text, item.type, false);
         });
     }
 
@@ -107,45 +89,29 @@ document.addEventListener("DOMContentLoaded", () => {
             throw new Error("API key enter cheyyaledu.");
         }
 
-        const memory = readMemory();
-
-        const contents = memory
-            .filter((item) => {
-                return item.type === "user" || item.type === "ai";
-            })
+        const contents = readMemory()
+            .filter((item) => item.type === "user" || item.type === "ai")
             .slice(-20)
-            .map((item) => {
-                return {
-                    role: item.type === "user" ? "user" : "model",
-                    parts: [
-                        {
-                            text: item.text
-                        }
-                    ]
-                };
-            });
+            .map((item) => ({
+                role: item.type === "user" ? "user" : "model",
+                parts: [{ text: item.text }]
+            }));
 
         const apiBase =
             "https://generativelanguage.googleapis.com/v1beta/models/";
-
         const apiUrl =
-            `\({apiBase}\){MODEL_NAME}:generateContent?key=${apiKey}`;
+            apiBase + MODEL_NAME + ":generateContent?key=" + apiKey;
 
         const response = await fetch(apiUrl, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 systemInstruction: {
-                    parts: [
-                        {
-                            text:
-                                "You are J.A.R.V.I.S, a helpful personal mobile assistant. Keep replies clear and concise."
-                        }
-                    ]
+                    parts: [{
+                        text: "You are J.A.R.V.I.S, a helpful personal mobile assistant. Keep replies clear and concise."
+                    }]
                 },
-                contents: contents
+                contents
             })
         });
 
@@ -157,8 +123,7 @@ document.addEventListener("DOMContentLoaded", () => {
             );
         }
 
-        const reply =
-            data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
         if (!reply) {
             throw new Error("AI nundi reply raledu.");
@@ -171,12 +136,9 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!("speechSynthesis" in window)) return;
 
         speechSynthesis.cancel();
-
         const voice = new SpeechSynthesisUtterance(text);
         voice.lang = "en-IN";
         voice.rate = 0.95;
-        voice.pitch = 1;
-
         speechSynthesis.speak(voice);
     }
 
@@ -184,11 +146,9 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!messageInput || !sendButton) return;
 
         const userText = messageInput.value.trim();
-
         if (!userText) return;
 
         showMessage("YOU", userText, "user");
-
         messageInput.value = "";
         messageInput.disabled = true;
         sendButton.disabled = true;
@@ -196,17 +156,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
         try {
             const reply = await askGemini();
-
             showMessage("J.A.R.V.I.S", reply, "ai");
             speak(reply);
         } catch (error) {
             console.error("JARVIS AI Error:", error);
-
-            showMessage(
-                "SYSTEM",
-                error.message,
-                "ai"
-            );
+            showMessage("SYSTEM", error.message, "ai");
         } finally {
             messageInput.disabled = false;
             sendButton.disabled = false;
@@ -216,23 +170,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function clearChat() {
-        if (chatBox) {
-            chatBox.innerHTML = "";
-        }
-
         localStorage.removeItem(MEMORY_KEY);
-
-        showMessage(
-            "J.A.R.V.I.S",
-            "Memory cleared. System ready.",
-            "ai"
-        );
+        if (chatBox) chatBox.innerHTML = "";
+        if (messageInput) messageInput.value = "";
+        showMessage("J.A.R.V.I.S", "Memory cleared. System ready.", "ai");
     }
 
     function setupVoice() {
         const SpeechRecognition =
-            window.SpeechRecognition ||
-            window.webkitSpeechRecognition;
+            window.SpeechRecognition || window.webkitSpeechRecognition;
 
         if (!SpeechRecognition) return;
 
@@ -243,15 +189,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
         recognition.onstart = () => {
             isListening = true;
-            micButton.textContent = "STOP";
+            if (micButton) micButton.textContent = "STOP";
         };
 
         recognition.onresult = (event) => {
-            const text =
-                event.results[0][0].transcript;
-
-            messageInput.value = text;
-            messageInput.focus();
+            const text = event.results[0][0].transcript;
+            if (messageInput) {
+                messageInput.value = text;
+                messageInput.focus();
+            }
         };
 
         recognition.onerror = () => {
@@ -264,7 +210,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         recognition.onend = () => {
             isListening = false;
-            micButton.textContent = "🎙️";
+            if (micButton) micButton.textContent = "🎙️";
         };
     }
 
@@ -278,24 +224,13 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        if (isListening) {
-            recognition.stop();
-        } else {
-            recognition.start();
-        }
+        if (isListening) recognition.stop();
+        else recognition.start();
     }
 
-    if (sendButton) {
-        sendButton.addEventListener("click", sendMessage);
-    }
-
-    if (clearButton) {
-        clearButton.addEventListener("click", clearChat);
-    }
-
-    if (micButton) {
-        micButton.addEventListener("click", toggleVoice);
-    }
+    if (sendButton) sendButton.addEventListener("click", sendMessage);
+    if (clearButton) clearButton.addEventListener("click", clearChat);
+    if (micButton) micButton.addEventListener("click", toggleVoice);
 
     if (messageInput) {
         messageInput.addEventListener("keydown", (event) => {
@@ -308,6 +243,5 @@ document.addEventListener("DOMContentLoaded", () => {
 
     setupVoice();
     loadSavedChat();
-
     console.log("JARVIS AI brain loaded successfully.");
 });
