@@ -167,6 +167,24 @@ document.addEventListener("DOMContentLoaded", () => {
         speechSynthesis.speak(voice);
     }
 
+    // Skill router: no background actions. A skill runs only after an explicit command.
+    const SKILL_REGISTRY = {
+        whatsapp: { name: "WhatsApp", keywords: /\bwhatsapp\b/i },
+        youtube: { name: "YouTube", keywords: /\b(youtube|video)\b/i },
+        search: { name: "Web Search", keywords: /\b(search|google|web)\b/i },
+        calendar: { name: "Calendar", keywords: /\b(calendar|schedule|meeting|reminder)\b/i }
+    };
+
+    function detectSkill(text) {
+        return Object.entries(SKILL_REGISTRY)
+            .find(([, skill]) => skill.keywords.test(text))?.[0] || null;
+    }
+
+    function isExplicitAction(text) {
+        return /\b(open|launch|start|send|reply|message|tell|search|find|create|add|schedule|show|read)\b/i.test(text)
+            || /చెప్పు|పంపు|చూడు|వెతుకు|తెరువు/i.test(text);
+    }
+
     function openWhatsApp() {
         // wa.me reliably hands off to the installed Android WhatsApp app.
         const whatsappUrl = "https://wa.me/";
@@ -190,6 +208,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
         showMessage("YOU", userText, "user");
         messageInput.value = "";
+
+        const requestedSkill = detectSkill(userText);
+        if (requestedSkill && isExplicitAction(userText)) {
+            if (requestedSkill === "whatsapp" && handleLocalCommand(userText)) return;
+            if (requestedSkill !== "whatsapp") {
+                showMessage("J.A.R.V.I.S", `${SKILL_REGISTRY[requestedSkill].name} skill detected. Secure skill bridge ready for connection.`, "ai");
+                return;
+            }
+        }
 
         if (handleLocalCommand(userText)) return;
         messageInput.disabled = true;
