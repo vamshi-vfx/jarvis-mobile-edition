@@ -1,5 +1,6 @@
 const http = require('node:http');
 const { URL } = require('node:url');
+const SKILLS = require('./skills');
 
 const PORT = Number(process.env.PORT || 8787);
 const API_TOKEN = process.env.JARVIS_API_TOKEN || '';
@@ -38,11 +39,24 @@ function readBody(req) {
 }
 
 function detectSkill(text = '') {
-  if (/whatsapp/i.test(text)) return 'whatsapp';
-  if (/youtube|video/i.test(text)) return 'youtube';
-  if (/google|search|web/i.test(text)) return 'search';
-  if (/calendar|schedule|meeting|reminder/i.test(text)) return 'calendar';
-  return null;
+  const patterns = {
+    whatsapp: /whatsapp|message|reply|chat/i,
+    search: /google|search|web|news|weather/i,
+    youtube: /youtube|video/i,
+    email: /email|mail|gmail|outlook/i,
+    calendar: /calendar|schedule|meeting|event/i,
+    tasks: /task|reminder|todo/i,
+    contacts: /contact|phone number|address book/i,
+    drive: /drive|file|folder|upload|download/i,
+    documents: /pdf|word|docx|excel|xlsx|spreadsheet|powerpoint|pptx/i,
+    travel: /flight|hotel|travel|trip/i,
+    places: /restaurant|place|shop|near me|directions/i,
+    prices: /price|cost|cheap|compare|buy/i,
+    media: /image|photo|picture|video edit/i,
+    automation: /automate|automation|workflow|multi[- ]step/i,
+    memory: /remember|memory|save this/i
+  };
+  return Object.keys(patterns).find(key => patterns[key].test(text)) || null;
 }
 
 function isExplicitAction(text = '') {
@@ -79,14 +93,14 @@ async function routeCommand(body) {
     }
     return { executed: false, skill, action: 'send_or_reply', requires: ['recipient', 'message'], bridge: Boolean(WPP_BRIDGE_URL && WPP_BRIDGE_TOKEN) };
   }
-  return { executed: false, skill, message: `${skill} skill detected; provider is not connected yet.` };
+  return { executed: false, skill, skillInfo: SKILLS[skill], message: `${SKILLS[skill].name} skill detected; provider is not connected yet.` };
 }
 
 const server = http.createServer(async (req, res) => {
   if (req.method === 'OPTIONS') return json(res, 204, {});
   const url = new URL(req.url, `http://${req.headers.host}`);
   if (req.method === 'GET' && url.pathname === '/api/health') {
-    return json(res, 200, { ok: true, service: 'jarvis-backend', explicitActionsOnly: true, whatsappBridge: Boolean(WPP_BRIDGE_URL && WPP_BRIDGE_TOKEN) });
+    return json(res, 200, { ok: true, service: 'jarvis-backend', explicitActionsOnly: true, whatsappBridge: Boolean(WPP_BRIDGE_URL && WPP_BRIDGE_TOKEN), skills: Object.keys(SKILLS) });
   }
   if (!authorized(req)) return json(res, 401, { ok: false, message: 'Unauthorized' });
   try {
