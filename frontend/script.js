@@ -4,6 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const sendButton = document.getElementById("send");
     const clearButton = document.getElementById("clear-btn");
     const micButton = document.getElementById("mic-btn");
+    const openWhatsAppButton = document.getElementById("open-whatsapp");
 
     const MEMORY_KEY = "jarvis_chat_memory";
     const API_KEY_STORAGE = "jarvis_api_key";
@@ -166,6 +167,24 @@ document.addEventListener("DOMContentLoaded", () => {
         speechSynthesis.speak(voice);
     }
 
+    function openWhatsApp() {
+        // Use the installed Android app when available; fall back to WhatsApp Web.
+        const fallback = "https://wa.me/";
+        showMessage("J.A.R.V.I.S", "WhatsApp opening...", "ai");
+        window.location.href = "whatsapp://";
+        window.setTimeout(() => {
+            if (document.visibilityState === "visible") window.open(fallback, "_blank");
+        }, 700);
+    }
+
+    function handleLocalCommand(text) {
+        if (/\b(open|launch|start)\s+whatsapp\b|\bwhatsapp\s+(open|launch)\b/i.test(text)) {
+            openWhatsApp();
+            return true;
+        }
+        return false;
+    }
+
     async function sendMessage() {
         if (!messageInput || !sendButton) return;
 
@@ -174,6 +193,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         showMessage("YOU", userText, "user");
         messageInput.value = "";
+
+        if (handleLocalCommand(userText)) return;
         messageInput.disabled = true;
         sendButton.disabled = true;
         sendButton.textContent = "...";
@@ -259,6 +280,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (sendButton) sendButton.addEventListener("click", sendMessage);
     if (clearButton) clearButton.addEventListener("click", clearChat);
     if (micButton) micButton.addEventListener("click", toggleVoice);
+    if (openWhatsAppButton) openWhatsAppButton.addEventListener("click", openWhatsApp);
 
     if (messageInput) {
         messageInput.addEventListener("keydown", (event) => {
