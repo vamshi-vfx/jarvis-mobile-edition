@@ -7,7 +7,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const MEMORY_KEY = "jarvis_chat_memory";
     const API_KEY_STORAGE = "jarvis_api_key";
-    const MODEL_NAME = "gemini-3.6-flash";
+
+    // Fallback models: first one busy ayithe next model try avutundi
+    const MODEL_NAMES = [
+        "gemini-3.6-flash",
+        "gemini-3.5-flash",
+        "gemini-3.1-flash-lite"
+    ];
 
     let recognition = null;
     let isListening = false;
@@ -99,37 +105,55 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const apiBase =
             "https://generativelanguage.googleapis.com/v1beta/models/";
-        const apiUrl =
-            apiBase + MODEL_NAME + ":generateContent?key=" + apiKey;
 
-        const response = await fetch(apiUrl, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                systemInstruction: {
-                    parts: [{
-                        text: "You are J.A.R.V.I.S, a helpful personal mobile assistant. Keep replies clear and concise."
-                    }]
-                },
-                contents
-            })
-        });
+        let lastError = "AI connection failed.";
 
-        const data = await response.json();
+        for (const modelName of MODEL_NAMES) {
+            try {
+                const apiUrl =
+                    apiBase + modelName + ":generateContent?key=" + apiKey;
 
-        if (!response.ok) {
-            throw new Error(
-                data?.error?.message || "AI connection failed."
-            );
+                const response = await fetch(apiUrl, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        systemInstruction: {
+                            parts: [{
+                                text: "You are J.A.R.V.I.S, a helpful personal mobile assistant. Keep replies clear and concise."
+                            }]
+                        },
+                        contents
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    const reply =
+                        data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                    if (reply) return reply;
+                    lastError = "AI nundi reply raledu.";
+                    continue;
+                }
+
+                lastError =
+                    data?.error?.message || "AI connection failed.";
+
+                const temporaryProblem =
+                    /high demand|temporar|quota|rate|unavailable|overload|busy|deprecated|not found/i;
+
+                if (!temporaryProblem.test(lastError)) {
+                    break;
+                }
+            } catch (error) {
+                lastError = error.message;
+            }
         }
 
-        const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-        if (!reply) {
-            throw new Error("AI nundi reply raledu.");
-        }
-
-        return reply;
+        throw new Error(lastError);
     }
 
     function speak(text) {
@@ -173,7 +197,11 @@ document.addEventListener("DOMContentLoaded", () => {
         localStorage.removeItem(MEMORY_KEY);
         if (chatBox) chatBox.innerHTML = "";
         if (messageInput) messageInput.value = "";
-        showMessage("J.A.R.V.I.S", "Memory cleared. System ready.", "ai");
+        showMessage(
+            "J.A.R.V.I.S",
+            "Memory cleared. System ready.",
+            "ai"
+        );
     }
 
     function setupVoice() {
@@ -243,5 +271,5 @@ document.addEventListener("DOMContentLoaded", () => {
 
     setupVoice();
     loadSavedChat();
-    console.log("JARVIS AI brain loaded successfully.");
+    console.log("JARVIS AI fallback system loaded successfully.");
 });
