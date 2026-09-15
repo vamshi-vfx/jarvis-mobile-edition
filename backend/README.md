@@ -17,3 +17,7 @@ node server.js
 ```
 
 The WhatsApp provider is intentionally an adapter (`WPP_BRIDGE_URL`). It can be connected to an approved private WhatsApp bridge later without exposing session credentials in the public repository.
+
+## Production OAuth storage
+
+Google OAuth and Supabase production environment variables are deployment-managed. Never commit OAuth secrets, Supabase service keys, encrypted token payloads, or user data to this repository.
