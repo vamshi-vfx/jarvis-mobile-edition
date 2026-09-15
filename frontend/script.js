@@ -169,10 +169,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Skill router: no background actions. A skill runs only after an explicit command.
     const SKILL_REGISTRY = {
-        whatsapp: { name: "WhatsApp", keywords: /\bwhatsapp\b/i },
+        whatsapp: { name: "WhatsApp", keywords: /\bwhatsapp|message|reply|chat\b/i },
         youtube: { name: "YouTube", keywords: /\b(youtube|video)\b/i },
-        search: { name: "Web Search", keywords: /\b(search|google|web)\b/i },
-        calendar: { name: "Calendar", keywords: /\b(calendar|schedule|meeting|reminder)\b/i }
+        search: { name: "Web Search", keywords: /\b(search|google|web|news|weather)\b/i },
+        email: { name: "Email", keywords: /\b(email|mail|gmail|outlook)\b/i },
+        calendar: { name: "Calendar", keywords: /\b(calendar|schedule|meeting|event)\b/i },
+        tasks: { name: "Tasks and Reminders", keywords: /\b(task|reminder|todo)\b/i },
+        drive: { name: "Cloud Files", keywords: /\b(drive|file|folder|upload|download)\b/i },
+        documents: { name: "Documents", keywords: /\b(pdf|word|docx|excel|xlsx|spreadsheet|powerpoint|pptx)\b/i },
+        travel: { name: "Travel", keywords: /\b(flight|hotel|travel|trip)\b/i },
+        places: { name: "Places and Restaurants", keywords: /\b(restaurant|place|shop|directions)\b/i },
+        prices: { name: "Price Comparison", keywords: /\b(price|cost|cheap|compare|buy)\b/i },
+        media: { name: "Image and Media", keywords: /\b(image|photo|picture|edit)\b/i },
+        automation: { name: "Multi-step Automation", keywords: /\b(automate|automation|workflow)\b/i },
+        memory: { name: "Personal Memory", keywords: /\b(remember|memory|save this)\b/i }
     };
 
     function detectSkill(text) {
