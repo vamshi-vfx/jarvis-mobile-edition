@@ -1,0 +1,23 @@
+'use strict';
+
+const crypto = require('node:crypto');
+const PROVIDERS = Object.freeze({gmail:{scopes:['https://www.googleapis.com/auth/gmail.readonly'],label:'Gmail'},calendar:{scopes:['https://www.googleapis.com/auth/calendar.readonly'],label:'Google Calendar'},drive:{scopes:['https://www.googleapis.com/auth/drive.metadata.readonly'],label:'Google Drive'}});
+const GOOGLE_AUTH_URL='https://accounts.google.com/o/oauth2/v2/auth';
+const GOOGLE_TOKEN_URL='https://oauth2.googleapis.com/token';
+const STATE_TTL_MS=10*60*1000;
+const tokenStore=new Map(); const consumedStates=new Set();
+function config(){return {clientId:process.env.GOOGLE_CLIENT_ID||'',clientSecret:process.env.GOOGLE_CLIENT_SECRET||'',redirectUri:process.env.GOOGLE_REDIRECT_URI||'',stateSecret:process.env.GOOGLE_OAUTH_STATE_SECRET||'',encryptionKey:process.env.GOOGLE_TOKEN_ENCRYPTION_KEY||''};}
+function provider(name){return PROVIDERS[name]||null;}
+function b64(v){return Buffer.from(v).toString('base64url');}
+function sign(v,s){return crypto.createHmac('sha256',s).update(v).digest('base64url');}
+function createState(name){const {stateSecret}=config();if(!stateSecret)throw new Error('Google OAuth is not configured: GOOGLE_OAUTH_STATE_SECRET is missing');const body=b64(JSON.stringify({provider:name,nonce:crypto.randomBytes(24).toString('base64url'),iat:Date.now()}));return `${body}.${sign(body,stateSecret)}`;}
+function verifyState(value){const {stateSecret}=config();if(!stateSecret||typeof value!=='string'||consumedStates.has(value))return null;const [body,sig]=value.split('.');if(!body||!sig)return null;const expected=sign(body,stateSecret);if(sig.length!==expected.length||!crypto.timingSafeEqual(Buffer.from(sig),Buffer.from(expected)))return null;try{const p=JSON.parse(Buffer.from(body,'base64url').toString('utf8'));if(!provider(p.provider)||!Number.isSafeInteger(p.iat)||Date.now()-p.iat>STATE_TTL_MS||p.iat>Date.now()+30000)return null;return p;}catch{return null;}}
+function consumeState(value){const p=verifyState(value);if(p)consumedStates.add(value);return p;}
+function key(){const {encryptionKey}=config();if(!encryptionKey)throw new Error('Google OAuth token storage is not configured: GOOGLE_TOKEN_ENCRYPTION_KEY is missing');return crypto.createHash('sha256').update(encryptionKey).digest();}
+function encrypt(value){const iv=crypto.randomBytes(12);const c=crypto.createCipheriv('aes-256-gcm',key(),iv);const text=Buffer.concat([c.update(JSON.stringify(value),'utf8'),c.final()]);return `${iv.toString('base64url')}.${text.toString('base64url')}.${c.getAuthTag().toString('base64url')}`;}
+function decrypt(value){const [iv,text,tag]=String(value).split('.');const d=crypto.createDecipheriv('aes-256-gcm',key(),Buffer.from(iv,'base64url'));d.setAuthTag(Buffer.from(tag,'base64url'));return JSON.parse(Buffer.concat([d.update(Buffer.from(text,'base64url')),d.final()]).toString('utf8'));}
+// Replace this Map with a durable encrypted adapter for production/Vercel.
+const secureTokenStore={async set(name,token){tokenStore.set(name,encrypt(token));},async get(name){const v=tokenStore.get(name);return v?decrypt(v):null;},async delete(name){tokenStore.delete(name);}};
+function authorizationUrl(name){const details=provider(name);const {clientId,redirectUri}=config();if(!clientId||!redirectUri)throw new Error('Google OAuth is not configured: GOOGLE_CLIENT_ID and GOOGLE_REDIRECT_URI are required');const state=createState(name);const q=new URLSearchParams({client_id:clientId,redirect_uri:redirectUri,response_type:'code',access_type:'offline',prompt:'consent',scope:details.scopes.join(' '),state});return `${GOOGLE_AUTH_URL}?${q}`;}
+async function exchangeCode(code){const {clientId,clientSecret,redirectUri}=config();if(!clientSecret)throw new Error('Google OAuth is not configured: GOOGLE_CLIENT_SECRET is missing');const r=await fetch(GOOGLE_TOKEN_URL,{method:'POST',headers:{'content-type':'application/x-www-form-urlencoded'},body:new URLSearchParams({code,client_id:clientId,client_secret:clientSecret,redirect_uri:redirectUri,grant_type:'authorization_code'})});const b=await r.json().catch(()=>({}));if(!r.ok||!b.access_token)throw new Error('Google authorization code exchange failed');return {access_token:b.access_token,refresh_token:b.refresh_token||null,token_type:b.token_type,scope:b.scope,expires_at:Date.now()+Number(b.expires_in||3600)*1000};}
+module.exports={PROVIDERS,provider,authorizationUrl,verifyState,consumeState,exchangeCode,secureTokenStore};
