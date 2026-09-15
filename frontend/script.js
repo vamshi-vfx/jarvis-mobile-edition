@@ -1,104 +1,82 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // HTML elements
     const chatBox = document.getElementById("chat");
     const messageInput = document.getElementById("msg");
     const sendButton = document.getElementById("send");
     const clearButton = document.getElementById("clear-btn");
     const micButton = document.getElementById("mic-btn");
 
-    // Memory settings
     const MEMORY_KEY = "jarvis_chat_memory";
-    const MAX_MEMORY_MESSAGES = 50;
+    const API_KEY_STORAGE = "jarvis_api_key";
+    const MODEL_NAME = "gemini-3.6-flash";
 
-    let replyTimer = null;
     let recognition = null;
     let isListening = false;
 
-    // ------------------------------------------
-    // MEMORY SYSTEM
-    // ------------------------------------------
-
-    function getMemory() {
+    function readMemory() {
         try {
-            const savedMemory = localStorage.getItem(MEMORY_KEY);
-            return savedMemory ? JSON.parse(savedMemory) : [];
-        } catch (error) {
-            console.error("Memory read error:", error);
+            return JSON.parse(
+                localStorage.getItem(MEMORY_KEY) || "[]"
+            );
+        } catch {
             return [];
         }
     }
 
-    function saveToMemory(sender, text, type) {
-        try {
-            const memory = getMemory();
-
-            memory.push({
-                sender: sender,
-                text: text,
-                type: type,
-                time: new Date().toISOString()
-            });
-
-            const limitedMemory =
-                memory.slice(-MAX_MEMORY_MESSAGES);
-
-            localStorage.setItem(
-                MEMORY_KEY,
-                JSON.stringify(limitedMemory)
-            );
-        } catch (error) {
-            console.error("Memory save error:", error);
-        }
+    function saveMemory(memory) {
+        localStorage.setItem(
+            MEMORY_KEY,
+            JSON.stringify(memory.slice(-30))
+        );
     }
 
-    function clearMemory() {
-        try {
-            localStorage.removeItem(MEMORY_KEY);
-        } catch (error) {
-            console.error("Memory clear error:", error);
-        }
+    function addToMemory(sender, text, type) {
+        const memory = readMemory();
+
+        memory.push({
+            sender: sender,
+            text: text,
+            type: type
+        });
+
+        saveMemory(memory);
     }
 
-    // ------------------------------------------
-    // CHAT DISPLAY
-    // ------------------------------------------
-
-    function addMessage(sender, text, type, save = true) {
+    function showMessage(sender, text, type, save = true) {
         if (!chatBox) return;
 
         const message = document.createElement("div");
         message.className = type === "user" ? "msg user" : "msg";
 
-        const senderText = document.createElement("strong");
-        senderText.textContent = `${sender}: `;
+        const senderElement = document.createElement("strong");
+        senderElement.textContent = `${sender}: `;
 
-        const messageText = document.createTextNode(text);
+        const textElement = document.createTextNode(text);
 
-        message.appendChild(senderText);
-        message.appendChild(messageText);
+        message.appendChild(senderElement);
+        message.appendChild(textElement);
 
         chatBox.appendChild(message);
         chatBox.scrollTop = chatBox.scrollHeight;
 
         if (save) {
-            saveToMemory(sender, text, type);
+            addToMemory(sender, text, type);
         }
     }
 
-    function loadMemory() {
-        const memory = getMemory();
+    function loadSavedChat() {
+        const memory = readMemory();
 
         if (memory.length === 0) {
-            addMessage(
+            showMessage(
                 "J.A.R.V.I.S",
-                "System online. Voice and memory ready.",
+                "System online. AI brain ready.",
                 "ai"
             );
             return;
         }
 
         memory.forEach((item) => {
-            addMessage(
+            showMessage(
                 item.sender,
                 item.text,
                 item.type,
@@ -107,189 +85,177 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // ------------------------------------------
-    // LOCAL JARVIS REPLY
-    // ------------------------------------------
+    function getApiKey() {
+        let apiKey = localStorage.getItem(API_KEY_STORAGE);
 
-    function getJarvisReply(userMessage) {
-        const message = userMessage.toLowerCase();
+        if (!apiKey) {
+            apiKey = prompt("Mee Gemini API key enter cheyyandi:");
 
-        if (
-            message.includes("hello") ||
-            message.includes("hi") ||
-            message.includes("hai")
-        ) {
-            return "Hello Vamshi. J.A.R.V.I.S is ready.";
+            if (apiKey && apiKey.trim()) {
+                apiKey = apiKey.trim();
+                localStorage.setItem(API_KEY_STORAGE, apiKey);
+            }
         }
 
-        if (
-            message.includes("who are you") ||
-            message.includes("nee peru")
-        ) {
-            return "I am your personal J.A.R.V.I.S mobile assistant.";
-        }
-
-        if (
-            message.includes("what can you do") ||
-            message.includes("em cheyagalavu")
-        ) {
-            return "I can remember this chat, receive voice input, and speak my replies.";
-        }
-
-        if (
-            message.includes("remember") ||
-            message.includes("gurthu")
-        ) {
-            return "Okay Vamshi. Ee conversation memory lo save chesanu.";
-        }
-
-        return "Mee message receive ayyindi. Real AI brain next step lo connect cheddam.";
+        return apiKey;
     }
 
-    // ------------------------------------------
-    // TEXT TO SPEECH
-    // ------------------------------------------
+    async function askGemini() {
+        const apiKey = getApiKey();
 
-    function speakText(text) {
-        if (!("speechSynthesis" in window)) {
-            return;
+        if (!apiKey) {
+            throw new Error("API key enter cheyyaledu.");
         }
 
-        window.speechSynthesis.cancel();
+        const memory = readMemory();
 
-        const speech = new SpeechSynthesisUtterance(text);
-        speech.lang = "en-IN";
-        speech.rate = 0.95;
-        speech.pitch = 1;
+        const contents = memory
+            .filter((item) => {
+                return item.type === "user" || item.type === "ai";
+            })
+            .slice(-20)
+            .map((item) => {
+                return {
+                    role: item.type === "user" ? "user" : "model",
+                    parts: [
+                        {
+                            text: item.text
+                        }
+                    ]
+                };
+            });
 
-        window.speechSynthesis.speak(speech);
+        const apiBase =
+            "https://generativelanguage.googleapis.com/v1beta/models/";
+
+        const apiUrl =
+            `\({apiBase}\){MODEL_NAME}:generateContent?key=${apiKey}`;
+
+        const response = await fetch(apiUrl, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                systemInstruction: {
+                    parts: [
+                        {
+                            text:
+                                "You are J.A.R.V.I.S, a helpful personal mobile assistant. Keep replies clear and concise."
+                        }
+                    ]
+                },
+                contents: contents
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                data?.error?.message || "AI connection failed."
+            );
+        }
+
+        const reply =
+            data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        if (!reply) {
+            throw new Error("AI nundi reply raledu.");
+        }
+
+        return reply;
     }
 
-    // ------------------------------------------
-    // SEND MESSAGE
-    // ------------------------------------------
+    function speak(text) {
+        if (!("speechSynthesis" in window)) return;
 
-    function sendMessage() {
+        speechSynthesis.cancel();
+
+        const voice = new SpeechSynthesisUtterance(text);
+        voice.lang = "en-IN";
+        voice.rate = 0.95;
+        voice.pitch = 1;
+
+        speechSynthesis.speak(voice);
+    }
+
+    async function sendMessage() {
         if (!messageInput || !sendButton) return;
 
-        const userMessage = messageInput.value.trim();
+        const userText = messageInput.value.trim();
 
-        if (!userMessage) return;
+        if (!userText) return;
 
-        addMessage("YOU", userMessage, "user");
+        showMessage("YOU", userText, "user");
 
         messageInput.value = "";
         messageInput.disabled = true;
         sendButton.disabled = true;
         sendButton.textContent = "...";
 
-        replyTimer = setTimeout(() => {
-            const jarvisReply = getJarvisReply(userMessage);
+        try {
+            const reply = await askGemini();
 
-            addMessage("J.A.R.V.I.S", jarvisReply, "ai");
-            speakText(jarvisReply);
+            showMessage("J.A.R.V.I.S", reply, "ai");
+            speak(reply);
+        } catch (error) {
+            console.error("JARVIS AI Error:", error);
 
+            showMessage(
+                "SYSTEM",
+                error.message,
+                "ai"
+            );
+        } finally {
             messageInput.disabled = false;
             sendButton.disabled = false;
             sendButton.textContent = "SEND";
             messageInput.focus();
-
-            replyTimer = null;
-        }, 600);
+        }
     }
 
-    // ------------------------------------------
-    // CLEAR CHAT AND MEMORY
-    // ------------------------------------------
-
     function clearChat() {
-        if (replyTimer) {
-            clearTimeout(replyTimer);
-            replyTimer = null;
-        }
-
-        if ("speechSynthesis" in window) {
-            window.speechSynthesis.cancel();
-        }
-
         if (chatBox) {
             chatBox.innerHTML = "";
         }
 
-        clearMemory();
+        localStorage.removeItem(MEMORY_KEY);
 
-        if (messageInput) {
-            messageInput.value = "";
-            messageInput.disabled = false;
-            messageInput.focus();
-        }
-
-        if (sendButton) {
-            sendButton.disabled = false;
-            sendButton.textContent = "SEND";
-        }
-
-        addMessage(
+        showMessage(
             "J.A.R.V.I.S",
             "Memory cleared. System ready.",
             "ai"
         );
     }
 
-    // ------------------------------------------
-    // VOICE INPUT
-    // ------------------------------------------
-
-    function setupVoiceRecognition() {
+    function setupVoice() {
         const SpeechRecognition =
             window.SpeechRecognition ||
             window.webkitSpeechRecognition;
 
-        if (!SpeechRecognition) {
-            return false;
-        }
+        if (!SpeechRecognition) return;
 
         recognition = new SpeechRecognition();
-
         recognition.lang = "en-IN";
         recognition.continuous = false;
         recognition.interimResults = false;
-        recognition.maxAlternatives = 1;
 
         recognition.onstart = () => {
             isListening = true;
-
-            if (micButton) {
-                micButton.textContent = "STOP";
-            }
-
-            addMessage(
-                "SYSTEM",
-                "Listening... ippudu matladandi.",
-                "ai"
-            );
+            micButton.textContent = "STOP";
         };
 
         recognition.onresult = (event) => {
-            const transcript =
+            const text =
                 event.results[0][0].transcript;
 
-            if (messageInput) {
-                messageInput.value = transcript;
-                messageInput.focus();
-            }
-
-            addMessage(
-                "SYSTEM",
-                "Voice text ga convert ayyindi. SEND press cheyyandi.",
-                "ai"
-            );
+            messageInput.value = text;
+            messageInput.focus();
         };
 
-        recognition.onerror = (event) => {
-            console.error("Voice recognition error:", event.error);
-
-            addMessage(
+        recognition.onerror = () => {
+            showMessage(
                 "SYSTEM",
                 "Voice input work avvaledu. Mic permission check cheyyandi.",
                 "ai"
@@ -298,20 +264,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
         recognition.onend = () => {
             isListening = false;
-
-            if (micButton) {
-                micButton.textContent = "🎙️";
-            }
+            micButton.textContent = "🎙️";
         };
-
-        return true;
     }
 
-    function toggleVoiceInput() {
+    function toggleVoice() {
         if (!recognition) {
-            addMessage(
+            showMessage(
                 "SYSTEM",
-                "Mee browser voice input support cheyyadam ledu. Chrome lo try cheyyandi.",
+                "Mee browser voice input support cheyyadam ledu.",
                 "ai"
             );
             return;
@@ -324,10 +285,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // ------------------------------------------
-    // EVENT LISTENERS
-    // ------------------------------------------
-
     if (sendButton) {
         sendButton.addEventListener("click", sendMessage);
     }
@@ -337,7 +294,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (micButton) {
-        micButton.addEventListener("click", toggleVoiceInput);
+        micButton.addEventListener("click", toggleVoice);
     }
 
     if (messageInput) {
@@ -349,375 +306,8 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Voice setup
-    setupVoiceRecognition();
+    setupVoice();
+    loadSavedChat();
 
-    // Old memory load
-    loadMemory();
-
-    console.log(
-        "JARVIS Episode 5: Voice and Memory loaded successfully."
-    );
+    console.log("JARVIS AI brain loaded successfully.");
 });
-        document.addEventListener("DOMContentLoaded", () => {
-    // HTML elements
-    const chatBox = document.getElementById("chat");
-    const messageInput = document.getElementById("msg");
-    const sendButton = document.getElementById("send");
-    const clearButton = document.getElementById("clear-btn");
-    const micButton = document.getElementById("mic-btn");
-
-    // Memory settings
-    const MEMORY_KEY = "jarvis_chat_memory";
-    const MAX_MEMORY_MESSAGES = 50;
-
-    let replyTimer = null;
-    let recognition = null;
-    let isListening = false;
-
-    // ------------------------------------------
-    // MEMORY SYSTEM
-    // ------------------------------------------
-
-    function getMemory() {
-        try {
-            const savedMemory = localStorage.getItem(MEMORY_KEY);
-            return savedMemory ? JSON.parse(savedMemory) : [];
-        } catch (error) {
-            console.error("Memory read error:", error);
-            return [];
-        }
-    }
-
-    function saveToMemory(sender, text, type) {
-        try {
-            const memory = getMemory();
-
-            memory.push({
-                sender: sender,
-                text: text,
-                type: type,
-                time: new Date().toISOString()
-            });
-
-            const limitedMemory =
-                memory.slice(-MAX_MEMORY_MESSAGES);
-
-            localStorage.setItem(
-                MEMORY_KEY,
-                JSON.stringify(limitedMemory)
-            );
-        } catch (error) {
-            console.error("Memory save error:", error);
-        }
-    }
-
-    function clearMemory() {
-        try {
-            localStorage.removeItem(MEMORY_KEY);
-        } catch (error) {
-            console.error("Memory clear error:", error);
-        }
-    }
-
-    // ------------------------------------------
-    // CHAT DISPLAY
-    // ------------------------------------------
-
-    function addMessage(sender, text, type, save = true) {
-        if (!chatBox) return;
-
-        const message = document.createElement("div");
-        message.className = type === "user" ? "msg user" : "msg";
-
-        const senderText = document.createElement("strong");
-        senderText.textContent = `${sender}: `;
-
-        const messageText = document.createTextNode(text);
-
-        message.appendChild(senderText);
-        message.appendChild(messageText);
-
-        chatBox.appendChild(message);
-        chatBox.scrollTop = chatBox.scrollHeight;
-
-        if (save) {
-            saveToMemory(sender, text, type);
-        }
-    }
-
-    function loadMemory() {
-        const memory = getMemory();
-
-        if (memory.length === 0) {
-            addMessage(
-                "J.A.R.V.I.S",
-                "System online. Voice and memory ready.",
-                "ai"
-            );
-            return;
-        }
-
-        memory.forEach((item) => {
-            addMessage(
-                item.sender,
-                item.text,
-                item.type,
-                false
-            );
-        });
-    }
-
-    // ------------------------------------------
-    // LOCAL JARVIS REPLY
-    // ------------------------------------------
-
-    function getJarvisReply(userMessage) {
-        const message = userMessage.toLowerCase();
-
-        if (
-            message.includes("hello") ||
-            message.includes("hi") ||
-            message.includes("hai")
-        ) {
-            return "Hello Vamshi. J.A.R.V.I.S is ready.";
-        }
-
-        if (
-            message.includes("who are you") ||
-            message.includes("nee peru")
-        ) {
-            return "I am your personal J.A.R.V.I.S mobile assistant.";
-        }
-
-        if (
-            message.includes("what can you do") ||
-            message.includes("em cheyagalavu")
-        ) {
-            return "I can remember this chat, receive voice input, and speak my replies.";
-        }
-
-        if (
-            message.includes("remember") ||
-            message.includes("gurthu")
-        ) {
-            return "Okay Vamshi. Ee conversation memory lo save chesanu.";
-        }
-
-        return "Mee message receive ayyindi. Real AI brain next step lo connect cheddam.";
-    }
-
-    // ------------------------------------------
-    // TEXT TO SPEECH
-    // ------------------------------------------
-
-    function speakText(text) {
-        if (!("speechSynthesis" in window)) {
-            return;
-        }
-
-        window.speechSynthesis.cancel();
-
-        const speech = new SpeechSynthesisUtterance(text);
-        speech.lang = "en-IN";
-        speech.rate = 0.95;
-        speech.pitch = 1;
-
-        window.speechSynthesis.speak(speech);
-    }
-
-    // ------------------------------------------
-    // SEND MESSAGE
-    // ------------------------------------------
-
-    function sendMessage() {
-        if (!messageInput || !sendButton) return;
-
-        const userMessage = messageInput.value.trim();
-
-        if (!userMessage) return;
-
-        addMessage("YOU", userMessage, "user");
-
-        messageInput.value = "";
-        messageInput.disabled = true;
-        sendButton.disabled = true;
-        sendButton.textContent = "...";
-
-        replyTimer = setTimeout(() => {
-            const jarvisReply = getJarvisReply(userMessage);
-
-            addMessage("J.A.R.V.I.S", jarvisReply, "ai");
-            speakText(jarvisReply);
-
-            messageInput.disabled = false;
-            sendButton.disabled = false;
-            sendButton.textContent = "SEND";
-            messageInput.focus();
-
-            replyTimer = null;
-        }, 600);
-    }
-
-    // ------------------------------------------
-    // CLEAR CHAT AND MEMORY
-    // ------------------------------------------
-
-    function clearChat() {
-        if (replyTimer) {
-            clearTimeout(replyTimer);
-            replyTimer = null;
-        }
-
-        if ("speechSynthesis" in window) {
-            window.speechSynthesis.cancel();
-        }
-
-        if (chatBox) {
-            chatBox.innerHTML = "";
-        }
-
-        clearMemory();
-
-        if (messageInput) {
-            messageInput.value = "";
-            messageInput.disabled = false;
-            messageInput.focus();
-        }
-
-        if (sendButton) {
-            sendButton.disabled = false;
-            sendButton.textContent = "SEND";
-        }
-
-        addMessage(
-            "J.A.R.V.I.S",
-            "Memory cleared. System ready.",
-            "ai"
-        );
-    }
-
-    // ------------------------------------------
-    // VOICE INPUT
-    // ------------------------------------------
-
-    function setupVoiceRecognition() {
-        const SpeechRecognition =
-            window.SpeechRecognition ||
-            window.webkitSpeechRecognition;
-
-        if (!SpeechRecognition) {
-            return false;
-        }
-
-        recognition = new SpeechRecognition();
-
-        recognition.lang = "en-IN";
-        recognition.continuous = false;
-        recognition.interimResults = false;
-        recognition.maxAlternatives = 1;
-
-        recognition.onstart = () => {
-            isListening = true;
-
-            if (micButton) {
-                micButton.textContent = "STOP";
-            }
-
-            addMessage(
-                "SYSTEM",
-                "Listening... ippudu matladandi.",
-                "ai"
-            );
-        };
-
-        recognition.onresult = (event) => {
-            const transcript =
-                event.results[0][0].transcript;
-
-            if (messageInput) {
-                messageInput.value = transcript;
-                messageInput.focus();
-            }
-
-            addMessage(
-                "SYSTEM",
-                "Voice text ga convert ayyindi. SEND press cheyyandi.",
-                "ai"
-            );
-        };
-
-        recognition.onerror = (event) => {
-            console.error("Voice recognition error:", event.error);
-
-            addMessage(
-                "SYSTEM",
-                "Voice input work avvaledu. Mic permission check cheyyandi.",
-                "ai"
-            );
-        };
-
-        recognition.onend = () => {
-            isListening = false;
-
-            if (micButton) {
-                micButton.textContent = "🎙️";
-            }
-        };
-
-        return true;
-    }
-
-    function toggleVoiceInput() {
-        if (!recognition) {
-            addMessage(
-                "SYSTEM",
-                "Mee browser voice input support cheyyadam ledu. Chrome lo try cheyyandi.",
-                "ai"
-            );
-            return;
-        }
-
-        if (isListening) {
-            recognition.stop();
-        } else {
-            recognition.start();
-        }
-    }
-
-    // ------------------------------------------
-    // EVENT LISTENERS
-    // ------------------------------------------
-
-    if (sendButton) {
-        sendButton.addEventListener("click", sendMessage);
-    }
-
-    if (clearButton) {
-        clearButton.addEventListener("click", clearChat);
-    }
-
-    if (micButton) {
-        micButton.addEventListener("click", toggleVoiceInput);
-    }
-
-    if (messageInput) {
-        messageInput.addEventListener("keydown", (event) => {
-            if (event.key === "Enter") {
-                event.preventDefault();
-                sendMessage();
-            }
-        });
-    }
-
-    // Voice setup
-    setupVoiceRecognition();
-
-    // Old memory load
-    loadMemory();
-
-    console.log(
-        "JARVIS Episode 5: Voice and Memory loaded successfully."
-    );
-});
-        
