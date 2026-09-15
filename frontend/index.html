@@ -3,38 +3,104 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>J.A.R.V.I.S</title>
+  <meta name="theme-color" content="#07111f">
+  <title>J.A.R.V.I.S — Mobile Command Center</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header>
-    <h1>J.A.R.V.I.S</h1>
-    <p>MOBILE EDITION</p>
-  </header>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">J</div>
+        <div>
+          <h1>J.A.R.V.I.S</h1>
+          <p>PERSONAL AI COMMAND CENTER</p>
+        </div>
+      </div>
+      <div class="online-pill"><span></span> ONLINE</div>
+    </header>
 
-  <div class="core">
-    <div class="ring r1"></div>
-    <div class="ring r2"></div>
-    <div class="center"></div>
-  </div>
+    <main class="dashboard">
+      <section class="hero-card">
+        <div class="hero-copy">
+          <span class="eyebrow">CORE SYSTEM / 05</span>
+          <h2>Your intelligent<br><strong>mobile command center.</strong></h2>
+          <p>Ask questions, use your voice, and keep your conversations available in one focused workspace.</p>
+          <div class="hero-meta">
+            <span class="pulse-dot"></span>
+            <span>All systems operational</span>
+          </div>
+        </div>
 
-  <p class="core-text">CORE ACTIVE</p>
+        <div class="orb-panel">
+          <div class="core">
+            <div class="ring r1"></div>
+            <div class="ring r2"></div>
+            <div class="ring r3"></div>
+            <div class="center"></div>
+          </div>
+          <span>AI CORE ACTIVE</span>
+        </div>
+      </section>
 
-  <div class="status">
-    <h2>SYSTEM STATUS</h2>
-    <div class="row"><span>AI CORE</span><b class="on">● ONLINE</b></div>
-    <div class="row"><span>NETWORK</span><b class="on">● ONLINE</b></div>
-    <div class="row"><span>VOICE</span><b class="on">● READY</b></div>
-    <div class="row"><span>MEMORY</span><b class="on">● ACTIVE</b></div>
-  </div>
+      <section class="section-block">
+        <div class="section-heading">
+          <div>
+            <span class="eyebrow">SYSTEM MONITOR</span>
+            <h3>Live status</h3>
+          </div>
+          <span class="updated-label">UPDATED NOW</span>
+        </div>
 
-  <div class="chat" id="chat"></div>
+        <div class="status-grid">
+          <div class="status-card">
+            <div class="status-icon">✦</div>
+            <div><span>AI CORE</span><strong>ONLINE</strong></div>
+            <i class="status-light"></i>
+          </div>
+          <div class="status-card">
+            <div class="status-icon">⌁</div>
+            <div><span>NETWORK</span><strong>ONLINE</strong></div>
+            <i class="status-light"></i>
+          </div>
+          <div class="status-card">
+            <div class="status-icon">◉</div>
+            <div><span>VOICE</span><strong>READY</strong></div>
+            <i class="status-light"></i>
+          </div>
+          <div class="status-card">
+            <div class="status-icon">▣</div>
+            <div><span>MEMORY</span><strong>ACTIVE</strong></div>
+            <i class="status-light"></i>
+          </div>
+        </div>
+      </section>
 
-  <div class="input-area">
-    <input id="msg" placeholder="Ask J.A.R.V.I.S..." autocomplete="off">
-    <button id="send">SEND</button>
-    <button id="clear-btn">🧹</button>
-    <button id="mic-btn">🎙️</button>
+      <section class="workspace-card">
+        <div class="workspace-header">
+          <div>
+            <span class="eyebrow">ASSISTANT WORKSPACE</span>
+            <h3>Conversation</h3>
+          </div>
+          <div class="secure-label"><span>●</span> PRIVATE SESSION</div>
+        </div>
+
+        <div class="chat" id="chat"></div>
+
+        <div class="input-area">
+          <input id="msg" placeholder="Ask J.A.R.V.I.S anything..." autocomplete="off">
+          <button id="send" class="send-button">SEND <span>↗</span></button>
+          <button id="clear-btn" class="icon-button" aria-label="Clear memory">⌫</button>
+          <button id="mic-btn" class="icon-button" aria-label="Voice input">♩</button>
+        </div>
+        <div class="input-hint">Press Enter to send <span>•</span> Tap the voice icon to speak</div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>J.A.R.V.I.S MOBILE EDITION</span>
+      <span>SECURE LOCAL MEMORY</span>
+    </footer>
   </div>
 
   <script src="script.js"></script>
