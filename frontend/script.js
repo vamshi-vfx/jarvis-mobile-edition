@@ -8,6 +8,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const MEMORY_KEY = "jarvis_chat_memory";
     const API_KEY_STORAGE = "jarvis_api_key";
+    const BACKEND_HEALTH_URL = "https://jarvis-mobile-edition-alpha.vercel.app/api/health";
+
+    async function checkBackendStatus() {
+        try {
+            const response = await fetch(BACKEND_HEALTH_URL, { cache: "no-store" });
+            const data = await response.json();
+            if (data?.ok && data?.whatsappBridge) {
+                showMessage("J.A.R.V.I.S", "Secure backend and WhatsApp bridge online. Explicit commands only.", "ai");
+            } else if (data?.ok) {
+                showMessage("J.A.R.V.I.S", "Backend online. WhatsApp bridge is not connected.", "ai");
+            }
+        } catch (error) {
+            showMessage("SYSTEM", "Backend connection unavailable. Local AI mode active.", "ai");
+        }
+    }
 
     // Fallback models: first one busy ayithe next model try avutundi
     const MODEL_NAMES = [
@@ -327,5 +342,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     setupVoice();
     loadSavedChat();
+    checkBackendStatus();
     console.log("JARVIS AI fallback system loaded successfully.");
 });
