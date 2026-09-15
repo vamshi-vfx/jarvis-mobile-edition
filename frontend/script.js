@@ -168,15 +168,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function openWhatsApp() {
-        // Use the installed Android app when available; fall back to WhatsApp Web.
-        const fallback = "https://wa.me/";
+        // wa.me reliably hands off to the installed Android WhatsApp app.
+        const whatsappUrl = "https://wa.me/";
         showMessage("J.A.R.V.I.S", "WhatsApp opening...", "ai");
-        window.location.href = "whatsapp://";
-        window.setTimeout(() => {
-            if (document.visibilityState === "visible") window.open(fallback, "_blank");
-        }, 700);
+        const opened = window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+        if (!opened) window.location.assign(whatsappUrl);
     }
-
     function handleLocalCommand(text) {
         if (/\b(open|launch|start)\s+whatsapp\b|\bwhatsapp\s+(open|launch)\b/i.test(text)) {
             openWhatsApp();
