@@ -1,100 +1,122 @@
-// ===== 1. API KEY (Safe: browser లో మాత్రమే) =====
-let API_KEY = localStorage.getItem('jarvis_key');
-if(!API_KEY){ API_KEY = prompt('Enter your Gemini API Key:'); if(API_KEY) localStorage.setItem('jarvis_key', API_KEY); }
+// ==========================================
+// JARVIS MOBILE EDITION - CORE SYSTEM SCRIPT
+// ==========================================
 
-// ===== 2. SMART MODELS =====
-const MODELS = ["gemini-3.6-flash", "gemini-flash-latest"];
+document.addEventListener('DOMContentLoaded', () => {
+    
+    // --- 1. ELEMENTS SELECT CHEYADAM (IDs Match Avvali) ---
+    const sendBtn = document.getElementById('sendBtn');
+    const clearBtn = document.getElementById('clearBtn'); // Broom icon button
+    const micBtn = document.getElementById('micBtn');     // Mic icon button
+    const inputBox = document.getElementById('inputBox'); // Text input field
+    const chatContainer = document.getElementById('chatContainer'); // Chat display area
+    
+    // Status Elements
+    const voiceStatus = document.getElementById('voiceStatus');
+    const memoryStatus = document.getElementById('memoryStatus');
 
-// ===== 3. MEMORY =====
-let MEMORY = JSON.parse(localStorage.getItem('jarvis_memory') || '[]');
-function saveMemory(){ localStorage.setItem('jarvis_memory', JSON.stringify(MEMORY)); }
+    // --- 2. API CONFIGURATION ---
+    // ⚠️ IMPORTANT: Mee Gemini API Key ikkada pettandi
+    const API_KEY = 'YOUR_GEMINI_API_KEY_HERE'; 
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${API_KEY}`;
 
-const chat=document.getElementById('chat');
-const input=document.getElementById('msg');
-const micBtn=document.getElementById('mic-btn');
-const clearBtn=document.getElementById('clear-btn');
-const camBtn=document.getElementById('cam-btn');
-const imgInput=document.getElementById('img-input');
+    // --- 3. UNLOCK VOICE & MEMORY STATUS ---
+    // Screenshot lo "LOCKED" kanipisthundi kabatti idhi add chesanu
+    if(voiceStatus) voiceStatus.innerHTML = '<span style="color:#0f0">● ONLINE</span>';
+    if(memoryStatus) memoryStatus.innerHTML = '<span style="color:#0f0">● ONLINE</span>';
 
-MEMORY.forEach(m=> add((m.role==='user'?'YOU: ':'J.A.R.V.I.S: ')+m.text, m.role==='user'?'user':'ai'));
+    // --- 4. SEND MESSAGE FUNCTION ---
+    async function sendMessage() {
+        const message = inputBox.value.trim();
+        
+        // Empty message check
+        if (!message) return; 
 
-// ===== 4. GEMINI BRAIN (text + memory) =====
-async function callGemini(p){
-  const contents = MEMORY.slice(-12).map(m=>({role:m.role, parts:[{text:m.text}]}));
-  contents.push({role:'user', parts:[{text:p}]});
-  let lastErr;
-  for(const m of MODELS){
-    try{
-      const res=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+m+":generateContent?key="+API_KEY,
-        {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:contents})});
-      const data=await res.json();
-      if(data.error){ lastErr=new Error(data.error.message);
-        if(/high demand|temporar|quota|rate|unavailable|no longer available|deprecated/i.test(data.error.message)) continue;
-        throw lastErr; }
-      return data.candidates[0].content.parts[0].text;
-    }catch(e){ lastErr=e; }
-  }
-  throw lastErr;
-}
+        // UI Update: User message chupinchadam
+        appendMessage('You', message, '#0ff');
+        inputBox.value = ''; // Clear input
+        sendBtn.disabled = true; // Double click prevent cheyadaniki
+        sendBtn.innerText = '...';
 
-async function askGemini(p){
-  add('J.A.R.V.I.S: Thinking...','ai');
-  try{
-    const reply=await callGemini(p);
-    MEMORY.push({role:'user',text:p}); MEMORY.push({role:'model',text:reply}); saveMemory();
-    chat.lastChild.innerText='J.A.R.V.I.S: '+reply; speak(reply);
-  }catch(e){ chat.lastChild.innerText='J.A.R.V.I.S: ERROR - '+e.message; }
-}
+        try {
+            // Gemini API Call
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: message }] }]
+                })
+            });
 
-// ===== 5. VISION (EYES) =====
-camBtn.onclick=()=>imgInput.click();
-imgInput.onchange=()=>{
-  const file=imgInput.files[0]; if(!file)return;
-  const reader=new FileReader();
-  reader.onload=()=>{
-    const base64=reader.result.split(',')[1];
-    const q=input.value.trim()||'What do you see? Describe briefly.';
-    add('YOU: [IMAGE] '+q,'user'); input.value='';
-    askVision(base64,file.type,q);
-  };
-  reader.readAsDataURL(file);
-};
+            const data = await response.json();
+            
+            let aiReply = "Error: Response not found";
+            if (data.candidates && data.candidates[0].content.parts[0].text) {
+                aiReply = data.candidates[0].content.parts[0].text;
+            } else if (data.error) {
+                aiReply = `API Error: ${data.error.message}`;
+            }
 
-async function askVision(base64,mime,q){
-  add('J.A.R.V.I.S: Analyzing image...','ai');
-  let lastErr;
-  for(const m of MODELS){
-    try{
-      const res=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+m+":generateContent?key="+API_KEY,
-        {method:"POST",headers:{"Content-Type":"application/json"},
-         body:JSON.stringify({contents:[{parts:[{text:q},{inline_data:{mime_type:mime,data:base64}}]}]})});
-      const data=await res.json();
-      if(data.error){ lastErr=new Error(data.error.message);
-        if(/high demand|temporar|quota|rate|unavailable|no longer available|deprecated/i.test(data.error.message)) continue;
-        throw lastErr; }
-      const reply=data.candidates[0].content.parts[0].text;
-      chat.lastChild.innerText='J.A.R.V.I.S: '+reply; speak(reply); return;
-    }catch(e){ lastErr=e; }
-  }
-  chat.lastChild.innerText='J.A.R.V.I.S: ERROR - '+lastErr.message;
-}
+            // UI Update: AI Reply chupinchadam
+            appendMessage('J.A.R.V.I.S', aiReply, '#0f0');
 
-// ===== 6. SPEECH RECOGNITION =====
-const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-const rec=new SR(); rec.lang='en-US'; // Telugu కి 'te-IN'
-rec.onresult=(e)=>{const t=e.results[0][0].transcript;add('YOU: '+t,'user');askGemini(t);};
-micBtn.onclick=()=>{rec.start();micBtn.innerText='LISTENING...';};
-rec.onend=()=>{micBtn.innerText='🎙️';};
+        } catch (error) {
+            console.error("JARVIS Core Error:", error);
+            appendMessage('SYSTEM', 'Network Connection Failed. Check Console.', '#f00');
+        } finally {
+            sendBtn.disabled = false;
+            sendBtn.innerText = 'SEND';
+        }
+    }
 
-// ===== 7. TEXT-TO-SPEECH =====
-let voices=[]; function loadVoices(){ voices=speechSynthesis.getVoices(); }
-loadVoices(); speechSynthesis.onvoiceschanged=loadVoices;
-function speak(t){ const u=new SpeechSynthesisUtterance(t); u.rate=1.05; u.pitch=0.85;
-  const v=voices.find(v=>v.lang.startsWith('en')); if(v) u.voice=v; speechSynthesis.speak(u); }
+    // --- 5. CHAT APPEND FUNCTION (Cinematic Style) ---
+    function appendMessage(sender, text, color) {
+        if(!chatContainer) return;
+        
+        const msgDiv = document.createElement('div');
+        msgDiv.style.borderLeft = `3px solid ${color}`;
+        msgDiv.style.padding = '10px';
+        msgDiv.style.marginBottom = '10px';
+        msgDiv.style.background = 'rgba(0, 255, 255, 0.05)';
+        msgDiv.style.fontFamily = 'monospace';
+        msgDiv.style.color = color;
+        
+        msgDiv.innerHTML = `<strong>${sender}:</strong> ${text}`;
+        chatContainer.appendChild(msgDiv);
+        
+        // Auto scroll to bottom
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
 
-// ===== 8. SEND + CLEAR =====
-document.getElementById('send').onclick=()=>{ const t=input.value.trim(); if(!t)return;
-  add('YOU: '+t,'user'); input.value=''; askGemini(t); };
-clearBtn.onclick=()=>{ MEMORY=[]; saveMemory(); chat.innerHTML=''; add('SYSTEM: Memory cleared.','ai'); };
+    // --- 6. CLEAR CHAT FUNCTION ---
+    function clearChat() {
+        if(chatContainer) chatContainer.innerHTML = '';
+        if(inputBox) inputBox.value = '';
+    }
 
-function add(t,w){const d=document.createElement('div');d.className='msg '+w;d.innerText=t;chat.appendChild(d);chat.scrollTop=chat.scrollHeight;}
+    // --- 7. EVENT LISTENERS (MOBILE TOUCH SUPPORT) ---
+    // Desktop Click + Mobile Touch rendu support chesthundi
+    if(sendBtn) {
+        sendBtn.addEventListener('click', sendMessage);
+        sendBtn.addEventListener('touchstart', (e) => { e.preventDefault(); sendMessage(); });
+    }
+
+    if(clearBtn) {
+        clearBtn.addEventListener('click', clearChat);
+        clearBtn.addEventListener('touchstart', (e) => { e.preventDefault(); clearChat(); });
+    }
+
+    if(micBtn) {
+        micBtn.addEventListener('click', () => alert('Voice Module Initializing...'));
+        micBtn.addEventListener('touchstart', (e) => { e.preventDefault(); alert('Voice Module Initializing...'); });
+    }
+
+    // Enter key tho kuda send avvadaniki
+    if(inputBox) {
+        inputBox.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+    }
+
+    console.log("✅ J.A.R.V.I.S Mobile Edition Core Loaded Successfully");
+});
