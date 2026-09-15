@@ -3,106 +3,150 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#07111f">
-  <title>J.A.R.V.I.S — Mobile Command Center</title>
+  <meta name="theme-color" content="#02070d">
+  <title>J.A.R.V.I.S. — Mobile Edition</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="app-shell">
-    <header class="topbar">
-      <div class="brand">
-        <div class="brand-mark">J</div>
-        <div>
-          <h1>J.A.R.V.I.S</h1>
-          <p>PERSONAL AI COMMAND CENTER</p>
-        </div>
+  <div class="jarvis-hud">
+    <header class="hud-header">
+      <div class="time-block">
+        <span id="hud-day">SATURDAY</span>
+        <span id="hud-date">15 SEPTEMBER 2026</span>
+        <strong id="hud-time">03:16 <small>PM</small></strong>
       </div>
-      <div class="online-pill"><span></span> ONLINE</div>
+
+      <div class="hud-title">
+        <h1>J.A.R.V.I.S.</h1>
+        <p>JUST A RATHER VERY INTELLIGENT SYSTEM</p>
+      </div>
+
+      <div class="telemetry">
+        <div><span class="telemetry-icon">▣</span><span>BATTERY<strong>87%</strong></span></div>
+        <div><span class="telemetry-icon">⌁</span><span>NETWORK<strong>STRONG</strong></span></div>
+        <div><span class="telemetry-icon">▥</span><span>CPU USAGE<strong>72%</strong></span></div>
+        <div><span class="telemetry-icon">▣</span><span>RAM USAGE<strong>68%</strong></span></div>
+      </div>
     </header>
 
-    <main class="dashboard">
-      <section class="hero-card">
-        <div class="hero-copy">
-          <span class="eyebrow">CORE SYSTEM / 05</span>
-          <h2>Your intelligent<br><strong>mobile command center.</strong></h2>
-          <p>Ask questions, use your voice, and keep your conversations available in one focused workspace.</p>
-          <div class="hero-meta">
-            <span class="pulse-dot"></span>
-            <span>All systems operational</span>
-          </div>
+    <main class="hud-layout">
+      <aside class="left-rail">
+        <section class="hud-panel">
+          <h2>SYSTEM STATUS</h2>
+          <div class="metric-row"><span class="metric-icon">◉</span><span>CPU<strong>72%</strong></span><b></b></div>
+          <div class="metric-row"><span class="metric-icon">▣</span><span>RAM<strong>68%</strong></span><b></b></div>
+          <div class="metric-row"><span class="metric-icon">▤</span><span>STORAGE<strong>64%</strong></span><b></b></div>
+          <div class="metric-row"><span class="metric-icon">♨</span><span>TEMP<strong>39°C</strong></span><b></b></div>
+        </section>
+
+        <section class="hud-panel network-panel">
+          <h2>NETWORK</h2>
+          <div class="network-value"><span>DOWNLOAD</span><strong>120.4 <small>Mbps</small> ↓</strong></div>
+          <div class="network-value"><span>UPLOAD</span><strong>45.6 <small>Mbps</small> ↑</strong></div>
+          <div class="mini-bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        </section>
+
+        <section class="hud-panel ai-panel">
+          <h2>AI STATUS</h2>
+          <strong class="ai-name">J.A.R.V.I.S</strong>
+          <b class="online-text">● ONLINE</b>
+          <span>SYSTEM SECURE <small>▣</small></span>
+        </section>
+      </aside>
+
+      <section class="core-column">
+        <div class="radar-stage">
+          <div class="crosshair horizontal"></div>
+          <div class="crosshair vertical"></div>
+          <div class="radar-ring ring-a"></div>
+          <div class="radar-ring ring-b"></div>
+          <div class="radar-ring ring-c"></div>
+          <div class="radar-ring ring-d"></div>
+          <div class="radar-sweep"></div>
+          <div class="radar-core"><span>JARVIS</span></div>
         </div>
 
-        <div class="orb-panel">
-          <div class="core">
-            <div class="ring r1"></div>
-            <div class="ring r2"></div>
-            <div class="ring r3"></div>
-            <div class="center"></div>
-          </div>
-          <span>AI CORE ACTIVE</span>
-        </div>
-      </section>
-
-      <section class="section-block">
-        <div class="section-heading">
-          <div>
-            <span class="eyebrow">SYSTEM MONITOR</span>
-            <h3>Live status</h3>
-          </div>
-          <span class="updated-label">UPDATED NOW</span>
-        </div>
-
-        <div class="status-grid">
-          <div class="status-card">
-            <div class="status-icon">✦</div>
-            <div><span>AI CORE</span><strong>ONLINE</strong></div>
-            <i class="status-light"></i>
-          </div>
-          <div class="status-card">
-            <div class="status-icon">⌁</div>
-            <div><span>NETWORK</span><strong>ONLINE</strong></div>
-            <i class="status-light"></i>
-          </div>
-          <div class="status-card">
-            <div class="status-icon">◉</div>
-            <div><span>VOICE</span><strong>READY</strong></div>
-            <i class="status-light"></i>
-          </div>
-          <div class="status-card">
-            <div class="status-icon">▣</div>
-            <div><span>MEMORY</span><strong>ACTIVE</strong></div>
-            <i class="status-light"></i>
-          </div>
-        </div>
-      </section>
-
-      <section class="workspace-card">
-        <div class="workspace-header">
-          <div>
-            <span class="eyebrow">ASSISTANT WORKSPACE</span>
-            <h3>Conversation</h3>
-          </div>
-          <div class="secure-label"><span>●</span> PRIVATE SESSION</div>
+        <div class="listening-panel">
+          <h2>I AM LISTENING...</h2>
+          <div class="waveform"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <span>SAY “HEY JARVIS” TO WAKE ME UP</span>
         </div>
 
         <div class="chat" id="chat"></div>
-
-        <div class="input-area">
-          <input id="msg" placeholder="Ask J.A.R.V.I.S anything..." autocomplete="off">
-          <button id="send" class="send-button">SEND <span>↗</span></button>
-          <button id="clear-btn" class="icon-button" aria-label="Clear memory">⌫</button>
-          <button id="mic-btn" class="icon-button" aria-label="Voice input">♩</button>
-        </div>
-        <div class="input-hint">Press Enter to send <span>•</span> Tap the voice icon to speak</div>
       </section>
+
+      <aside class="right-rail">
+        <section class="hud-panel quick-panel">
+          <h2>QUICK ACTIONS</h2>
+          <button>🟢 <span>OPEN WHATSAPP</span></button>
+          <button>▶ <span>YOUTUBE</span></button>
+          <button>☎ <span>MAKE A CALL</span></button>
+          <button>♫ <span>PLAY MUSIC</span></button>
+          <button>▣ <span>OPEN CAMERA</span></button>
+          <button>⚙ <span>SYSTEM SETTINGS</span></button>
+        </section>
+
+        <section class="hud-panel apps-panel">
+          <h2>ACTIVE APPS</h2>
+          <div class="app-row"><b>🟢</b><span>WhatsApp<strong>Running</strong></span></div>
+          <div class="app-row"><b>▶</b><span>YouTube<strong>Running</strong></span></div>
+          <div class="app-row"><b>●</b><span>Chrome<strong>Running</strong></span></div>
+          <div class="app-row"><b>◉</b><span>Jarvis Core<strong>Running</strong></span></div>
+        </section>
+      </aside>
     </main>
 
-    <footer class="footer">
-      <span>J.A.R.V.I.S MOBILE EDITION</span>
-      <span>SECURE LOCAL MEMORY</span>
-    </footer>
+    <section class="command-panel">
+      <input id="msg" placeholder="COMMAND HERE..." autocomplete="off">
+      <button id="send" class="command-send">SEND ↗</button>
+      <button id="clear-btn" class="hud-button">⌫</button>
+      <button id="mic-btn" class="mic-button">♩</button>
+    </section>
+
+    <section class="bottom-widgets">
+      <div class="widget voice-widget">
+        <h2>VOICE RECOGNITION</h2>
+        <div class="widget-mic">♩</div>
+        <b>ACTIVE</b>
+      </div>
+      <div class="widget connection-widget">
+        <h2>CONNECTION</h2>
+        <div class="world-grid">╱╲╱╲╱╲<br>╲╱╲╱╲╱</div>
+        <b>▣ SECURE CONNECTION</b>
+      </div>
+      <div class="widget notification-widget">
+        <h2>NOTIFICATIONS</h2>
+        <p>◷ <span>System Update</span><small>2m ago</small></p>
+        <p>◷ <span>WhatsApp</span><small>5m ago</small></p>
+        <p>◷ <span>New Message</span><small>10m ago</small></p>
+        <p>◷ <span>Battery Saver On</span><small>15m ago</small></p>
+        <a>Clear All</a>
+      </div>
+    </section>
+
+    <nav class="hud-nav">
+      <button>⌂</button>
+      <button>▦</button>
+      <button class="nav-core">◉</button>
+      <button>⌁</button>
+      <button>⚙</button>
+    </nav>
   </div>
 
+  <script>
+    function updateHudClock() {
+      const now = new Date();
+      const days = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
+      const day = document.getElementById("hud-day");
+      const date = document.getElementById("hud-date");
+      const time = document.getElementById("hud-time");
+      if (day) day.textContent = days[now.getDay()];
+      if (date) date.textContent = now.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase();
+      if (time) time.innerHTML = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: true }).replace(" AM", " <small>AM</small>").replace(" PM", " <small>PM</small>");
+    }
+    updateHudClock();
+    setInterval(updateHudClock, 1000);
+  </script>
   <script src="script.js"></script>
 </body>
 </html>
