@@ -1,0 +1,24 @@
+name: JARVIS daily AI launch update
+
+on:
+  schedule:
+    - cron: '30 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  send-self-chat-update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger protected JARVIS automation
+        env:
+          JARVIS_BACKEND_URL: ${{ secrets.JARVIS_BACKEND_URL }}
+          JARVIS_API_TOKEN: ${{ secrets.JARVIS_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          test -n "$JARVIS_BACKEND_URL"
+          test -n "$JARVIS_API_TOKEN"
+          curl --fail-with-body --silent --show-error \
+            -X POST "$JARVIS_BACKEND_URL/api/automation/daily-ai-launch" \
+            -H "Authorization: Bearer $JARVIS_API_TOKEN" \
+            -H 'Content-Type: application/json' \
+            -d '{}'
