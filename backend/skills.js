@@ -2,6 +2,7 @@ const SKILLS = {
   whatsapp: { name: 'WhatsApp', provider: 'private-whatsapp-bridge', explicitOnly: true },
   search: { name: 'Web Search', provider: 'search-api', explicitOnly: true },
   youtube: { name: 'YouTube', provider: 'youtube-api', explicitOnly: true },
+  youtubeAnalytics: { name: 'Daily YouTube Analytics', provider: 'public-youtube-data', explicitOnly: true },
   email: { name: 'Email', provider: 'gmail-or-outlook', explicitOnly: true },
   calendar: { name: 'Calendar', provider: 'google-calendar', explicitOnly: true },
   tasks: { name: 'Tasks and Reminders', provider: 'task-provider', explicitOnly: true },
