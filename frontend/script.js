@@ -199,6 +199,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Skill router: no background actions. A skill runs only after an explicit command.
     const SKILL_REGISTRY = {
         whatsapp: { name: "WhatsApp", keywords: /\bwhatsapp|message|reply|chat\b/i },
+        youtubeAnalytics: { name: "Daily YouTube Analytics", keywords: /\b(youtube\s*(analytics|report|stats)|channel\s*(analytics|report|stats)|daily\s*(youtube|channel)\s*(analytics|report|stats))\b/i },
         youtube: { name: "YouTube", keywords: /\b(youtube|video)\b/i },
         search: { name: "Web Search", keywords: /\b(search|google|web|news|weather)\b/i },
         email: { name: "Email", keywords: /\b(email|mail|gmail|outlook)\b/i },
