@@ -15,7 +15,7 @@ async function getText(url) {
 }
 function xmlValue(block, tag) {
   const match = block.match(new RegExp(`<${tag}(?:\\s[^>]*)?>([\\s\\S]*?)</${tag}>`, 'i'));
-  return match ? match[1].replace(/<!\\[CDATA\\[([\\s\\S]*?)\\]\\]>/g, '$1').trim() : null;
+  return match ? match[1].replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1').trim() : null;
 }
 function parseFeed(xml, since) {
   return [...xml.matchAll(/<entry>([\\s\\S]*?)<\/entry>/gi)].map(match => {
