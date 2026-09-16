@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#19080d">
+<title>Admin Dashboard — J.A.R.V.I.S.</title>
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+<main class="admin-shell">
+<header class="admin-bar"><div class="brand-mark">⚙</div><div><p>J.A.R.V.I.S.</p><h1>Admin Dashboard</h1></div><span class="secure-pill">SECURE</span></header>
+<section id="auth-panel" class="auth-panel"><span class="eyebrow">RESTRICTED ACCESS</span><h2>System Admin</h2><p>Enter the server admin token to continue. It is used for this session only.</p><label for="admin-token">Server token</label><input id="admin-token" type="password" autocomplete="off" placeholder="Bearer token"><button id="unlock-btn" class="primary">Unlock dashboard</button><p id="auth-message" class="message" role="status"></p></section>
+<section id="dashboard" hidden>
+<div class="welcome"><div><span class="eyebrow">SYSTEM ADMIN</span><h2>Control center</h2></div><button id="logout-btn" class="ghost">Logout</button></div>
+<section class="card activation-card"><div class="card-icon">✦</div><div class="card-copy"><h3>Generate Activation Key</h3><p>Create a one-time key on the protected server. Only the newly generated key is shown; hashes are retained server-side.</p></div><button id="generate-key" class="primary">Generate key</button><output id="key-result" class="key-result" hidden></output></section>
+<div class="action-grid"><button id="manage-users" class="action-card"><b>♙</b><span>Manage Users</span><small>Protected user tools</small></button><button id="open-assistant" class="action-card"><b>◉</b><span>Open Assistant (Pop-up)</span><small>Launch normal JARVIS view</small></button></div>
+<section class="card status-card"><div class="status-heading"><div><span class="eyebrow">LIVE MONITOR</span><h3>System Status</h3></div><button id="refresh-status" class="ghost">Refresh</button></div><div id="status-list" class="status-list"><p class="muted">Loading protected status…</p></div></section>
+<p id="dashboard-message" class="message" role="status"></p>
+</section>
+<footer>J.A.R.V.I.S. MOBILE EDITION <span>•</span> ADMIN CONSOLE</footer>
+</main>
+<script src="admin.js"></script>
+</body>
+</html>
