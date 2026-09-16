@@ -57,6 +57,7 @@ const server=http.createServer(async(req,res)=>{
   if(req.method==='OPTIONS') return json(res,204,{});
   const url=new URL(req.url,`http://${req.headers.host}`);
   if(req.method==='GET'&&url.pathname==='/api/health') return json(res,200,{ok:true,service:'jarvis-backend',explicitActionsOnly:true,backgroundReplies:false,whatsappBridge:Boolean(WPP_BRIDGE_URL&&WPP_BRIDGE_TOKEN),googleOAuth:true,skills:Object.keys(SKILLS)});
+  if(req.method==='GET'&&url.pathname==='/api/connectors/status') return json(res,200,{ok:true,providers:{whatsapp:Boolean(WPP_BRIDGE_URL&&WPP_BRIDGE_TOKEN),gmail:false,calendar:false,drive:false,youtube:Boolean(process.env.YOUTUBE_API_KEY||process.env.GOOGLE_YOUTUBE_API_KEY),webSearch:Boolean(process.env.SEARCH_API_KEY||process.env.TAVILY_API_KEY),outlook:Boolean(process.env.OUTLOOK_CLIENT_ID&&process.env.OUTLOOK_CLIENT_SECRET),slack:Boolean(process.env.SLACK_CLIENT_ID&&process.env.SLACK_CLIENT_SECRET),telegram:Boolean(process.env.TELEGRAM_BOT_TOKEN),notion:Boolean(process.env.NOTION_CLIENT_ID&&process.env.NOTION_CLIENT_SECRET)},note:'Safe booleans only; secrets and tokens are never returned.'});
   // OAuth start/callback are public by design; signed, short-lived, single-use state
   // prevents token leakage. Tokens are never returned to the client.
   if(req.method==='GET'&&url.pathname==='/api/google/oauth/start') {
