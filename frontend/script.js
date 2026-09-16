@@ -187,6 +187,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const wakeWordStatus = document.getElementById("wake-word-status");
     const wakeWordStop = document.getElementById("wake-word-stop");
     const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const nativeWake = window.KalkiNative && typeof window.KalkiNative.enableWakeWord === "function";
     let wakeEnabled = false; let wakeCapturing = false; let wakeRecognition = null; let commandRecognition = null;
     const setWakeStatus = (text, active = false) => { if (wakeWordStatus) { wakeWordStatus.textContent = text; wakeWordStatus.classList.toggle("active", active); } };
     const normalizeMixedCommand = (value) => value.trim()
@@ -200,19 +201,20 @@ document.addEventListener("DOMContentLoaded", () => {
         .replace(/\s+/g, " ").trim();
     const armWakeRecognition = () => { if (!wakeEnabled || !wakeRecognition || wakeCapturing) return; setWakeStatus("Armed in foreground — say “Hey Jarvis”.", true); try { wakeRecognition.start(); } catch (error) {} };
     const listenForCommand = () => { if (!wakeEnabled || !commandRecognition) return; wakeCapturing = true; setWakeStatus("Wake word heard — listening for your command…", true); try { commandRecognition.start(); } catch (error) {} };
-    const stopWakeWord = () => { wakeEnabled = false; wakeCapturing = false; try { wakeRecognition?.stop(); commandRecognition?.stop(); } catch (error) {} if (wakeWordToggle) wakeWordToggle.checked = false; if (wakeWordStop) wakeWordStop.hidden = true; setWakeStatus("Off. JARVIS will not use your microphone."); };
+    const stopWakeWord = () => { wakeEnabled = false; wakeCapturing = false; try { wakeRecognition?.stop(); commandRecognition?.stop(); } catch (error) {} if (nativeWake) window.KalkiNative.disableWakeWord(); if (wakeWordToggle) wakeWordToggle.checked = false; if (wakeWordStop) wakeWordStop.hidden = true; setWakeStatus("Off. JARVIS will not use your microphone."); };
+    window.__kalkiNativeWakeCommand = (command) => { if (!wakeEnabled) return; if (messageInput) messageInput.value = normalizeMixedCommand(command); sendButton?.click(); };
     if (settingsToggle && voiceSettings) settingsToggle.addEventListener("click", () => { voiceSettings.hidden = !voiceSettings.hidden; settingsToggle.setAttribute("aria-expanded", String(!voiceSettings.hidden)); });
     if (wakeWordToggle && wakeWordStatus) {
-        if (SpeechRecognitionAPI) {
+        if (nativeWake) {
+            wakeWordToggle.addEventListener("change", () => { if (!wakeWordToggle.checked) { stopWakeWord(); return; } wakeEnabled = true; if (wakeWordStop) wakeWordStop.hidden = false; setWakeStatus("Native foreground listening — say “Hey Jarvis”.", true); window.KalkiNative.enableWakeWord(); });
+            wakeWordStop?.addEventListener("click", stopWakeWord);
+        } else if (SpeechRecognitionAPI) {
             wakeRecognition = new SpeechRecognitionAPI(); commandRecognition = new SpeechRecognitionAPI();
             [wakeRecognition, commandRecognition].forEach((instance) => { instance.lang = "en-IN"; instance.continuous = false; instance.interimResults = false; });
             wakeRecognition.onresult = (event) => { const transcript = event.results[0][0].transcript.trim(); const match = transcript.match(/(?:hey|hai|hi)\s+(?:jarvis|jaarvis|jarv[ie]s|jervis)\b[,:;.!\s]*(.*)$/i); if (match?.[1]?.trim()) { if (messageInput) messageInput.value = normalizeMixedCommand(match[1]); sendButton?.click(); } else if (match) listenForCommand(); };
-            wakeRecognition.onend = () => armWakeRecognition();
-            wakeRecognition.onerror = () => { if (wakeEnabled) setWakeStatus("Armed in foreground — say “Hey Jarvis”.", true); };
-            commandRecognition.onresult = (event) => { wakeCapturing = false; if (messageInput) messageInput.value = normalizeMixedCommand(event.results[0][0].transcript); sendButton?.click(); };
-            commandRecognition.onend = () => { wakeCapturing = false; armWakeRecognition(); };
-            wakeWordToggle.addEventListener("change", async () => { if (!wakeWordToggle.checked) { stopWakeWord(); return; } try { if (navigator.mediaDevices?.getUserMedia) { const stream = await navigator.mediaDevices.getUserMedia({ audio: true }); stream.getTracks().forEach((track) => track.stop()); } wakeEnabled = true; if (wakeWordStop) wakeWordStop.hidden = false; armWakeRecognition(); } catch (error) { wakeWordToggle.checked = false; setWakeStatus("Microphone permission was not granted. Wake word is off."); } });
-            wakeWordStop?.addEventListener("click", stopWakeWord);
+            wakeRecognition.onend = () => armWakeRecognition(); wakeRecognition.onerror = () => { if (wakeEnabled) setWakeStatus("Armed in foreground — say “Hey Jarvis”.", true); };
+            commandRecognition.onresult = (event) => { wakeCapturing = false; if (messageInput) messageInput.value = normalizeMixedCommand(event.results[0][0].transcript); sendButton?.click(); }; commandRecognition.onend = () => { wakeCapturing = false; armWakeRecognition(); };
+            wakeWordToggle.addEventListener("change", async () => { if (!wakeWordToggle.checked) { stopWakeWord(); return; } try { if (navigator.mediaDevices?.getUserMedia) { const stream = await navigator.mediaDevices.getUserMedia({ audio: true }); stream.getTracks().forEach((track) => track.stop()); } wakeEnabled = true; if (wakeWordStop) wakeWordStop.hidden = false; armWakeRecognition(); } catch (error) { wakeWordToggle.checked = false; setWakeStatus("Microphone permission was not granted. Wake word is off."); } }); wakeWordStop?.addEventListener("click", stopWakeWord);
         } else { wakeWordToggle.disabled = true; setWakeStatus("Voice recognition is unavailable in this WebView."); }
     }
     if (sendButton && messageInput) sendButton.addEventListener("click", () => { messageInput.value = normalizeMixedCommand(messageInput.value); }, true);

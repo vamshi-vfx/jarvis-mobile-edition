@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/** Explicitly enabled foreground speech loop; never started at boot. */
+/** Explicitly enabled foreground speech loop; never started at boot or on app launch. */
 public final class WakeWordService extends Service {
     public static final String ACTION_COMMAND = "com.growthos.jarvis.WAKE_COMMAND";
     public static final String EXTRA_COMMAND = "command";
@@ -28,7 +28,11 @@ public final class WakeWordService extends Service {
     private static final long RESTART_DELAY_MS = 35L;
     private static final long RETRY_DELAY_MS = 250L;
     private static final long DUPLICATE_CALLBACK_WINDOW_MS = 650L;
-    private static final Pattern WAKE = Pattern.compile("^(?:hey|hai|hi)\\\\s+(?:jarvis|jaarvis|jarv(?:i|e)s|jervis)\\\\b[,:;.!?\\\\s]*(.*)$", Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+    // English/Indian-English variants; the resulting command is handed off unchanged to KALKI.
+    private static final Pattern WAKE = Pattern.compile(
+            "^(?:hey|hai|hi)\\s+(?:jarvis|jaarvis|jarv(?:i|e)s|jervis)\\b[,:;.!?\\s]*(.*)$",
+            Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+
     private enum Mode { WAKE, COMMAND }
     private final Handler handler = new Handler(Looper.getMainLooper());
     private SpeechRecognizer recognizer;
@@ -42,7 +46,9 @@ public final class WakeWordService extends Service {
     private final Runnable startRunnable = this::startRecognition;
 
     @Override public void onCreate() {
-        super.onCreate(); createChannel(); startForeground(NOTIFICATION_ID, notification());
+        super.onCreate();
+        createChannel();
+        startForeground(NOTIFICATION_ID, notification());
         if (!SpeechRecognizer.isRecognitionAvailable(this)) return;
         recognizer = SpeechRecognizer.createSpeechRecognizer(this);
         recognizer.setRecognitionListener(new RecognitionListener() {
@@ -94,10 +100,9 @@ public final class WakeWordService extends Service {
         scheduleRestart(RESTART_DELAY_MS);
     }
     private void emit(String command) { if (command == null || command.trim().isEmpty()) return; mode = Mode.WAKE; sendBroadcast(new Intent(ACTION_COMMAND).setPackage(getPackageName()).putExtra(EXTRA_COMMAND, command.trim())); }
-    private Notification notification() { Intent stop = new Intent(this, WakeWordService.class).setAction(ACTION_STOP); PendingIntent pi = PendingIntent.getService(this, 1, stop, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE); return new Notification.Builder(this, CHANNEL).setSmallIcon(R.drawable.ic_launcher).setContentTitle("JARVIS wake word active").setContentText("Listening in the foreground — say “Hey Jarvis”.").setOngoing(true).setCategory(Notification.CATEGORY_SERVICE).addAction(new Notification.Action.Builder(null, "Stop listening", pi).build()).build(); }
-    private void createChannel() { ((NotificationManager) getSystemService(NOTIFICATION_SERVICE)).createNotificationChannel(new NotificationChannel(CHANNEL, "JARVIS wake word", NotificationManager.IMPORTANCE_LOW)); }
+    private Notification notification() { Intent stop = new Intent(this, WakeWordService.class).setAction(ACTION_STOP); PendingIntent pi = PendingIntent.getService(this, 1, stop, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE); return new Notification.Builder(this, CHANNEL).setSmallIcon(R.drawable.ic_launcher).setContentTitle("KALKI wake word active").setContentText("Listening in the foreground — say “Hey Jarvis”.").setOngoing(true).setCategory(Notification.CATEGORY_SERVICE).addAction(new Notification.Action.Builder(null, "Stop listening", pi).build()).build(); }
+    private void createChannel() { ((NotificationManager) getSystemService(NOTIFICATION_SERVICE)).createNotificationChannel(new NotificationChannel(CHANNEL, "KALKI wake word", NotificationManager.IMPORTANCE_LOW)); }
     @Override public int onStartCommand(Intent intent, int flags, int id) { if (ACTION_STOP.equals(intent == null ? null : intent.getAction())) stopSelf(); return START_NOT_STICKY; }
     @Override public void onDestroy() { stopping = true; handler.removeCallbacksAndMessages(null); if (recognizer != null) { try { recognizer.cancel(); } catch (Exception ignored) { } recognizer.destroy(); } super.onDestroy(); }
     @Override public IBinder onBind(Intent intent) { return null; }
 }
-
