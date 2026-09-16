@@ -1,4 +1,5 @@
 const http = require('node:http');
+const crypto = require('node:crypto');
 const { URL } = require('node:url');
 const SKILLS = require('./skills');
 const GOOGLE = require('./google-oauth');
@@ -11,7 +12,13 @@ const API_TOKEN = process.env.JARVIS_API_TOKEN || '';
 const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || '*';
 const WPP_BRIDGE_URL = process.env.WPP_BRIDGE_URL || '';
 const WPP_BRIDGE_TOKEN = process.env.WPP_BRIDGE_TOKEN || '';
-const WPP_SELF_CHAT_ID = process.env.WPP_SELF_CHAT_ID || '';
+// Activation keys are intentionally ephemeral until a durable, access-controlled store is configured.
+const activationKeyHashes = new Set();
+function createActivationKey() {
+  const key = `JARVIS-${crypto.randomBytes(18).toString('base64url').toUpperCase()}`;
+  activationKeyHashes.add(crypto.createHash('sha256').update(key).digest('hex'));
+  return key;
+}
 
 function json(res, status, body) {
   res.writeHead(status, {'Content-Type':'application/json; charset=utf-8','Access-Control-Allow-Origin':ALLOWED_ORIGIN,'Access-Control-Allow-Headers':'Content-Type, Authorization','Access-Control-Allow-Methods':'GET, POST, OPTIONS'});
@@ -37,7 +44,7 @@ async function routeCommand(body) {
     return { executed: true, skill, action: 'report', report: await buildDailyYouTubeAnalytics(), message: 'Public YouTube analytics report prepared. Nothing was sent.' };
   }
   if(skill==='dailyAiLaunchUpdate') {
-    return { executed: false, skill, action: 'report', report: await buildDailyAiLaunchUpdate(), message: 'Daily AI launch update requested explicitly. No message was sent and nothing was scheduled.' };
+    return { executed: false, skill, action: 'report', report: buildDailyAiLaunchUpdate(), message: 'Daily AI launch update requested explicitly. No message was sent and nothing was scheduled.' };
   }
   if(SKILL_HANDLERS[skill]) return handleSkill(skill);
   if(skill==='whatsapp') {
@@ -67,20 +74,19 @@ const server=http.createServer(async(req,res)=>{
     catch(error) { return json(res,503,{ok:false,message:error.message}); }
   }
   try {
+    if(req.method==='GET'&&url.pathname==='/api/admin/status') {
+      if(!authorized(req)) return json(res,401,{ok:false,message:'Admin access requires the server token.'});
+      return json(res,200,{ok:true,status:{Backend:true,'WhatsApp bridge':Boolean(WPP_BRIDGE_URL&&WPP_BRIDGE_TOKEN),'AI automation':Boolean(process.env.GEMINI_API_KEY||process.env.GOOGLE_AI_API_KEY),'Explicit-action guard':true},note:'Protected status only; secrets and token values are never returned.'});
+    }
+    if(req.method==='POST'&&url.pathname==='/api/admin/activation-keys') {
+      if(!authorized(req)) return json(res,401,{ok:false,message:'Admin access requires the server token.'});
+      return json(res,201,{ok:true,key:createActivationKey(),storage:'sha256 hash in process memory; configure durable encrypted storage before production use',oneTime:true});
+    }
     if((req.method==='GET'&&url.pathname==='/api/google/status')||(req.method==='POST'&&url.pathname==='/api/google/disconnect')) {
       if(!authorized(req)) return json(res,401,{ok:false,message:'Google provider management requires the server token.'});
       if(req.method==='POST') { const body=await readBody(req); if(!GOOGLE.provider(body.provider)) return json(res,400,{ok:false,message:'Unsupported Google provider'}); await GOOGLE.secureTokenStore.delete(body.provider); return json(res,200,{ok:true,provider:body.provider,disconnected:true}); }
       const providers={}; for(const name of Object.keys(GOOGLE.PROVIDERS)) { try { providers[name]=Boolean(await GOOGLE.secureTokenStore.get(name)); } catch { providers[name]=false; } }
       return json(res,200,{ok:true,providers,note:'Connected status only; no access tokens are returned.'});
-    }
-    if(req.method==='POST'&&url.pathname==='/api/automation/daily-ai-launch') {
-      if(!authorized(req)) return json(res,401,{ok:false,message:'Scheduled automation requires the server token.'});
-      if(!WPP_BRIDGE_URL || !WPP_BRIDGE_TOKEN || !WPP_SELF_CHAT_ID) return json(res,503,{ok:false,scheduled:true,sent:false,selfOnly:true,message:'Automation is not armed: configure the private bridge and WPP_SELF_CHAT_ID. No message was sent.'});
-      const report=await buildDailyAiLaunchUpdate();
-      const lines=report.items.length ? report.items.map((item,index)=>`${index+1}. ${item.title} — ${item.source}\n${item.link}`) : ['No qualifying public-source AI launches were found in the previous 24 hours.'];
-      const message=`JARVIS AI launch update — ${new Date().toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata'})}\n\n${lines.join('\n\n')}`;
-      const result=await whatsappRequest('/send',{recipient:WPP_SELF_CHAT_ID,message,source:'jarvis-scheduled-ai-launch',selfOnly:true});
-      return json(res,200,{ok:true,scheduled:true,selfOnly:true,sent:Boolean(result.executed),itemCount:report.items.length,result});
     }
     if(req.method==='GET'&&url.pathname==='/api/skills') return json(res,200,{ok:true,skills:Object.fromEntries(Object.entries(SKILLS).map(([id,meta])=>[id,{id,...meta,handler:Boolean(SKILL_HANDLERS[id])}]))});
     if(req.method==='POST'&&url.pathname==='/api/command') return json(res,200,{ok:true,result:await routeCommand(await readBody(req))});
