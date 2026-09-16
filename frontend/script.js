@@ -29,12 +29,12 @@ document.addEventListener("DOMContentLoaded", () => {
             const response = await fetch(BACKEND_HEALTH_URL, { cache: "no-store" });
             const data = await response.json();
             if (data?.ok && data?.whatsappBridge) {
-                showMessage("KALKI", "Secure backend and WhatsApp bridge online. Explicit commands only.", "ai");
+                showMessage("J.A.R.V.I.S", "Secure backend and WhatsApp bridge online. Explicit commands only.", "ai");
             } else if (data?.ok) {
-                showMessage("KALKI", "Backend online. WhatsApp bridge is not connected.", "ai");
+                showMessage("J.A.R.V.I.S", "Backend online. WhatsApp bridge is not connected.", "ai");
             }
         } catch (error) {
-            showMessage("KALKI SYSTEM", "Backend connection unavailable. Local AI mode active.", "ai");
+            showMessage("SYSTEM", "Backend connection unavailable. Local AI mode active.", "ai");
         }
     }
 
@@ -62,9 +62,21 @@ document.addEventListener("DOMContentLoaded", () => {
         chatBox.scrollTop = chatBox.scrollHeight;
         if (save) addToMemory(sender, text, type);
     }
+    function showAutomationPreview(result) {
+        const workflow = result?.workflow;
+        if (!workflow || !chatBox) { showMessage("J.A.R.V.I.S", result?.message || "Preview ready. Nothing was executed.", "ai"); return; }
+        showMessage("J.A.R.V.I.S", `${result.message || "Preview ready."}\\nType: ${workflow.kind}${workflow.provider ? `\\nConnector: ${workflow.provider} (${workflow.provider === "tasks" ? "local representation only" : "not connected"})` : ""}\\nSteps: ${workflow.steps.map(step => step.command).join(" → ")}`, "ai");
+        if (!workflow.requiresConfirmation || workflow.status !== "preview") return;
+        const card = document.createElement("div"); card.className = "automation-confirmation"; card.dataset.workflowId = workflow.id;
+        const label = document.createElement("span"); label.textContent = "Nothing has been executed. Confirm this action?"; card.appendChild(label);
+        const confirm = document.createElement("button"); confirm.type = "button"; confirm.textContent = "CONFIRM";
+        const cancel = document.createElement("button"); cancel.type = "button"; cancel.textContent = "CANCEL";
+        const act = async (operation, button) => { confirm.disabled = true; cancel.disabled = true; button.textContent = "..."; try { const response = await fetch(`${BACKEND_COMMAND_URL.replace("/api/command", `/api/automation/${operation}`)}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ workflowId: workflow.id }) }); const data = await response.json(); label.textContent = data.message || (data.ok ? "Updated." : "Request failed."); if (data.workflow?.status) label.textContent += ` Status: ${data.workflow.status}.`; } catch (error) { label.textContent = "Action could not be completed. Nothing was executed."; } };
+        confirm.addEventListener("click", () => act("approve", confirm)); cancel.addEventListener("click", () => act("cancel", cancel)); card.append(confirm, cancel); chatBox.appendChild(card); chatBox.scrollTop = chatBox.scrollHeight;
+    }
     function loadSavedChat() {
         const memory = readMemory();
-        if (memory.length === 0) { showMessage("KALKI", "KALKI SYSTEM online. AI brain ready.", "ai"); return; }
+        if (memory.length === 0) { showMessage("J.A.R.V.I.S", "System online. AI brain ready.", "ai"); return; }
         memory.forEach((item) => showMessage(item.sender, item.text, item.type, false));
     }
     function getApiKey() {
@@ -83,7 +95,7 @@ document.addEventListener("DOMContentLoaded", () => {
         let lastError = "AI connection failed.";
         for (const modelName of MODEL_NAMES) {
             try {
-                const response = await fetch(apiBase + modelName + ":generateContent?key=" + apiKey, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ KALKI SYSTEMInstruction: { parts: [{ text: "You are KALKI, a helpful personal mobile assistant. Keep replies clear and concise." }] }, contents }) });
+                const response = await fetch(apiBase + modelName + ":generateContent?key=" + apiKey, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ systemInstruction: { parts: [{ text: "You are J.A.R.V.I.S, a helpful personal mobile assistant. Keep replies clear and concise." }] }, contents }) });
                 const data = await response.json();
                 if (response.ok) {
                     const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -126,7 +138,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function isExplicitAction(text) { return /\b(open|launch|start|send|reply|message|tell|search|find|create|add|schedule|show|read)\b/i.test(text) || /చెప్పు|పంపు|చూడు|వెతుకు|తెరువు/i.test(text); }
     function openWhatsApp() {
         // Safe handoff only: opening WhatsApp never sends a message.
-        showMessage("KALKI", "WhatsApp opening...", "ai");
+        showMessage("J.A.R.V.I.S", "WhatsApp opening...", "ai");
         window.location.assign("whatsapp://send");
     }
     function handleLocalCommand(text) {
@@ -143,22 +155,23 @@ document.addEventListener("DOMContentLoaded", () => {
             if (requestedSkill === "whatsapp" && handleLocalCommand(userText)) return;
             try {
                 const result = await sendBackendCommand(userText);
-                showMessage("KALKI", result.message || `${SKILL_REGISTRY[requestedSkill].name} command received.`, "ai");
+                if (result.workflow) showAutomationPreview(result);
+                else showMessage("J.A.R.V.I.S", result.message || `${SKILL_REGISTRY[requestedSkill].name} command received.`, "ai");
             } catch (error) {
                 console.error("JARVIS backend bridge error:", error);
-                showMessage("KALKI SYSTEM", "Backend command bridge unavailable. Nothing was executed.", "ai");
+                showMessage("SYSTEM", "Backend command bridge unavailable. Nothing was executed.", "ai");
             }
             return;
         }
         if (handleLocalCommand(userText)) return;
         messageInput.disabled = true; sendButton.disabled = true; sendButton.textContent = "...";
-        try { const reply = await askGemini(); showMessage("KALKI", reply, "ai"); speak(reply); }
-        catch (error) { console.error("JARVIS AI Error:", error); showMessage("KALKI SYSTEM", error.message, "ai"); }
+        try { const reply = await askGemini(); showMessage("J.A.R.V.I.S", reply, "ai"); speak(reply); }
+        catch (error) { console.error("JARVIS AI Error:", error); showMessage("SYSTEM", error.message, "ai"); }
         finally { messageInput.disabled = false; sendButton.disabled = false; sendButton.textContent = "SEND"; messageInput.focus(); }
     }
     function clearChat() {
         localStorage.removeItem(MEMORY_KEY); if (chatBox) chatBox.innerHTML = ""; if (messageInput) messageInput.value = "";
-        showMessage("KALKI", "Memory cleared. KALKI SYSTEM ready.", "ai");
+        showMessage("J.A.R.V.I.S", "Memory cleared. System ready.", "ai");
     }
     function setupVoice() {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -166,11 +179,11 @@ document.addEventListener("DOMContentLoaded", () => {
         recognition = new SpeechRecognition(); recognition.lang = "en-IN"; recognition.continuous = false; recognition.interimResults = false;
         recognition.onstart = () => { isListening = true; if (micButton) micButton.textContent = "STOP"; };
         recognition.onresult = (event) => { if (messageInput) { messageInput.value = event.results[0][0].transcript; messageInput.focus(); } };
-        recognition.onerror = () => showMessage("KALKI SYSTEM", "Voice input work avvaledu. Mic permission check cheyyandi.", "ai");
+        recognition.onerror = () => showMessage("SYSTEM", "Voice input work avvaledu. Mic permission check cheyyandi.", "ai");
         recognition.onend = () => { isListening = false; if (micButton) micButton.textContent = "🎙️"; };
     }
     function toggleVoice() {
-        if (!recognition) { showMessage("KALKI SYSTEM", "Mee browser voice input support cheyyadam ledu.", "ai"); return; }
+        if (!recognition) { showMessage("SYSTEM", "Mee browser voice input support cheyyadam ledu.", "ai"); return; }
         if (isListening) recognition.stop(); else recognition.start();
     }
     if (sendButton) sendButton.addEventListener("click", sendMessage);
@@ -187,8 +200,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const wakeWordStatus = document.getElementById("wake-word-status");
     const wakeWordStop = document.getElementById("wake-word-stop");
     const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const nativeWake = window.KalkiNative && typeof window.KalkiNative.enableWakeWord === "function";
     let wakeEnabled = false; let wakeCapturing = false; let wakeRecognition = null; let commandRecognition = null;
+    const nativeWake = Boolean(window.JarvisNative);
+    window.addEventListener("jarvis-native-command", (event) => { const command = String(event.detail || "").trim(); if (!command) return; if (messageInput) messageInput.value = normalizeMixedCommand(command); sendButton?.click(); });
     const setWakeStatus = (text, active = false) => { if (wakeWordStatus) { wakeWordStatus.textContent = text; wakeWordStatus.classList.toggle("active", active); } };
     const normalizeMixedCommand = (value) => value.trim()
         .replace(/\b(latest)\s+AI\s+(news|vishayalu)\s+(cheppu|cheppandi)\b/gi, "search latest AI news")
@@ -201,23 +215,22 @@ document.addEventListener("DOMContentLoaded", () => {
         .replace(/\s+/g, " ").trim();
     const armWakeRecognition = () => { if (!wakeEnabled || !wakeRecognition || wakeCapturing) return; setWakeStatus("Armed in foreground — say “Hey Jarvis”.", true); try { wakeRecognition.start(); } catch (error) {} };
     const listenForCommand = () => { if (!wakeEnabled || !commandRecognition) return; wakeCapturing = true; setWakeStatus("Wake word heard — listening for your command…", true); try { commandRecognition.start(); } catch (error) {} };
-    const stopWakeWord = () => { wakeEnabled = false; wakeCapturing = false; try { wakeRecognition?.stop(); commandRecognition?.stop(); } catch (error) {} if (nativeWake) window.KalkiNative.disableWakeWord(); if (wakeWordToggle) wakeWordToggle.checked = false; if (wakeWordStop) wakeWordStop.hidden = true; setWakeStatus("Off. JARVIS will not use your microphone."); };
-    window.__kalkiNativeWakeCommand = (command) => { if (!wakeEnabled) return; if (messageInput) messageInput.value = normalizeMixedCommand(command); sendButton?.click(); };
+    const stopWakeWord = () => { wakeEnabled = false; wakeCapturing = false; try { wakeRecognition?.stop(); commandRecognition?.stop(); } catch (error) {} if (wakeWordToggle) wakeWordToggle.checked = false; if (wakeWordStop) wakeWordStop.hidden = true; setWakeStatus("Off. JARVIS will not use your microphone."); };
     if (settingsToggle && voiceSettings) settingsToggle.addEventListener("click", () => { voiceSettings.hidden = !voiceSettings.hidden; settingsToggle.setAttribute("aria-expanded", String(!voiceSettings.hidden)); });
     if (wakeWordToggle && wakeWordStatus) {
-        if (nativeWake) {
-            wakeWordToggle.addEventListener("change", () => { if (!wakeWordToggle.checked) { stopWakeWord(); return; } wakeEnabled = true; if (wakeWordStop) wakeWordStop.hidden = false; setWakeStatus("Native foreground listening — say “Hey Jarvis”.", true); window.KalkiNative.enableWakeWord(); });
-            wakeWordStop?.addEventListener("click", stopWakeWord);
-        } else if (SpeechRecognitionAPI) {
+        if (SpeechRecognitionAPI) {
             wakeRecognition = new SpeechRecognitionAPI(); commandRecognition = new SpeechRecognitionAPI();
             [wakeRecognition, commandRecognition].forEach((instance) => { instance.lang = "en-IN"; instance.continuous = false; instance.interimResults = false; });
             wakeRecognition.onresult = (event) => { const transcript = event.results[0][0].transcript.trim(); const match = transcript.match(/(?:hey|hai|hi)\s+(?:jarvis|jaarvis|jarv[ie]s|jervis)\b[,:;.!\s]*(.*)$/i); if (match?.[1]?.trim()) { if (messageInput) messageInput.value = normalizeMixedCommand(match[1]); sendButton?.click(); } else if (match) listenForCommand(); };
-            wakeRecognition.onend = () => armWakeRecognition(); wakeRecognition.onerror = () => { if (wakeEnabled) setWakeStatus("Armed in foreground — say “Hey Jarvis”.", true); };
-            commandRecognition.onresult = (event) => { wakeCapturing = false; if (messageInput) messageInput.value = normalizeMixedCommand(event.results[0][0].transcript); sendButton?.click(); }; commandRecognition.onend = () => { wakeCapturing = false; armWakeRecognition(); };
-            wakeWordToggle.addEventListener("change", async () => { if (!wakeWordToggle.checked) { stopWakeWord(); return; } try { if (navigator.mediaDevices?.getUserMedia) { const stream = await navigator.mediaDevices.getUserMedia({ audio: true }); stream.getTracks().forEach((track) => track.stop()); } wakeEnabled = true; if (wakeWordStop) wakeWordStop.hidden = false; armWakeRecognition(); } catch (error) { wakeWordToggle.checked = false; setWakeStatus("Microphone permission was not granted. Wake word is off."); } }); wakeWordStop?.addEventListener("click", stopWakeWord);
+            wakeRecognition.onend = () => armWakeRecognition();
+            wakeRecognition.onerror = () => { if (wakeEnabled) setWakeStatus("Armed in foreground — say “Hey Jarvis”.", true); };
+            commandRecognition.onresult = (event) => { wakeCapturing = false; if (messageInput) messageInput.value = normalizeMixedCommand(event.results[0][0].transcript); sendButton?.click(); };
+            commandRecognition.onend = () => { wakeCapturing = false; armWakeRecognition(); };
+            wakeWordToggle.addEventListener("change", async () => { if (!wakeWordToggle.checked) { stopWakeWord(); if (nativeWake) window.JarvisNative.disableWakeWord(); return; } if (nativeWake) { wakeEnabled = true; if (wakeWordStop) wakeWordStop.hidden = false; setWakeStatus("Starting foreground listener — approve Android permissions…", true); window.JarvisNative.enableWakeWord(); return; } try { if (navigator.mediaDevices?.getUserMedia) { const stream = await navigator.mediaDevices.getUserMedia({ audio: true }); stream.getTracks().forEach((track) => track.stop()); } wakeEnabled = true; if (wakeWordStop) wakeWordStop.hidden = false; armWakeRecognition(); } catch (error) { wakeWordToggle.checked = false; setWakeStatus("Microphone permission was not granted. Wake word is off."); } });
+            wakeWordStop?.addEventListener("click", () => { stopWakeWord(); if (nativeWake) window.JarvisNative.disableWakeWord(); });
         } else { wakeWordToggle.disabled = true; setWakeStatus("Voice recognition is unavailable in this WebView."); }
     }
     if (sendButton && messageInput) sendButton.addEventListener("click", () => { messageInput.value = normalizeMixedCommand(messageInput.value); }, true);
     if (messageInput) messageInput.addEventListener("keydown", (event) => { if (event.key === "Enter") messageInput.value = normalizeMixedCommand(messageInput.value); }, true);
-    console.log("JARVIS AI fallback KALKI SYSTEM loaded successfully.");
+    console.log("JARVIS AI fallback system loaded successfully.");
 });

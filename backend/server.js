@@ -6,6 +6,7 @@ const GOOGLE = require('./google-oauth');
 const { buildDailyYouTubeAnalytics } = require('./youtube-analytics');
 const { buildDailyAiLaunchUpdate } = require('./ai-launch-updates');
 const { SKILL_HANDLERS, handleSkill } = require('./zapia-skills');
+const AUTOMATION = require('./automation');
 
 const PORT = Number(process.env.PORT || 8787);
 const API_TOKEN = process.env.JARVIS_API_TOKEN || '';
@@ -40,6 +41,8 @@ async function routeCommand(body) {
   const text=String(body.text||'').trim(); if(!text) throw new Error('Command text is required');
   const skill=detectSkill(text);
   if(!skill || !isExplicitAction(text)) return {executed:false,explicitOnly:true,reason:'Ask with an explicit action (for example: search, create, send, or show).'};
+  // Automation is always preview-first. This route never creates reminders or calls providers.
+  if(skill==='automation' || skill==='tasks' || /\b(remind(?:er)?|todo|workflow|multi[- ]step)\b/i.test(text)) return AUTOMATION.preview(text);
   if(skill==='youtubeAnalytics') {
     return { executed: true, skill, action: 'report', report: await buildDailyYouTubeAnalytics(), message: 'Public YouTube analytics report prepared. Nothing was sent.' };
   }
@@ -101,6 +104,10 @@ const server=http.createServer(async(req,res)=>{
       return json(res,200,{ok:true,providers,note:'Connected status only; no access tokens are returned.'});
     }
     if(req.method==='GET'&&url.pathname==='/api/skills') return json(res,200,{ok:true,skills:Object.fromEntries(Object.entries(SKILLS).map(([id,meta])=>[id,{id,...meta,handler:Boolean(SKILL_HANDLERS[id])}]))});
+    if(req.method==='GET'&&url.pathname==='/api/automation/workflows') return json(res,200,{ok:true,workflows:AUTOMATION.list(),explicitOnly:true});
+    if(req.method==='POST'&&url.pathname==='/api/automation/preview') { const body=await readBody(req); const text=String(body.text||body.command||'').trim(); if(!isExplicitAction(text)) return json(res,400,{ok:false,error:{code:'EXPLICIT_ACTION_REQUIRED',message:'An explicit command is required. Nothing was executed.'}}); return json(res,200,AUTOMATION.preview(text)); }
+    if(req.method==='POST'&&url.pathname.match(/^\/api\/automation\/(approve|cancel|undo)$/)) { const operation=url.pathname.split('/').pop(); const body=await readBody(req); const action=AUTOMATION[operation]; const result=action(String(body.workflowId||body.id||'')); return json(res,result.ok?200:400,result); }
+    if(req.method==='GET'&&url.pathname.match(/^\/api\/automation\/workflows\/[^/]+$/)) { const workflow=AUTOMATION.get(url.pathname.split('/').pop()); return workflow?json(res,200,{ok:true,workflow}):json(res,404,{ok:false,error:{code:'WORKFLOW_NOT_FOUND',message:'Workflow was not found.'}}); }
     if(req.method==='POST'&&url.pathname==='/api/command') return json(res,200,{ok:true,result:await routeCommand(await readBody(req))});
     const directSkillRoutes = {'/api/skills/day-organizer':'dayOrganizer','/api/skills/stay-in-touch':'stayInTouch','/api/skills/whatsapp-audio':'whatsappAudioTranscription','/api/skills/unavailable-time-reply-drafts':'unavailableTimeReplyDrafts'};
     if(req.method==='POST'&&directSkillRoutes[url.pathname]) {
