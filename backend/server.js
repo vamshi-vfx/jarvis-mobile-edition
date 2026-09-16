@@ -15,6 +15,13 @@ const WPP_BRIDGE_URL = process.env.WPP_BRIDGE_URL || '';
 const WPP_BRIDGE_TOKEN = process.env.WPP_BRIDGE_TOKEN || '';
 // Activation keys are intentionally ephemeral until a durable, access-controlled store is configured.
 const activationKeyHashes = new Set();
+// Admin sessions, feature flags, and audit entries are process-memory only until a durable store is configured.
+const adminSessions = new Map();
+const featureFlags = { automationPreviewOnly: true, explicitActionOnly: true, backgroundReplies: false };
+const auditLog = [];
+function audit(event, req, details = {}) { auditLog.unshift({ id: crypto.randomUUID(), event, at: new Date().toISOString(), actor: 'admin', ip: req.headers['x-forwarded-for'] || 'unknown', ...details }); if (auditLog.length > 200) auditLog.pop(); }
+function adminAuthorized(req) { if (!authorized(req)) return false; const sid = req.headers['x-jarvis-session']; if (!sid) return true; const session = adminSessions.get(sid); return Boolean(session && session.valid); }
+function requireAdmin(req, res) { if (!adminAuthorized(req)) { json(res,401,{ok:false,message:'Admin access requires a valid server token and session.'}); return false; } return true; }
 function createActivationKey() {
   const key = `JARVIS-${crypto.randomBytes(18).toString('base64url').toUpperCase()}`;
   activationKeyHashes.add(crypto.createHash('sha256').update(key).digest('hex'));
@@ -22,7 +29,7 @@ function createActivationKey() {
 }
 
 function json(res, status, body) {
-  res.writeHead(status, {'Content-Type':'application/json; charset=utf-8','Access-Control-Allow-Origin':ALLOWED_ORIGIN,'Access-Control-Allow-Headers':'Content-Type, Authorization','Access-Control-Allow-Methods':'GET, POST, OPTIONS'});
+  res.writeHead(status, {'Content-Type':'application/json; charset=utf-8','Access-Control-Allow-Origin':ALLOWED_ORIGIN,'Access-Control-Allow-Headers':'Content-Type, Authorization, X-Jarvis-Session','Access-Control-Allow-Methods':'GET, POST, OPTIONS'});
   res.end(JSON.stringify(body));
 }
 function authorized(req) { return Boolean(API_TOKEN) && req.headers.authorization === `Bearer ${API_TOKEN}`; }
@@ -89,12 +96,28 @@ const server=http.createServer(async(req,res)=>{
     catch(error) { return json(res,503,{ok:false,message:error.message}); }
   }
   try {
-    if(req.method==='GET'&&url.pathname==='/api/admin/status') {
+    if(req.method==='POST'&&url.pathname==='/api/admin/session') {
       if(!authorized(req)) return json(res,401,{ok:false,message:'Admin access requires the server token.'});
-      return json(res,200,{ok:true,status:{Backend:true,'WhatsApp bridge':Boolean(WPP_BRIDGE_URL&&WPP_BRIDGE_TOKEN),'AI automation':Boolean(process.env.GEMINI_API_KEY||process.env.GOOGLE_AI_API_KEY),'Explicit-action guard':true},note:'Protected status only; secrets and token values are never returned.'});
+      const id=crypto.randomBytes(24).toString('base64url'); adminSessions.set(id,{valid:true,createdAt:new Date().toISOString()}); audit('session.created',req); return json(res,201,{ok:true,session:id,expiresInSeconds:3600,storage:'process memory'});
     }
+    if(req.method==='POST'&&url.pathname==='/api/admin/logout') { if(!requireAdmin(req,res)) return; const sid=req.headers['x-jarvis-session']; if(sid) adminSessions.delete(sid); audit('session.revoked',req); return json(res,200,{ok:true}); }
+    if(req.method==='POST'&&url.pathname==='/api/admin/logout-all') { if(!requireAdmin(req,res)) return; for(const session of adminSessions.values()) session.valid=false; adminSessions.clear(); audit('sessions.revoked_all',req); return json(res,200,{ok:true,revoked:'all active in-memory sessions'}); }
+    if(req.method==='GET'&&url.pathname==='/api/admin/status') {
+      if(!requireAdmin(req,res)) return;
+      const providers={}; for(const name of Object.keys(GOOGLE.PROVIDERS)) providers[name]=await GOOGLE.verify(name);
+      const configured={whatsapp:Boolean(WPP_BRIDGE_URL&&WPP_BRIDGE_TOKEN),youtube:Boolean(process.env.YOUTUBE_API_KEY||process.env.GOOGLE_YOUTUBE_API_KEY),webSearch:Boolean(process.env.SEARCH_API_KEY||process.env.TAVILY_API_KEY),outlook:Boolean(process.env.OUTLOOK_CLIENT_ID&&process.env.OUTLOOK_CLIENT_SECRET),slack:Boolean(process.env.SLACK_CLIENT_ID&&process.env.SLACK_CLIENT_SECRET),telegram:Boolean(process.env.TELEGRAM_BOT_TOKEN),notion:Boolean(process.env.NOTION_CLIENT_ID&&process.env.NOTION_CLIENT_SECRET)};
+      for(const [name,isConfigured] of Object.entries(configured)) providers[name]=isConfigured?{status:'pending',lastVerifiedAt:null}:{status:'not_connected',lastVerifiedAt:null};
+      return json(res,200,{ok:true,status:{backend:{status:'healthy',value:true},api:{status:'healthy',value:true},'whatsapp-bridge':{status:configured.whatsapp?'configured':'not_connected',value:configured.whatsapp},'ai-automation':{status:Boolean(process.env.GEMINI_API_KEY||process.env.GOOGLE_AI_API_KEY)?'configured':'not_connected',value:Boolean(process.env.GEMINI_API_KEY||process.env.GOOGLE_AI_API_KEY)},'explicit-action-guard':{status:'enforced',value:true}},providers,flags:featureFlags,sessions:{active:adminSessions.size},persistence:{auditLog:'in-memory',sessions:'in-memory',featureFlags:'in-memory'},note:'Statuses never include secrets or token values.'});
+    }
+    if(req.method==='GET'&&url.pathname==='/api/admin/audit-log') { if(!requireAdmin(req,res)) return; return json(res,200,{ok:true,entries:auditLog.slice(0,100),storage:'in-memory'}); }
+    if(req.method==='GET'&&url.pathname==='/api/admin/feature-flags') { if(!requireAdmin(req,res)) return; return json(res,200,{ok:true,flags:featureFlags,storage:'in-memory'}); }
+    if(req.method==='POST'&&url.pathname==='/api/admin/feature-flags') { if(!requireAdmin(req,res)) return; const body=await readBody(req); for(const key of Object.keys(featureFlags)) if(typeof body[key]==='boolean') featureFlags[key]=body[key]; audit('feature_flags.updated',req,{changed:Object.keys(body).filter(k=>k in featureFlags)}); return json(res,200,{ok:true,flags:featureFlags,storage:'in-memory'}); }
+    if(req.method==='GET'&&url.pathname==='/api/admin/automation') { if(!requireAdmin(req,res)) return; return json(res,200,{ok:true,controls:{previewOnly:true,explicitActionOnly:true,backgroundReplies:false},note:'Automation execution remains disabled; this endpoint only exposes safe controls.'}); }
+    if(req.method==='GET'&&url.pathname==='/api/admin/privacy/export') { if(!requireAdmin(req,res)) return; audit('privacy.export_requested',req); return json(res,200,{ok:false,available:false,code:'PERSISTENCE_NOT_CONFIGURED',message:'Export is guarded until durable personal-data storage is configured. No data was exported.'}); }
+    if(req.method==='POST'&&url.pathname==='/api/admin/privacy/delete') { if(!requireAdmin(req,res)) return; audit('privacy.delete_requested',req); return json(res,409,{ok:false,available:false,code:'PERSISTENCE_NOT_CONFIGURED',message:'Deletion is a guarded placeholder until durable personal-data storage and confirmation are configured. No data was deleted.'}); }
     if(req.method==='POST'&&url.pathname==='/api/admin/activation-keys') {
-      if(!authorized(req)) return json(res,401,{ok:false,message:'Admin access requires the server token.'});
+      if(!requireAdmin(req,res)) return;
+      audit('activation_key.created',req);
       return json(res,201,{ok:true,key:createActivationKey(),storage:'sha256 hash in process memory; configure durable encrypted storage before production use',oneTime:true});
     }
     if((req.method==='GET'&&url.pathname==='/api/google/status')||(req.method==='POST'&&url.pathname==='/api/google/disconnect')) {

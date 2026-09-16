@@ -1,40 +1,18 @@
 (() => {
-  const API = 'https://jarvis-mobile-edition-alpha.vercel.app';
-  const authPanel = document.getElementById('auth-panel');
-  const dashboard = document.getElementById('dashboard');
-  const tokenInput = document.getElementById('admin-token');
-  const authMessage = document.getElementById('auth-message');
-  const dashboardMessage = document.getElementById('dashboard-message');
-  let token = '';
-  const setMessage = (node, text) => { node.textContent = text || ''; };
-  async function request(path, options = {}) {
-    const response = await fetch(`${API}${path}`, { ...options, headers: { ...(options.headers || {}), Authorization: `Bearer ${token}` }, cache: 'no-store' });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.message || 'Protected request failed.');
-    return data;
-  }
-  function renderStatus(data) {
-    const list = document.getElementById('status-list');
-    const rows = Object.entries(data.status || {}).map(([name, value]) => `<div class="status-row"><span>${name}</span><b class="${value ? '' : 'off'}">${value ? 'ONLINE' : 'NOT CONNECTED'}</b></div>`).join('');
-    list.innerHTML = rows || '<p class="muted">No status data available.</p>';
-  }
-  async function refreshStatus() { try { renderStatus(await request('/api/admin/status')); } catch (error) { setMessage(dashboardMessage, error.message); } }
-  async function unlock() {
-    const value = tokenInput.value.trim(); if (!value) { setMessage(authMessage, 'A server token is required.'); return; }
-    token = value;
-    try { await request('/api/admin/status'); authPanel.hidden = true; dashboard.hidden = false; tokenInput.value = ''; await refreshStatus(); }
-    catch (error) { token = ''; setMessage(authMessage, 'Access denied. Check the server token.'); }
-  }
-  document.getElementById('unlock-btn').addEventListener('click', unlock);
-  tokenInput.addEventListener('keydown', event => { if (event.key === 'Enter') unlock(); });
-  document.getElementById('refresh-status').addEventListener('click', refreshStatus);
-  document.getElementById('generate-key').addEventListener('click', async () => {
-    const output = document.getElementById('key-result'); const button = document.getElementById('generate-key');
-    button.disabled = true; output.hidden = true; setMessage(dashboardMessage, '');
-    try { const data = await request('/api/admin/activation-keys', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }); output.textContent = `${data.key} — copy now; it will not be shown again.`; output.hidden = false; }
-    catch (error) { setMessage(dashboardMessage, error.message); } finally { button.disabled = false; }
-  });
-  document.getElementById('manage-users').addEventListener('click', () => setMessage(dashboardMessage, 'User management is reserved for a protected backend implementation. No user data was changed.'));
-  document.getElementById('open-assistant').addEventListener('click', () => window.open(new URL('./index.html', window.location.href).href, 'kalki-assistant', 'popup,width=430,height=850'));
-  document.getElementById('logout-btn').addEventListener('click', () => { window.JarvisNative?.disableWakeWord(); token = ''; dashboard.hidden = true; authPanel.hidden = false; setMessage(authMessage, 'Signed out.'); });
+  const API='https://jarvis-mobile-edition-alpha.vercel.app', authPanel=document.getElementById('auth-panel'), dashboard=document.getElementById('dashboard'), tokenInput=document.getElementById('admin-token'), authMessage=document.getElementById('auth-message'), message=document.getElementById('dashboard-message');
+  let token='', session='';
+  const msg=t=>message.textContent=t||'';
+  async function request(path, options={}) { const headers={...(options.headers||{}),Authorization:`Bearer ${token}`}; if(session) headers['X-Jarvis-Session']=session; const r=await fetch(API+path,{...options,headers,cache:'no-store'}); const d=await r.json().catch(()=>({})); if(!r.ok) throw Error(d.message||d.error?.message||`Request failed (${r.status})`); return d; }
+  const esc=x=>String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  function render(d){ const list=document.getElementById('status-list'); list.innerHTML=Object.entries(d.status||{}).map(([n,v])=>{const ok=v.status==='healthy'||v.status==='enforced'||v.value===true;return `<div class="status-row"><span>${esc(n)}</span><b class="${ok?'':'off'}">${esc((v.status|| (v?'healthy':'not_connected')).toUpperCase())}</b></div>`}).join('')||'<p class="muted">No status data.</p>'; document.getElementById('persistence-note').textContent=`Persistence: ${d.persistence?.auditLog||'unknown'} · Active sessions: ${d.sessions?.active??'—'}`; document.getElementById('flags').innerHTML=Object.entries(d.flags||{}).map(([k,v])=>`<label class="flag"><span>${esc(k)}</span><input type="checkbox" data-flag="${esc(k)}" ${v?'checked':''}></label>`).join(''); }
+  async function refresh(){try{const d=await request('/api/admin/status');render(d);const a=await request('/api/admin/audit-log');document.getElementById('audit-log').innerHTML=(a.entries||[]).slice(0,12).map(x=>`<li><b>${esc(x.event)}</b><small>${new Date(x.at).toLocaleString()}</small></li>`).join('')||'<li>No admin events yet.</li>'; }catch(e){msg(e.message)}}
+  async function unlock(){const v=tokenInput.value.trim();if(!v){authMessage.textContent='A server token is required.';return} token=v;try{const d=await request('/api/admin/session',{method:'POST'});session=d.session;tokenInput.value='';authPanel.hidden=true;dashboard.hidden=false;await refresh()}catch(e){token='';authMessage.textContent='Access denied. Check the server token.'}}
+  document.getElementById('unlock-btn').onclick=unlock; tokenInput.onkeydown=e=>{if(e.key==='Enter')unlock()}; document.getElementById('refresh-status').onclick=refresh;
+  document.getElementById('generate-key').onclick=async()=>{try{const d=await request('/api/admin/activation-keys',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});const o=document.getElementById('key-result');o.textContent=`${d.key} — copy now; it will not be shown again.`;o.hidden=false;await refresh()}catch(e){msg(e.message)}};
+  document.getElementById('save-flags').onclick=async()=>{const body={};document.querySelectorAll('[data-flag]').forEach(x=>body[x.dataset.flag]=x.checked);try{await request('/api/admin/feature-flags',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});msg('Feature flags updated safely.');await refresh()}catch(e){msg(e.message)}};
+  document.getElementById('logout-all').onclick=async()=>{if(!confirm('Invalidate all active admin sessions?'))return;try{await request('/api/admin/logout-all',{method:'POST'});session='';token='';dashboard.hidden=true;authPanel.hidden=false;authMessage.textContent='All admin sessions invalidated.'}catch(e){msg(e.message)}};
+  document.getElementById('logout-btn').onclick=async()=>{try{await request('/api/admin/logout',{method:'POST'})}catch{} session='';token='';dashboard.hidden=true;authPanel.hidden=false;authMessage.textContent='Signed out.'};
+  document.getElementById('export-data').onclick=async()=>{try{const d=await request('/api/admin/privacy/export');msg(d.message)}catch(e){msg(e.message)}};
+  document.getElementById('delete-data').onclick=async()=>{if(!confirm('No data will be deleted in this guarded placeholder. Continue?'))return;try{const d=await request('/api/admin/privacy/delete',{method:'POST'});msg(d.message)}catch(e){msg(e.message)}};
+  document.getElementById('open-assistant').onclick=()=>window.open(new URL('./index.html',location.href).href,'kalki-assistant','popup,width=430,height=850');
 })();
