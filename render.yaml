@@ -15,3 +15,5 @@ services:
         sync: false
       - key: WPP_BRIDGE_TOKEN
         sync: false
+      - key: WPP_SELF_CHAT_ID
+        sync: false
