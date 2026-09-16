@@ -1,0 +1,70 @@
+name: Android APK
+
+on:
+  push:
+    paths:
+      - "android/**"
+      - ".github/workflows/android.yml"
+  pull_request:
+    paths:
+      - "android/**"
+      - ".github/workflows/android.yml"
+  workflow_dispatch:
+    inputs:
+      JARVIS_START_URL:
+        description: "Optional HTTPS URL compiled into the WebView APK"
+        required: false
+        type: string
+        default: "https://jarvis-mobile-edition-alpha.vercel.app/"
+
+permissions:
+  contents: read
+
+jobs:
+  debug-apk:
+    name: Build debug APK
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: android
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
+        run: sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+        working-directory: .
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.10.2"
+
+      - name: Build debug APK
+        env:
+          START_URL: ${{ inputs.JARVIS_START_URL }}
+        run: |
+          if [ -n "$START_URL" ]; then
+            gradle --no-daemon --stacktrace :app:assembleDebug "-PJARVIS_START_URL=$START_URL"
+          else
+            gradle --no-daemon --stacktrace :app:assembleDebug
+          fi
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: jarvis-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
+
