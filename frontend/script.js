@@ -8,6 +8,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const MEMORY_KEY = "jarvis_chat_memory";
     const API_KEY_STORAGE = "jarvis_api_key";
+    const PREFS_KEY = "kalki_preferences_v1";
+    const ALIASES_KEY = "kalki_aliases_v1";
+    const CUSTOM_SKILLS_KEY = "kalki_custom_skills_v1";
+    const readJson = (key, fallback) => { try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); } catch { return fallback; } };
+    const getPrefs = () => ({ language: "auto", style: "short", name: "", ...readJson(PREFS_KEY, {}) });
     const BACKEND_HEALTH_URL = "https://jarvis-mobile-edition-alpha.vercel.app/api/health";
     const BACKEND_COMMAND_URL = "https://jarvis-mobile-edition-alpha.vercel.app/api/command";
 
@@ -95,7 +100,7 @@ document.addEventListener("DOMContentLoaded", () => {
         let lastError = "AI connection failed.";
         for (const modelName of MODEL_NAMES) {
             try {
-                const response = await fetch(apiBase + modelName + ":generateContent?key=" + apiKey, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ systemInstruction: { parts: [{ text: "You are J.A.R.V.I.S, a helpful personal mobile assistant. Keep replies clear and concise." }] }, contents }) });
+                const response = await fetch(apiBase + modelName + ":generateContent?key=" + apiKey, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ systemInstruction: { parts: [{ text: `You are KALKI, a helpful personal mobile assistant. Reply in ${getPrefs().language === "telugu" ? "Telugu" : getPrefs().language === "teluglish" ? "Teluglish (Telugu written in Latin script)" : getPrefs().language === "english" ? "English" : "the same language as the user"}. Keep replies ${getPrefs().style === "detailed" ? "detailed and structured" : "short and direct"}. ${getPrefs().name ? `Address the user as ${getPrefs().name}.` : ""} Never perform or imply an external action unless the user explicitly asks.` }] }, contents }) });
                 const data = await response.json();
                 if (response.ok) {
                     const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -216,7 +221,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const armWakeRecognition = () => { if (!wakeEnabled || !wakeRecognition || wakeCapturing) return; setWakeStatus("Armed in foreground — say “Hey Jarvis”.", true); try { wakeRecognition.start(); } catch (error) {} };
     const listenForCommand = () => { if (!wakeEnabled || !commandRecognition) return; wakeCapturing = true; setWakeStatus("Wake word heard — listening for your command…", true); try { commandRecognition.start(); } catch (error) {} };
     const stopWakeWord = () => { wakeEnabled = false; wakeCapturing = false; try { wakeRecognition?.stop(); commandRecognition?.stop(); } catch (error) {} if (wakeWordToggle) wakeWordToggle.checked = false; if (wakeWordStop) wakeWordStop.hidden = true; setWakeStatus("Off. JARVIS will not use your microphone."); };
-    if (settingsToggle && voiceSettings) settingsToggle.addEventListener("click", () => { voiceSettings.hidden = !voiceSettings.hidden; settingsToggle.setAttribute("aria-expanded", String(!voiceSettings.hidden)); });
+    const personalitySettings = document.getElementById("personality-settings");
+    if (settingsToggle && voiceSettings) settingsToggle.addEventListener("click", () => { const open = voiceSettings.hidden; voiceSettings.hidden = !open; if (personalitySettings) personalitySettings.hidden = !open; settingsToggle.setAttribute("aria-expanded", String(open)); });
     if (wakeWordToggle && wakeWordStatus) {
         if (SpeechRecognitionAPI) {
             wakeRecognition = new SpeechRecognitionAPI(); commandRecognition = new SpeechRecognitionAPI();
@@ -232,5 +238,20 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     if (sendButton && messageInput) sendButton.addEventListener("click", () => { messageInput.value = normalizeMixedCommand(messageInput.value); }, true);
     if (messageInput) messageInput.addEventListener("keydown", (event) => { if (event.key === "Enter") messageInput.value = normalizeMixedCommand(messageInput.value); }, true);
+    // Phase 6 settings are opt-in and local-first. Backend persistence is intentionally not assumed.
+    const prefLanguage = document.getElementById("pref-language"), prefStyle = document.getElementById("pref-style"), prefName = document.getElementById("pref-name");
+    const prefsStatus = document.getElementById("preferences-status");
+    const renderSettings = () => { const p = getPrefs(); if (prefLanguage) prefLanguage.value = p.language; if (prefStyle) prefStyle.value = p.style; if (prefName) prefName.value = p.name; renderAliases(); renderCustomSkills(); };
+    const savePrefs = () => { localStorage.setItem(PREFS_KEY, JSON.stringify({ language: prefLanguage?.value || "auto", style: prefStyle?.value || "short", name: (prefName?.value || "").trim() })); if (prefsStatus) prefsStatus.textContent = "Saved on this device. KALKI will use this for new replies."; };
+    const renderAliases = () => { const list = document.getElementById("alias-list"); if (!list) return; list.innerHTML = ""; readJson(ALIASES_KEY, []).forEach((a, i) => { const li=document.createElement("li"); li.textContent=`${a.phrase} → ${a.command}`; const b=document.createElement("button"); b.type="button"; b.textContent="Remove"; b.onclick=()=>{const x=readJson(ALIASES_KEY,[]);x.splice(i,1);localStorage.setItem(ALIASES_KEY,JSON.stringify(x));renderAliases();}; li.appendChild(b);list.appendChild(li); }); };
+    const renderCustomSkills = () => { const list=document.getElementById("custom-skill-list"); if(!list)return;list.innerHTML="";readJson(CUSTOM_SKILLS_KEY,[]).forEach((skill,i)=>{const li=document.createElement("li");li.textContent=`${skill.name}: “${skill.trigger}”`;const b=document.createElement("button");b.type="button";b.textContent="Remove";b.onclick=()=>{const x=readJson(CUSTOM_SKILLS_KEY,[]);x.splice(i,1);localStorage.setItem(CUSTOM_SKILLS_KEY,JSON.stringify(x));renderCustomSkills();};li.appendChild(b);list.appendChild(li);}); };
+    document.getElementById("save-preferences")?.addEventListener("click", savePrefs);
+    document.getElementById("add-alias")?.addEventListener("click", () => { const phrase=document.getElementById("alias-phrase")?.value.trim(), command=document.getElementById("alias-command")?.value.trim(); if(!phrase||!command)return; const x=readJson(ALIASES_KEY,[]);x.push({phrase,command});localStorage.setItem(ALIASES_KEY,JSON.stringify(x.slice(-30)));document.getElementById("alias-phrase").value="";document.getElementById("alias-command").value="";renderAliases(); });
+    document.getElementById("add-custom-skill")?.addEventListener("click", () => { const name=document.getElementById("custom-skill-name")?.value.trim(), trigger=document.getElementById("custom-skill-trigger")?.value.trim(), description=document.getElementById("custom-skill-description")?.value.trim(); if(!name||!trigger||!description)return; const x=readJson(CUSTOM_SKILLS_KEY,[]);x.push({name,trigger,description});localStorage.setItem(CUSTOM_SKILLS_KEY,JSON.stringify(x.slice(-20)));["custom-skill-name","custom-skill-trigger","custom-skill-description"].forEach(id=>{document.getElementById(id).value="";});renderCustomSkills(); });
+    document.getElementById("clear-personal-data")?.addEventListener("click", () => { if(!confirm("Clear KALKI preferences, aliases, skills, and chat from this device?"))return; [PREFS_KEY,ALIASES_KEY,CUSTOM_SKILLS_KEY,MEMORY_KEY].forEach(k=>localStorage.removeItem(k)); if(chatBox)chatBox.innerHTML="";renderSettings();showMessage("KALKI","Personal data cleared on this device. No server data was changed.","ai"); });
+    // Apply a saved alias only to an explicit send; aliases never auto-submit or run in background.
+    const applyAlias = (value) => { const found=readJson(ALIASES_KEY,[]).find(a=>value.toLowerCase()===String(a.phrase).toLowerCase()); return found ? found.command : value; };
+    if (sendButton && messageInput) sendButton.addEventListener("click", () => { messageInput.value = applyAlias(messageInput.value.trim()); }, true);
+    renderSettings();
     console.log("JARVIS AI fallback system loaded successfully.");
 });
