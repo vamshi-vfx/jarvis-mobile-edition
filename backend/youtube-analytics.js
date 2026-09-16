@@ -30,7 +30,7 @@ function findChannelId(html) {
     /"channelId":"(UC[a-zA-Z0-9_-]{20,})"/,
     /"browseId":"(UC[a-zA-Z0-9_-]{20,})"/,
     /<meta[^>]+itemprop=["']channelId["'][^>]+content=["'](UC[a-zA-Z0-9_-]{20,})/i,
-    /<link[^>]+href=["']https:\\/\\/www\\.youtube\\.com\\/channel\\/(UC[a-zA-Z0-9_-]{20,})/i
+    /youtube\.com\/channel\/(UC[a-zA-Z0-9_-]{20,})/i
   ]) { const match = html.match(pattern); if (match) return match[1]; }
   return null;
 }
