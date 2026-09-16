@@ -3,6 +3,7 @@ const SKILLS = {
   search: { name: 'Web Search', provider: 'search-api', explicitOnly: true },
   youtube: { name: 'YouTube', provider: 'youtube-api', explicitOnly: true },
   youtubeAnalytics: { name: 'Daily YouTube Analytics', provider: 'public-youtube-data', explicitOnly: true, oauthRequired: false, channel: 'GrowthOS Telugu (@growthos_telugu)', comparisonState: 'unavailable-without-durable-storage' },
+  dailyAiLaunchUpdate: { name: 'Daily AI Launch Updates', provider: 'public-web-sources', explicitOnly: true, sendsMessages: false, schedules: false, status: 'provider-not-connected' },
   email: { name: 'Email', provider: 'gmail-or-outlook', explicitOnly: true },
   calendar: { name: 'Calendar', provider: 'google-calendar', explicitOnly: true },
   tasks: { name: 'Tasks and Reminders', provider: 'task-provider', explicitOnly: true },
