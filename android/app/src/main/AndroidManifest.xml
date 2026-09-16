@@ -6,39 +6,13 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
-
-    <application
-        android:allowBackup="false"
-        android:icon="@drawable/kalki_logo"
-        android:roundIcon="@drawable/kalki_logo"
-        android:label="KALKI"
-        android:usesCleartextTraffic="false"
-        android:theme="@style/Theme.Jarvis">
-        <service
-            android:name=".WakeWordService"
-            android:exported="false"
-            android:foregroundServiceType="microphone" />
-        <activity
-            android:name=".MainActivity"
-            android:exported="true"
-            android:screenOrientation="portrait">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="vamshi-vfx.github.io" android:pathPrefix="/jarvis-mobile-edition/" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.SEND" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="image/*" />
-                <data android:mimeType="application/pdf" />
-                <data android:mimeType="*/*" />
-            </intent-filter>
+    <application android:allowBackup="false" android:icon="@drawable/kalki_logo" android:roundIcon="@drawable/kalki_logo" android:label="KALKI" android:usesCleartextTraffic="false" android:theme="@style/Theme.Jarvis">
+        <service android:name=".WakeWordService" android:exported="false" android:foregroundServiceType="microphone" />
+        <activity android:name=".MainActivity" android:exported="true" android:launchMode="singleTop" android:screenOrientation="portrait">
+            <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
+            <intent-filter><action android:name="android.intent.action.VIEW" /><category android:name="android.intent.category.DEFAULT" /><category android:name="android.intent.category.BROWSABLE" /><data android:scheme="https" android:host="vamshi-vfx.github.io" android:pathPrefix="/jarvis-mobile-edition/" /></intent-filter>
+            <intent-filter><action android:name="android.intent.action.SEND" /><category android:name="android.intent.category.DEFAULT" /><data android:mimeType="*/*" /></intent-filter>
+            <intent-filter><action android:name="android.intent.action.SEND_MULTIPLE" /><category android:name="android.intent.category.DEFAULT" /><data android:mimeType="*/*" /></intent-filter>
         </activity>
     </application>
 </manifest>
