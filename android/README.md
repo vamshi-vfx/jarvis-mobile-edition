@@ -22,7 +22,7 @@ After a verified build, install the debug APK with Android Studio or:
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-The app asks for microphone permission only when the page requests audio capture. No wake listener or background action is added. Links such as WhatsApp are handed to the installed external app; normal HTTPS navigation stays in the WebView.
+The app asks for microphone permission only after the user enables the optional Wake word setting. The WebView wake-word mode is foreground-only and one-shot: it must be visibly armed, can be stopped, and performs no action unless an explicit command is recognized. It cannot provide reliable background wake-word behavior; a native foreground service (with its own notification, lifecycle, and permission handling) would be required for that and is intentionally not included. Links such as `whatsapp://send` are handed to the installed external app; normal HTTPS navigation stays in the WebView. Opening WhatsApp never sends a message.
 
 ## Verification status
 
