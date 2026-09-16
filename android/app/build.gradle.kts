@@ -3,7 +3,7 @@ plugins {
 }
 
 val startUrl = providers.gradleProperty("JARVIS_START_URL")
-    .orElse("https://jarvis-mobile-edition-alpha.vercel.app/")
+    .orElse("https://vamshi-vfx.github.io/jarvis-mobile-edition/")
 
 android {
     namespace = "com.growthos.jarvis"
@@ -13,8 +13,8 @@ android {
         applicationId = "com.growthos.jarvis"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 2
+        versionName = "0.2.0"
         buildConfigField("String", "JARVIS_START_URL", "\"${startUrl.get().replace("\\", "\\\\").replace("\"", "\\\"")}\"")
     }
 
