@@ -9,12 +9,15 @@ import android.os.*;
 import android.provider.Settings;
 import android.webkit.*;
 import android.widget.Toast;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import java.util.*;
 
-/** Thin, secure WebView shell. The deployed frontend remains the UI. */
+/** Thin, secure WebView shell with explicit, preview-only Android share handoff. */
 public final class MainActivity extends Activity {
     private static final int AUDIO_REQUEST=41, WAKE_REQUEST=42, FILE_REQUEST=43;
     private WebView webView; private PermissionRequest pendingPermissionRequest; private ValueCallback<Uri[]> fileCallback;
+    private String pendingShareJson;
     private final BroadcastReceiver wakeReceiver=new BroadcastReceiver(){ public void onReceive(Context c,Intent i){
         if(!WakeWordService.ACTION_COMMAND.equals(i.getAction())) return; String command=i.getStringExtra(WakeWordService.EXTRA_COMMAND);
         if(command==null||command.trim().isEmpty()) return; String n=command.trim().toLowerCase(Locale.ROOT);
@@ -26,6 +29,7 @@ public final class MainActivity extends Activity {
         webView.addJavascriptInterface(new NativeBridge(),"JarvisNative"); webView.setWebViewClient(new WebViewClient(){
             @Override public boolean shouldOverrideUrlLoading(WebView v,WebResourceRequest r){return openExternalIfNeeded(r.getUrl());}
             @Override public boolean shouldOverrideUrlLoading(WebView v,String u){return openExternalIfNeeded(Uri.parse(u));}
+            @Override public void onPageFinished(WebView v,String u){super.onPageFinished(v,u);dispatchPendingShare();}
         });
         webView.setWebChromeClient(new WebChromeClient(){
             @Override public void onPermissionRequest(final PermissionRequest r){runOnUiThread(()->{if(hasRecordAudioPermission()&&isTrustedOrigin(r.getOrigin()))r.grant(new String[]{PermissionRequest.RESOURCE_AUDIO_CAPTURE});else if(!hasRecordAudioPermission()){pendingPermissionRequest=r;requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO},AUDIO_REQUEST);}else r.deny();});}
@@ -33,8 +37,20 @@ public final class MainActivity extends Activity {
         });
         String url=BuildConfig.JARVIS_START_URL; if(!url.startsWith("https://")){Toast.makeText(this,"KALKI URL must use HTTPS",Toast.LENGTH_LONG).show();return;} webView.loadUrl(url); handleIntent(getIntent()); }
     @Override protected void onNewIntent(Intent i){super.onNewIntent(i);setIntent(i);handleIntent(i);}
-    private void handleIntent(Intent i){if(i==null)return; String a=i.getAction(); Uri u=i.getData(); if(Intent.ACTION_VIEW.equals(a)&&u!=null)dispatch("jarvis-native-deeplink",u.toString()); else if(Intent.ACTION_SEND.equals(a)&&i.getParcelableExtra(Intent.EXTRA_STREAM)!=null)dispatch("jarvis-native-share",i.getParcelableExtra(Intent.EXTRA_STREAM).toString());}
-    private void dispatch(String event,String value){if(webView==null)return; webView.post(()->webView.evaluateJavascript("window.dispatchEvent(new CustomEvent("+JSONObjectQuote(event)+",{detail:"+JSONObjectQuote(value)+"}));",null));}
+    private void handleIntent(Intent i){
+        if(i==null)return; String a=i.getAction(); Uri u=i.getData();
+        if(Intent.ACTION_VIEW.equals(a)&&u!=null){dispatch("jarvis-native-deeplink",u.toString());return;}
+        if(!Intent.ACTION_SEND.equals(a)&&!Intent.ACTION_SEND_MULTIPLE.equals(a))return;
+        try { JSONObject p=new JSONObject(); p.put("mimeType",i.getType()==null?"application/octet-stream":i.getType());
+            CharSequence title=i.getCharSequenceExtra(Intent.EXTRA_TITLE), text=i.getCharSequenceExtra(Intent.EXTRA_TEXT);
+            if(title!=null)p.put("title",title.toString()); if(text!=null)p.put("text",text.toString()); JSONArray fs=new JSONArray(); ClipData clip=i.getClipData();
+            if(clip!=null)for(int n=0;n<clip.getItemCount();n++)addShareUri(fs,clip.getItemAt(n).getUri(),i.getType()); else {Uri stream=i.getParcelableExtra(Intent.EXTRA_STREAM);if(stream!=null)addShareUri(fs,stream,i.getType());}
+            p.put("files",fs);p.put("previewOnly",true);pendingShareJson=p.toString();dispatchPendingShare();
+        } catch(Exception ignored){Toast.makeText(this,"Unable to preview shared content",Toast.LENGTH_SHORT).show();}
+    }
+    private void addShareUri(JSONArray fs,Uri u,String type)throws Exception{if(u==null)return;JSONObject f=new JSONObject();f.put("uri",u.toString());f.put("name",u.getLastPathSegment()==null?"Shared item":u.getLastPathSegment());f.put("mimeType",type==null?"application/octet-stream":type);fs.put(f);}
+    private void dispatchPendingShare(){if(webView==null||pendingShareJson==null)return;String q=JSONObject.quote(pendingShareJson);webView.post(()->webView.evaluateJavascript("window.dispatchEvent(new CustomEvent('kalki-share',{detail:JSON.parse("+q+")}));",null));}
+    private void dispatch(String event,String value){if(webView==null)return;webView.post(()->webView.evaluateJavascript("window.dispatchEvent(new CustomEvent("+JSONObject.quote(event)+",{detail:"+JSONObject.quote(value)+"}));",null));}
     private String JSONObjectQuote(String s){return org.json.JSONObject.quote(s);}
     @Override protected void onStart(){super.onStart();IntentFilter f=new IntentFilter(WakeWordService.ACTION_COMMAND);if(Build.VERSION.SDK_INT>=33)registerReceiver(wakeReceiver,f,RECEIVER_NOT_EXPORTED);else registerReceiver(wakeReceiver,f);}
     @Override protected void onStop(){try{unregisterReceiver(wakeReceiver);}catch(Exception ignored){}super.onStop();}
@@ -53,7 +69,7 @@ public final class MainActivity extends Activity {
         @JavascriptInterface public void openNotificationSettings(){startActivity(new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE,getPackageName()));}
         @JavascriptInterface public void openBatterySettings(){startActivity(new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,Uri.parse("package:"+getPackageName())));}
         @JavascriptInterface public void openAppSettings(){startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:"+getPackageName())));}
-        @JavascriptInterface public String nativeVersion(){return "kalki-android-0.5.0";}
+        @JavascriptInterface public String nativeVersion(){return "kalki-android-0.6.0-share-preview";}
     }
     @Override protected void onActivityResult(int req,int result,Intent data){super.onActivityResult(req,result,data);if(req==FILE_REQUEST&&fileCallback!=null){Uri[] r=WebChromeClient.FileChooserParams.parseResult(result,data);fileCallback.onReceiveValue(r);fileCallback=null;}}
     @Override public void onRequestPermissionsResult(int c,String[] p,int[] r){super.onRequestPermissionsResult(c,p,r);if(c==AUDIO_REQUEST&&pendingPermissionRequest!=null){if(hasRecordAudioPermission()&&isTrustedOrigin(pendingPermissionRequest.getOrigin()))pendingPermissionRequest.grant(new String[]{PermissionRequest.RESOURCE_AUDIO_CAPTURE});else pendingPermissionRequest.deny();pendingPermissionRequest=null;}else if(c==WAKE_REQUEST&&hasRecordAudioPermission()&&hasNotificationPermission())startWakeService();else if(c==WAKE_REQUEST&&webView!=null)webView.evaluateJavascript("document.getElementById('wake-word-toggle')?.click();document.getElementById('wake-word-toggle')&&(document.getElementById('wake-word-toggle').checked=false);",null);}
