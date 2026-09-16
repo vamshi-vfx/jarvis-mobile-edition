@@ -35,6 +35,6 @@
     catch (error) { setMessage(dashboardMessage, error.message); } finally { button.disabled = false; }
   });
   document.getElementById('manage-users').addEventListener('click', () => setMessage(dashboardMessage, 'User management is reserved for a protected backend implementation. No user data was changed.'));
-  document.getElementById('open-assistant').addEventListener('click', () => window.open(new URL('./index.html', window.location.href).href, 'jarvis-assistant', 'popup,width=430,height=850'));
-  document.getElementById('logout-btn').addEventListener('click', () => { token = ''; dashboard.hidden = true; authPanel.hidden = false; setMessage(authMessage, 'Signed out.'); });
+  document.getElementById('open-assistant').addEventListener('click', () => window.open(new URL('./index.html', window.location.href).href, 'kalki-assistant', 'popup,width=430,height=850'));
+  document.getElementById('logout-btn').addEventListener('click', () => { window.JarvisNative?.disableWakeWord(); token = ''; dashboard.hidden = true; authPanel.hidden = false; setMessage(authMessage, 'Signed out.'); });
 })();
