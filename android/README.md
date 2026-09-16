@@ -1,29 +1,20 @@
-# J.A.R.V.I.S. Android shell
+# KALKI Android shell
 
-This is a deliberately thin Android WebView wrapper around the existing deployed `frontend/`. It does not copy, replace, or bundle `frontend/script.js`, and it does not move backend credentials into the APK.
+Thin, secure Android WebView wrapper around the deployed `frontend/`. Package ID remains `com.growthos.jarvis`; no backend credentials or secrets are embedded. The build-time URL must be HTTPS and defaults to the GitHub Pages frontend.
 
-## Build
+## Phase 7 hardening
+- KALKI logo is used as launcher/round icon; dark native theme and foreground wake notification are included.
+- WebView disables file URL access, universal file access, cleartext traffic, mixed content and media autoplay. Only HTTPS pages stay in the WebView; custom schemes hand off to Android.
+- Frontend file/image/PDF inputs use Android's system document picker (`onShowFileChooser`). Android share intents for image/PDF/other files and scoped HTTPS deep links are handed to the frontend as `jarvis-native-share` / `jarvis-native-deeplink` events; the app does not read or upload files by itself.
+- `JarvisNative.permissionStatus()` reports microphone, camera and Android 13+ notification permission state. `openNotificationSettings()`, `openBatterySettings()` and `openAppSettings()` provide user-invoked settings handoffs.
+- Wake word stays OFF by default, is never started at boot, and remains an explicit user action. The foreground notification includes Stop listening. SpeechRecognizer is not a production hotword engine.
+- `nativeVersion()` is a non-network update-notification scaffold for the frontend; update checks and any installation remain user-controlled. No app-lock/PIN is enabled: a secure lock needs a verified keystore/biometric design and physical testing.
 
-Open `android/` in Android Studio (Giraffe+ / Android Gradle Plugin 8.6.1), allow Gradle sync, then run the `app` configuration on an Android 8+ device. The OnePlus Nord CE3 5G (Android 15) is supported by the min/target SDK settings.
-
-The default start URL is `https://jarvis-mobile-edition-alpha.vercel.app/`. For another HTTPS frontend deployment, set it at build time:
-
+## Build and test
 ```bash
-./gradlew :app:assembleDebug -PJARVIS_START_URL=https://your-frontend.example/
+gradle --no-daemon assembleDebug
+# optional URL override (must be HTTPS)
+gradle --no-daemon :app:assembleDebug -PJARVIS_START_URL=https://your-frontend.example/
 ```
 
-`JARVIS_START_URL` is a build-time value, not a secret. Keep the backend token, Gemini key, OAuth secrets, and bridge token server-side; the wrapper never embeds them. The existing frontend currently owns its backend endpoint configuration.
-
-## Install
-
-After a verified build, install the debug APK with Android Studio or:
-
-```bash
-adb install -r app/build/outputs/apk/debug/app-debug.apk
-```
-
-The app asks for microphone permission only after the user enables the optional Wake word setting. The WebView wake-word mode is foreground-only and one-shot: it must be visibly armed, can be stopped, and performs no action unless an explicit command is recognized. It cannot provide reliable background wake-word behavior; a native foreground service (with its own notification, lifecycle, and permission handling) would be required for that and is intentionally not included. Links such as `whatsapp://send` are handed to the installed external app; normal HTTPS navigation stays in the WebView. Opening WhatsApp never sends a message.
-
-## Verification status
-
-This repository intentionally does not include a Gradle wrapper or a prebuilt APK yet. A machine with Android SDK/Gradle or Android Studio must perform the first build. Before distribution, verify Gradle dependency resolution, install on the OnePlus, microphone permission, backend health/command flow, and a signed release build. Release signing credentials must be supplied outside Git and are not part of this commit.
+Install only after review with `adb install -r app/build/outputs/apk/debug/app-debug.apk`. On the OnePlus, test cold start/deep links, file picker and image/PDF share, camera/mic permission states, notification Stop action, explicit wake command delivery, denied permissions, battery settings, rotation/background-resume, and WebView error/retry behavior. Physical device testing and release signing are still required before production.
