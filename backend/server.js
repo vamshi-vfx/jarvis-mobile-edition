@@ -2,6 +2,7 @@ const http = require('node:http');
 const { URL } = require('node:url');
 const SKILLS = require('./skills');
 const GOOGLE = require('./google-oauth');
+const { buildDailyYouTubeAnalytics } = require('./youtube-analytics');
 
 const PORT = Number(process.env.PORT || 8787);
 const API_TOKEN = process.env.JARVIS_API_TOKEN || '';
@@ -16,7 +17,7 @@ function json(res, status, body) {
 function authorized(req) { return Boolean(API_TOKEN) && req.headers.authorization === `Bearer ${API_TOKEN}`; }
 function readBody(req) { return new Promise((resolve,reject)=>{ let data=''; req.on('data',c=>{data+=c;if(data.length>262144) req.destroy();}); req.on('end',()=>{try{resolve(data?JSON.parse(data):{});}catch{reject(new Error('Invalid JSON'));}}); req.on('error',reject); }); }
 function detectSkill(text='') {
-  const patterns = {whatsapp:/whatsapp|message|reply|chat/i,search:/google|search|web|news|weather/i,youtubeAnalytics:/youtube\s*(analytics|report|stats)|channel\s*(analytics|report|stats)|daily\s*(youtube|channel)\s*(analytics|report|stats)/i,youtube:/youtube|video/i,email:/email|mail|gmail|outlook/i,calendar:/calendar|schedule|meeting|event/i,tasks:/task|reminder|todo/i,contacts:/contact|phone number|address book/i,drive:/drive|file|folder|upload|download/i,documents:/pdf|word|docx|excel|xlsx|spreadsheet|powerpoint|pptx/i,travel:/flight|hotel|travel|trip/i,places:/restaurant|place|shop|near me|directions/i,prices:/price|cost|cheap|compare|buy/i,media:/image|photo|picture|video edit/i,automation:/automate|automation|workflow|multi[- ]step/i,memory:/remember|memory|save this/i};
+  const patterns = {whatsapp:/whatsapp|message|reply|chat/i,search:/google|search|web|news|weather/i,youtube:/youtube|video/i,email:/email|mail|gmail|outlook/i,calendar:/calendar|schedule|meeting|event/i,tasks:/task|reminder|todo/i,contacts:/contact|phone number|address book/i,drive:/drive|file|folder|upload|download/i,documents:/pdf|word|docx|excel|xlsx|spreadsheet|powerpoint|pptx/i,travel:/flight|hotel|travel|trip/i,places:/restaurant|place|shop|near me|directions/i,prices:/price|cost|cheap|compare|buy/i,media:/image|photo|picture|video edit/i,automation:/automate|automation|workflow|multi[- ]step/i,memory:/remember|memory|save this/i};
   return Object.keys(patterns).find(key=>patterns[key].test(text)) || null;
 }
 function isExplicitAction(text='') { return /\b(open|launch|start|send|reply|message|tell|search|find|create|add|schedule|show|read|save|remember)\b|chey|pampu|cheppu|choodu|vetuku|teruvu/i.test(text); }
@@ -29,6 +30,9 @@ async function routeCommand(body) {
   const text=String(body.text||'').trim(); if(!text) throw new Error('Command text is required');
   const skill=detectSkill(text);
   if(!skill || !isExplicitAction(text)) return {executed:false,explicitOnly:true,reason:'Ask with an explicit action (for example: search, create, send, or show).'};
+  if(skill==='youtubeAnalytics') {
+    return { executed: true, skill, action: 'report', report: await buildDailyYouTubeAnalytics(), message: 'Public YouTube analytics report prepared. Nothing was sent.' };
+  }
   if(skill==='whatsapp') {
     if(/\b(open|launch|start)\b.*whatsapp|whatsapp.*\b(open|launch|start)\b/i.test(text)) return {executed:true,skill,action:'open',url:'https://wa.me/',message:'Opening WhatsApp. No message was sent.'};
     return {executed:false,skill,action:'send_or_reply',requires:['recipient','message'],providerConnected:Boolean(WPP_BRIDGE_URL&&WPP_BRIDGE_TOKEN),message:'WhatsApp command received, but no message was sent without a connected bridge and complete recipient/message.'};
@@ -63,6 +67,7 @@ const server=http.createServer(async(req,res)=>{
       return json(res,200,{ok:true,providers,note:'Connected status only; no access tokens are returned.'});
     }
     if(req.method==='POST'&&url.pathname==='/api/command') return json(res,200,{ok:true,result:await routeCommand(await readBody(req))});
+    if(req.method==='POST'&&url.pathname==='/api/youtube/analytics') return json(res,200,await buildDailyYouTubeAnalytics());
     if(req.method==='POST'&&url.pathname==='/api/whatsapp/send') {
       if(!authorized(req)) return json(res,401,{ok:false,message:'Provider execution requires the server token.'});
       const body=await readBody(req); if(!body.recipient||!body.message) return json(res,400,{ok:false,message:'recipient and message are required'});
