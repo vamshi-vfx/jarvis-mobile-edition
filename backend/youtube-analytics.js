@@ -18,7 +18,7 @@ function xmlValue(block, tag) {
   return match ? match[1].replace(/<!\\[CDATA\\[([\\s\\S]*?)\\]\\]>/g, '$1').trim() : null;
 }
 function parseFeed(xml, since) {
-  return [...xml.matchAll(/<entry>([\\s\\S]*?)<\\/entry>/gi)].map(match => {
+  return [...xml.matchAll(/<entry>([\\s\\S]*?)<\/entry>/gi)].map(match => {
     const block = match[1];
     const published = xmlValue(block, 'published') || xmlValue(block, 'updated');
     const videoId = xmlValue(block, 'yt:videoId') || xmlValue(block, 'videoId');
