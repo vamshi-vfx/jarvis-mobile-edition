@@ -101,7 +101,7 @@ document.addEventListener("DOMContentLoaded", () => {
         let lastError = "AI connection failed.";
         for (const modelName of MODEL_NAMES) {
             try {
-                const response = await fetch(apiBase + modelName + ":generateContent?key=" + apiKey, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ systemInstruction: { parts: [{ text: `You are KALKI, a helpful personal mobile assistant. Reply in ${getPrefs().language === "telugu" ? "Telugu" : getPrefs().language === "teluglish" ? "Teluglish (Telugu written in Latin script)" : getPrefs().language === "english" ? "English" : "the same language as the user"}. Keep replies ${getPrefs().style === "detailed" ? "detailed and structured" : "short and direct"}. ${getPrefs().name ? `Address the user as ${getPrefs().name}.` : ""} Never perform or imply an external action unless the user explicitly asks.` }] }, contents }) });
+                const response = await fetch(apiBase + modelName + ":generateContent?key=" + apiKey, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ systemInstruction: { parts: [{ text: `You are KALKI, a helpful personal mobile assistant. Reply in ${getPrefs().language === "telugu" ? "Telugu" : getPrefs().language === "teluglish" ? "Teluglish (Telugu written in Latin script)" : getPrefs().language === "english" ? "English" : "the same language as the user"}. Keep replies ${getPrefs().style === "detailed" ? "detailed and structured" : "short and direct"}. ${getPrefs().name ? `Address the user as ${getPrefs().name}.` : ""} Never perform or imply an external action unless the user explicitly asks. ${getActiveContextPrompt()}` }] }, contents }) });
                 const data = await response.json();
                 if (response.ok) {
                     const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -255,4 +255,24 @@ document.addEventListener("DOMContentLoaded", () => {
     if (sendButton && messageInput) sendButton.addEventListener("click", () => { messageInput.value = applyAlias(messageInput.value.trim()); }, true);
     renderSettings();
     console.log("JARVIS AI fallback system loaded successfully.");
+    // Phase 11: context packs are deliberately browser-local until encrypted durable storage exists.
+    const CONTEXT_KEY = "kalki_context_packs_v1";
+    const contextDefinitions = [
+        { id: "work", icon: "▦", name: "Work", hint: "Projects & priorities" },
+        { id: "creator", icon: "✦", name: "YouTube / Creator", hint: "Content & audience" },
+        { id: "finance", icon: "◈", name: "Finance", hint: "Plans & constraints" },
+        { id: "travel", icon: "✈", name: "Travel", hint: "Trips & logistics" },
+        { id: "personal", icon: "♡", name: "Personal", hint: "Life & routines" }
+    ];
+    let selectedContext = "work";
+    const getContextPacks = () => readJson(CONTEXT_KEY, {});
+    const getActiveContextPrompt = () => { const pack = getContextPacks()[selectedContext]; return pack?.notes ? `Use the selected ${contextDefinitions.find(x=>x.id===selectedContext)?.name || "personal"} context only as user-provided background: ${pack.notes}. Do not treat it as a secret or authorization.` : "No personal context pack is active."; };
+    const contextList = document.getElementById("context-pack-list"), contextNotes = document.getElementById("context-notes"), contextTarget = document.getElementById("context-target"), contextStatus = document.getElementById("context-status");
+    const renderContextPacks = () => { if (!contextList) return; const packs=getContextPacks(); contextList.innerHTML=contextDefinitions.map(c=>`<button class="context-pack ${selectedContext===c.id?"is-selected":""}" type="button" data-context="${c.id}" role="option" aria-selected="${selectedContext===c.id}"><span class="context-pack-icon">${c.icon}</span><strong>${c.name}</strong><small>${packs[c.id]?.notes ? "Added locally" : c.hint}</small></button>`).join(""); const active=packs[selectedContext]; if(contextNotes) contextNotes.value=active?.notes||""; if(contextStatus) contextStatus.textContent=`${contextDefinitions.find(x=>x.id===selectedContext)?.name} context · ${active?.notes ? "active for this surface" : "empty"}. Saved on this device only.`; };
+    const selectContext = (id) => { if(!contextDefinitions.some(c=>c.id===id)) return; selectedContext=id; renderContextPacks(); };
+    contextList?.addEventListener("click", event => { const card=event.target.closest("[data-context]"); if(card) selectContext(card.dataset.context); });
+    document.getElementById("context-save")?.addEventListener("click", () => { const notes=(contextNotes?.value||"").trim(); const packs=getContextPacks(); if(notes) packs[selectedContext]={notes,updatedAt:new Date().toISOString()}; else delete packs[selectedContext]; localStorage.setItem(CONTEXT_KEY,JSON.stringify(packs)); renderContextPacks(); });
+    document.getElementById("context-clear")?.addEventListener("click", () => { const packs=getContextPacks(); delete packs[selectedContext]; localStorage.setItem(CONTEXT_KEY,JSON.stringify(packs)); renderContextPacks(); });
+    contextTarget?.addEventListener("change", () => { const target=contextTarget.value; if(contextStatus) contextStatus.textContent=`${contextDefinitions.find(x=>x.id===selectedContext)?.name} context selected for ${target === "chat" ? "this chat" : target === "agent" ? "the selected agent" : "the selected automation"}. Saved on this device only.`; });
+    renderContextPacks();
 });
