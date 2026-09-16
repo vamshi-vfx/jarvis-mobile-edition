@@ -57,7 +57,18 @@ const server=http.createServer(async(req,res)=>{
   if(req.method==='OPTIONS') return json(res,204,{});
   const url=new URL(req.url,`http://${req.headers.host}`);
   if(req.method==='GET'&&url.pathname==='/api/health') return json(res,200,{ok:true,service:'jarvis-backend',explicitActionsOnly:true,backgroundReplies:false,whatsappBridge:Boolean(WPP_BRIDGE_URL&&WPP_BRIDGE_TOKEN),googleOAuth:true,skills:Object.keys(SKILLS)});
-  if(req.method==='GET'&&url.pathname==='/api/connectors/status') return json(res,200,{ok:true,providers:{whatsapp:Boolean(WPP_BRIDGE_URL&&WPP_BRIDGE_TOKEN),gmail:false,calendar:false,drive:false,youtube:Boolean(process.env.YOUTUBE_API_KEY||process.env.GOOGLE_YOUTUBE_API_KEY),webSearch:Boolean(process.env.SEARCH_API_KEY||process.env.TAVILY_API_KEY),outlook:Boolean(process.env.OUTLOOK_CLIENT_ID&&process.env.OUTLOOK_CLIENT_SECRET),slack:Boolean(process.env.SLACK_CLIENT_ID&&process.env.SLACK_CLIENT_SECRET),telegram:Boolean(process.env.TELEGRAM_BOT_TOKEN),notion:Boolean(process.env.NOTION_CLIENT_ID&&process.env.NOTION_CLIENT_SECRET)},note:'Safe booleans only; secrets and tokens are never returned.'});
+  if(req.method==='GET'&&url.pathname==='/api/connectors/status') {
+    const providers={};
+    for(const name of Object.keys(GOOGLE.PROVIDERS)) providers[name]=await GOOGLE.verify(name);
+    const configured={whatsapp:Boolean(WPP_BRIDGE_URL&&WPP_BRIDGE_TOKEN),youtube:Boolean(process.env.YOUTUBE_API_KEY||process.env.GOOGLE_YOUTUBE_API_KEY),webSearch:Boolean(process.env.SEARCH_API_KEY||process.env.TAVILY_API_KEY),outlook:Boolean(process.env.OUTLOOK_CLIENT_ID&&process.env.OUTLOOK_CLIENT_SECRET),slack:Boolean(process.env.SLACK_CLIENT_ID&&process.env.SLACK_CLIENT_SECRET),telegram:Boolean(process.env.TELEGRAM_BOT_TOKEN),notion:Boolean(process.env.NOTION_CLIENT_ID&&process.env.NOTION_CLIENT_SECRET)};
+    for(const [name,isConfigured] of Object.entries(configured)) providers[name]=isConfigured?{status:'pending',lastVerifiedAt:null}:{status:'not_connected',lastVerifiedAt:null};
+    return json(res,200,{ok:true,providers,note:'Connected means a safe read-only verification succeeded. Pending means configuration exists but user authorization or provider verification is still required. Secrets and tokens are never returned.'});
+  }
+  if(req.method==='GET'&&url.pathname.startsWith('/api/connectors/')&&url.pathname.endsWith('/verify')) {
+    const name=url.pathname.split('/')[3];
+    if(GOOGLE.provider(name)) return json(res,200,{ok:true,provider:name,verification:await GOOGLE.verify(name)});
+    return json(res,200,{ok:true,provider:name,verification:{status:'pending',lastVerifiedAt:null},message:'This provider requires its own OAuth or private bridge verification; no external action was performed.'});
+  }
   // OAuth start/callback are public by design; signed, short-lived, single-use state
   // prevents token leakage. Tokens are never returned to the client.
   if(req.method==='GET'&&url.pathname==='/api/google/oauth/start') {
