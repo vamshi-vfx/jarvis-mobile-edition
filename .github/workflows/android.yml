@@ -30,36 +30,36 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+
       - name: Set up Java 17
         uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
-          cache: gradle
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          packages: |-
-            platform-tools
-            platforms;android-35
-            build-tools;35.0.0
+
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.10.2"
+
+      - name: Use preinstalled Android SDK
+        shell: bash
+        run: |
+          set -euxo pipefail
+          export ANDROID_SDK_ROOT="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          SDKMANAGER="${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMANAGER" ]; then SDKMANAGER="$(command -v sdkmanager)"; fi
+          yes | "$SDKMANAGER" --sdk_root="$ANDROID_SDK_ROOT" --licenses >/dev/null || true
+          "$SDKMANAGER" --sdk_root="$ANDROID_SDK_ROOT" "platforms;android-35" "build-tools;35.0.0"
+
       - name: Build debug APK
         env:
-          START_URL: ${{ inputs.JARVIS_START_URL }}
-        run: |
-          if [ -n "$START_URL" ]; then
-            gradle --no-daemon --stacktrace :app:assembleDebug "-PJARVIS_START_URL=$START_URL"
-          else
-            gradle --no-daemon --stacktrace :app:assembleDebug
-          fi
-      - name: Upload debug APK
+          JARVIS_START_URL: ${{ inputs.JARVIS_START_URL || 'https://jarvis-mobile-edition-alpha.vercel.app/' }}
+        run: gradle --no-daemon assembleDebug -PJARVIS_START_URL="$JARVIS_START_URL"
+
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: jarvis-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
-          retention-days: 14
