@@ -29,12 +29,12 @@ document.addEventListener("DOMContentLoaded", () => {
             const response = await fetch(BACKEND_HEALTH_URL, { cache: "no-store" });
             const data = await response.json();
             if (data?.ok && data?.whatsappBridge) {
-                showMessage("J.A.R.V.I.S", "Secure backend and WhatsApp bridge online. Explicit commands only.", "ai");
+                showMessage("KALKI", "Secure backend and WhatsApp bridge online. Explicit commands only.", "ai");
             } else if (data?.ok) {
-                showMessage("J.A.R.V.I.S", "Backend online. WhatsApp bridge is not connected.", "ai");
+                showMessage("KALKI", "Backend online. WhatsApp bridge is not connected.", "ai");
             }
         } catch (error) {
-            showMessage("SYSTEM", "Backend connection unavailable. Local AI mode active.", "ai");
+            showMessage("KALKI SYSTEM", "Backend connection unavailable. Local AI mode active.", "ai");
         }
     }
 
@@ -64,7 +64,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     function loadSavedChat() {
         const memory = readMemory();
-        if (memory.length === 0) { showMessage("J.A.R.V.I.S", "System online. AI brain ready.", "ai"); return; }
+        if (memory.length === 0) { showMessage("KALKI", "KALKI SYSTEM online. AI brain ready.", "ai"); return; }
         memory.forEach((item) => showMessage(item.sender, item.text, item.type, false));
     }
     function getApiKey() {
@@ -83,7 +83,7 @@ document.addEventListener("DOMContentLoaded", () => {
         let lastError = "AI connection failed.";
         for (const modelName of MODEL_NAMES) {
             try {
-                const response = await fetch(apiBase + modelName + ":generateContent?key=" + apiKey, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ systemInstruction: { parts: [{ text: "You are J.A.R.V.I.S, a helpful personal mobile assistant. Keep replies clear and concise." }] }, contents }) });
+                const response = await fetch(apiBase + modelName + ":generateContent?key=" + apiKey, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ KALKI SYSTEMInstruction: { parts: [{ text: "You are KALKI, a helpful personal mobile assistant. Keep replies clear and concise." }] }, contents }) });
                 const data = await response.json();
                 if (response.ok) {
                     const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -126,7 +126,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function isExplicitAction(text) { return /\b(open|launch|start|send|reply|message|tell|search|find|create|add|schedule|show|read)\b/i.test(text) || /చెప్పు|పంపు|చూడు|వెతుకు|తెరువు/i.test(text); }
     function openWhatsApp() {
         // Safe handoff only: opening WhatsApp never sends a message.
-        showMessage("J.A.R.V.I.S", "WhatsApp opening...", "ai");
+        showMessage("KALKI", "WhatsApp opening...", "ai");
         window.location.assign("whatsapp://send");
     }
     function handleLocalCommand(text) {
@@ -143,22 +143,22 @@ document.addEventListener("DOMContentLoaded", () => {
             if (requestedSkill === "whatsapp" && handleLocalCommand(userText)) return;
             try {
                 const result = await sendBackendCommand(userText);
-                showMessage("J.A.R.V.I.S", result.message || `${SKILL_REGISTRY[requestedSkill].name} command received.`, "ai");
+                showMessage("KALKI", result.message || `${SKILL_REGISTRY[requestedSkill].name} command received.`, "ai");
             } catch (error) {
                 console.error("JARVIS backend bridge error:", error);
-                showMessage("SYSTEM", "Backend command bridge unavailable. Nothing was executed.", "ai");
+                showMessage("KALKI SYSTEM", "Backend command bridge unavailable. Nothing was executed.", "ai");
             }
             return;
         }
         if (handleLocalCommand(userText)) return;
         messageInput.disabled = true; sendButton.disabled = true; sendButton.textContent = "...";
-        try { const reply = await askGemini(); showMessage("J.A.R.V.I.S", reply, "ai"); speak(reply); }
-        catch (error) { console.error("JARVIS AI Error:", error); showMessage("SYSTEM", error.message, "ai"); }
+        try { const reply = await askGemini(); showMessage("KALKI", reply, "ai"); speak(reply); }
+        catch (error) { console.error("JARVIS AI Error:", error); showMessage("KALKI SYSTEM", error.message, "ai"); }
         finally { messageInput.disabled = false; sendButton.disabled = false; sendButton.textContent = "SEND"; messageInput.focus(); }
     }
     function clearChat() {
         localStorage.removeItem(MEMORY_KEY); if (chatBox) chatBox.innerHTML = ""; if (messageInput) messageInput.value = "";
-        showMessage("J.A.R.V.I.S", "Memory cleared. System ready.", "ai");
+        showMessage("KALKI", "Memory cleared. KALKI SYSTEM ready.", "ai");
     }
     function setupVoice() {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -166,11 +166,11 @@ document.addEventListener("DOMContentLoaded", () => {
         recognition = new SpeechRecognition(); recognition.lang = "en-IN"; recognition.continuous = false; recognition.interimResults = false;
         recognition.onstart = () => { isListening = true; if (micButton) micButton.textContent = "STOP"; };
         recognition.onresult = (event) => { if (messageInput) { messageInput.value = event.results[0][0].transcript; messageInput.focus(); } };
-        recognition.onerror = () => showMessage("SYSTEM", "Voice input work avvaledu. Mic permission check cheyyandi.", "ai");
+        recognition.onerror = () => showMessage("KALKI SYSTEM", "Voice input work avvaledu. Mic permission check cheyyandi.", "ai");
         recognition.onend = () => { isListening = false; if (micButton) micButton.textContent = "🎙️"; };
     }
     function toggleVoice() {
-        if (!recognition) { showMessage("SYSTEM", "Mee browser voice input support cheyyadam ledu.", "ai"); return; }
+        if (!recognition) { showMessage("KALKI SYSTEM", "Mee browser voice input support cheyyadam ledu.", "ai"); return; }
         if (isListening) recognition.stop(); else recognition.start();
     }
     if (sendButton) sendButton.addEventListener("click", sendMessage);
@@ -217,5 +217,5 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     if (sendButton && messageInput) sendButton.addEventListener("click", () => { messageInput.value = normalizeMixedCommand(messageInput.value); }, true);
     if (messageInput) messageInput.addEventListener("keydown", (event) => { if (event.key === "Enter") messageInput.value = normalizeMixedCommand(messageInput.value); }, true);
-    console.log("JARVIS AI fallback system loaded successfully.");
+    console.log("JARVIS AI fallback KALKI SYSTEM loaded successfully.");
 });
