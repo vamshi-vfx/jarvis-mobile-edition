@@ -254,6 +254,50 @@ document.addEventListener("DOMContentLoaded", () => {
     const applyAlias = (value) => { const found=readJson(ALIASES_KEY,DEFAULT_ALIASES).find(a=>value.toLowerCase()===String(a.phrase).toLowerCase()); return found ? found.command : value; };
     if (sendButton && messageInput) sendButton.addEventListener("click", () => { messageInput.value = applyAlias(messageInput.value.trim()); }, true);
     renderSettings();
+    // Read-only self-health checks. No token values, repairs, prompts, or external actions.
+    const diagnosticsGrid = document.getElementById("diagnostics-grid");
+    const diagnosticsSummary = document.getElementById("diagnostics-summary");
+    const diagnosticsRefresh = document.getElementById("diagnostics-refresh");
+    const diagnosticsLastChecked = document.getElementById("diagnostics-last-checked");
+    const diagnosticsCards = (items) => items.map((item) => `<article class="diagnostic-card"><h3>${item.label}</h3><span class="diagnostic-status ${item.kind}">${item.status}</span><p>${item.detail}</p></article>`).join("");
+    const diagnosticFetch = async (url, timeout = 5000) => { const controller = new AbortController(); const timer = setTimeout(() => controller.abort(), timeout); try { const response = await fetch(url, { cache: "no-store", signal: controller.signal }); const data = await response.json().catch(() => null); return { response, data }; } finally { clearTimeout(timer); } };
+    async function getPermissionState() {
+        const result = { microphone: "unknown", notifications: "unknown" };
+        if (nativeWake && typeof window.JarvisNative.permissionStatus === "function") { try { const p = JSON.parse(window.JarvisNative.permissionStatus()); result.microphone = p.microphone ? "granted" : "not granted"; result.notifications = p.notifications ? "granted" : "not granted"; } catch (_) {} }
+        else if (navigator.permissions?.query) { try { result.microphone = (await navigator.permissions.query({ name: "microphone" })).state; } catch (_) {} }
+        return result;
+    }
+    async function runDiagnostics() {
+        if (!diagnosticsGrid) return;
+        diagnosticsRefresh.disabled = true; diagnosticsRefresh.textContent = "Checking…"; diagnosticsSummary.className = "diagnostics-summary"; diagnosticsSummary.textContent = "Running read-only checks…";
+        const online = navigator.onLine;
+        const permission = await getPermissionState();
+        const browserKind = /WebView|wv\)/i.test(navigator.userAgent) || nativeWake;
+        let backend = { kind: "warn", status: "unavailable", detail: "The verified health endpoint could not be reached." };
+        try { const result = await diagnosticFetch(BACKEND_HEALTH_URL); if (result.response.ok && result.data?.ok) backend = { kind: "good", status: "healthy", detail: `Verified ${result.data.service || "backend"} health response; explicit-actions-only=${result.data.explicitActionsOnly === true ? "on" : "not confirmed"}.` }; else backend.detail = "Health endpoint responded without a verifiable healthy status."; } catch (_) { backend.detail = "No health response was received. Check network access or deployment availability."; }
+        let connectors = { kind: "warn", status: "unavailable", detail: "Connector status endpoint could not be verified." };
+        try { const result = await diagnosticFetch(BACKEND_HEALTH_URL.replace("/api/health", "/api/connectors/status")); if (result.response.ok && result.data?.ok) { const providers = Object.values(result.data.providers || {}); const connected = providers.filter((p) => p?.status === "connected").length; connectors = { kind: "good", status: "verified", detail: `${connected} connector(s) reported connected; statuses are server-reported and no credentials are shown.` }; } } catch (_) {}
+        const aiConfigured = Boolean(localStorage.getItem(API_KEY_STORAGE));
+        const items = [
+            { label: "Local device", kind: online ? "good" : "warn", status: online ? "online" : "offline", detail: online ? "Browser reports network connectivity." : "Browser reports offline; remote checks may be unavailable." },
+            { label: "Backend", ...backend }, { label: "Connectors", ...connectors },
+            { label: "AI access", kind: aiConfigured ? "good" : "warn", status: aiConfigured ? "available locally" : "unknown", detail: aiConfigured ? "A local AI key marker exists; provider access was not called by diagnostics." : "No local AI key is configured. This does not test or expose any key." },
+            { label: "Wake service & permissions", kind: permission.microphone === "granted" ? "good" : "warn", status: permission.microphone === "granted" ? "microphone granted" : permission.microphone, detail: `${nativeWake ? "Native Android bridge detected." : "Browser voice mode detected."} Notifications: ${permission.notifications}. Wake word remains foreground-only.` },
+            { label: "WebView", kind: browserKind ? "good" : "warn", status: browserKind ? "detected" : "browser", detail: browserKind ? "KALKI native bridge/WebView marker is present." : "Native WebView marker is not available in this browser." },
+            { label: "Build", kind: "warn", status: "unavailable", detail: "Build provenance cannot be verified from the dashboard; use the verified release workflow/artifact." }
+        ];
+        diagnosticsGrid.innerHTML = diagnosticsCards(items);
+        const warnings = items.filter((item) => item.kind !== "good").length;
+        diagnosticsSummary.className = `diagnostics-summary ${warnings ? "warn" : "good"}`;
+        diagnosticsSummary.textContent = warnings ? `${warnings} check(s) need attention or are unavailable. No action was taken.` : "All available read-only checks are healthy. No action was taken.";
+        diagnosticsLastChecked.textContent = `Last checked ${new Date().toLocaleString()}`;
+        diagnosticsRefresh.disabled = false; diagnosticsRefresh.textContent = "↻ Refresh safely";
+        document.getElementById("diagnostics-app-settings")?.toggleAttribute("hidden", !nativeWake);
+        document.getElementById("diagnostics-notification-settings")?.toggleAttribute("hidden", !nativeWake);
+    }
+    diagnosticsRefresh?.addEventListener("click", runDiagnostics);
+    document.getElementById("diagnostics-app-settings")?.addEventListener("click", () => window.JarvisNative?.openAppSettings());
+    document.getElementById("diagnostics-notification-settings")?.addEventListener("click", () => window.JarvisNative?.openNotificationSettings());
     console.log("JARVIS AI fallback system loaded successfully.");
     // Phase 11: context packs are deliberately browser-local until encrypted durable storage exists.
     const CONTEXT_KEY = "kalki_context_packs_v1";
