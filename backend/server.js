@@ -20,7 +20,7 @@ const adminSessions = new Map();
 const featureFlags = { automationPreviewOnly: true, explicitActionOnly: true, backgroundReplies: false };
 const auditLog = [];
 function audit(event, req, details = {}) { auditLog.unshift({ id: crypto.randomUUID(), event, at: new Date().toISOString(), actor: 'admin', ip: req.headers['x-forwarded-for'] || 'unknown', ...details }); if (auditLog.length > 200) auditLog.pop(); }
-function adminAuthorized(req) { if (!authorized(req)) return false; const sid = req.headers['x-jarvis-session']; if (!sid) return true; const session = adminSessions.get(sid); return Boolean(session && session.valid); }
+function adminAuthorized(req) { if (!authorized(req)) return false; const sid = req.headers['x-jarvis-session']; if (!sid) return true; const session = adminSessions.get(sid); if (session && session.expiresAt <= Date.now()) { adminSessions.delete(sid); return false; } return Boolean(session && session.valid); }
 function requireAdmin(req, res) { if (!adminAuthorized(req)) { json(res,401,{ok:false,message:'Admin access requires a valid server token and session.'}); return false; } return true; }
 function createActivationKey() {
   const key = `JARVIS-${crypto.randomBytes(18).toString('base64url').toUpperCase()}`;
@@ -98,7 +98,7 @@ const server=http.createServer(async(req,res)=>{
   try {
     if(req.method==='POST'&&url.pathname==='/api/admin/session') {
       if(!authorized(req)) return json(res,401,{ok:false,message:'Admin access requires the server token.'});
-      const id=crypto.randomBytes(24).toString('base64url'); adminSessions.set(id,{valid:true,createdAt:new Date().toISOString()}); audit('session.created',req); return json(res,201,{ok:true,session:id,expiresInSeconds:3600,storage:'process memory'});
+      const id=crypto.randomBytes(24).toString('base64url'); adminSessions.set(id,{valid:true,createdAt:new Date().toISOString(),expiresAt:Date.now()+3600000}); audit('session.created',req); return json(res,201,{ok:true,session:id,expiresInSeconds:3600,storage:'process memory'});
     }
     if(req.method==='POST'&&url.pathname==='/api/admin/logout') { if(!requireAdmin(req,res)) return; const sid=req.headers['x-jarvis-session']; if(sid) adminSessions.delete(sid); audit('session.revoked',req); return json(res,200,{ok:true}); }
     if(req.method==='POST'&&url.pathname==='/api/admin/logout-all') { if(!requireAdmin(req,res)) return; for(const session of adminSessions.values()) session.valid=false; adminSessions.clear(); audit('sessions.revoked_all',req); return json(res,200,{ok:true,revoked:'all active in-memory sessions'}); }
