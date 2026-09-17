@@ -106,6 +106,15 @@ const server=http.createServer(async(req,res)=>{
   try {
     if(req.method==='GET'&&url.pathname==='/api/billing/status') return json(res,200,{ok:true,billing:BILLING.status()});
     if(req.method==='GET'&&url.pathname==='/api/beta/status') return json(res,200,{ok:true,entitlement:ENTITLEMENTS.entitlement(ENTITLEMENTS.userId(req)),storage:ENTITLEMENTS.storage,note:'Beta access is server-side scaffolding and is not persisted yet.'});
+    // Launch-client aliases. These remain public read/request endpoints backed by the
+    // same process-memory scaffolding; approval is still admin-only below.
+    if((req.method==='GET'||req.method==='POST')&&url.pathname==='/api/beta/access') {
+      const id=ENTITLEMENTS.userId(req);
+      const current=ENTITLEMENTS.entitlement(id);
+      const entitlement=current.betaStatus==='approved' ? current : ENTITLEMENTS.setBetaStatus(id,'pending');
+      return json(res,req.method==='POST'?202:200,{ok:true,requested:req.method==='POST',entitlement,storage:ENTITLEMENTS.storage,note:'Beta access is pending admin approval and is not persisted yet.'});
+    }
+    if(req.method==='GET'&&url.pathname==='/api/entitlements/status') return json(res,200,{ok:true,entitlement:ENTITLEMENTS.entitlement(ENTITLEMENTS.userId(req)),storage:ENTITLEMENTS.storage,note:'Entitlements are process-memory scaffolding; no billing or checkout is enabled.'});
     if(req.method==='GET'&&url.pathname==='/api/entitlements') { if(!requireAdmin(req,res)) return; return json(res,200,{ok:true,entitlement:ENTITLEMENTS.entitlement(ENTITLEMENTS.userId(req)),plans:ENTITLEMENTS.PLANS,storage:ENTITLEMENTS.storage}); }
     if(req.method==='POST'&&url.pathname==='/api/admin/beta-access') { if(!requireAdmin(req,res)) return; const body=await readBody(req); const id=String(body.userId||'').slice(0,160); if(!id) return json(res,400,{ok:false,message:'userId is required'}); const entitlement=ENTITLEMENTS.setBetaStatus(id,String(body.status||'pending')); audit('beta_access.updated',req,{userId:id,status:entitlement.betaStatus}); return json(res,200,{ok:true,entitlement,storage:ENTITLEMENTS.storage}); }
     if(req.method==='GET'&&url.pathname==='/api/admin/usage') { if(!requireAdmin(req,res)) return; return json(res,200,{ok:true,usage:ENTITLEMENTS.usageFor(ENTITLEMENTS.userId(req)),storage:ENTITLEMENTS.storage}); }
