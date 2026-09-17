@@ -40,3 +40,5 @@
 /* Settings drawer usability: keep every option reachable on small screens. */
 .side-sheet{max-height:100dvh;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-bottom:40px}
 .voice-settings,.personality-settings{max-height:none;overflow:visible}
+
+.attachment-menu{position:fixed;left:50%;bottom:78px;transform:translateX(-50%);z-index:9;width:min(420px,calc(100vw - 24px));padding:16px;background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 18px 50px #0009}.attachment-menu-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.attachment-menu-head button{background:transparent;color:var(--muted);border:0;font-size:22px}.attachment-menu p{color:var(--muted);font-size:11px;margin:12px 0 0}.attachment-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.attachment-grid button{display:flex;align-items:center;gap:8px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);color:var(--text);text-align:left}.attachment-grid button span{font-size:12px}.attachment-grid button:hover{border-color:var(--accent);color:var(--accent)}
