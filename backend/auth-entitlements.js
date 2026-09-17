@@ -28,7 +28,7 @@ function listUsers() { return [...users.values()].map(publicUser).sort((a,b) => 
 function updateUser(id, patch) { const user = getUser(id, patch); Object.assign(user, sanitizeUserPatch(patch), { updatedAt: now() }); return publicUser(user); }
 function markLogin(id) { const user = getUser(id); user.lastLoginAt = now(); user.updatedAt = now(); return publicUser(user); }
 function entitlement(id) { const user = getUser(id); const plan = PLANS[user.planId] || PLANS.free; return { userId: id, email: user.email, betaStatus: user.betaStatus, entitlement: user.entitlement, plan: { ...plan }, active: user.betaStatus === 'approved' && plan.active && user.subscriptionState !== 'canceled', source: 'process-memory-scaffolding' }; }
-function setBetaStatus(id, status) { if (!ACCESS_STATES.includes(status)) throw new Error('Invalid access status'); return updateUser(id, { betaStatus: status }); }
+function setBetaStatus(id, status) { if (!ACCESS_STATES.includes(status)) throw new Error('Invalid access status'); updateUser(id, { betaStatus: status }); return entitlement(id); }
 function recordUsage(id, feature, amount = 1) { const key = `${id}:${feature}:${now().slice(0, 7)}`; const row = usage.get(key) || { userId: id, feature, period: now().slice(0, 7), count: 0 }; row.count += Math.max(0, Number(amount) || 0); usage.set(key, row); return row; }
 function usageFor(id) { return [...usage.values()].filter(row => row.userId === id); }
 function canUse(id, feature) { const e = entitlement(id); return { allowed: e.active && e.plan.features.includes(feature), reason: e.active ? 'feature_not_in_plan' : 'beta_access_not_approved', entitlement: e }; }
