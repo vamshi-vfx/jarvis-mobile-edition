@@ -7,6 +7,8 @@ const { buildDailyYouTubeAnalytics } = require('./youtube-analytics');
 const { buildDailyAiLaunchUpdate } = require('./ai-launch-updates');
 const { SKILL_HANDLERS, handleSkill } = require('./zapia-skills');
 const AUTOMATION = require('./automation');
+const ENTITLEMENTS = require('./auth-entitlements');
+const BILLING = require('./billing');
 
 const PORT = Number(process.env.PORT || 8787);
 const API_TOKEN = process.env.JARVIS_API_TOKEN || '';
@@ -102,6 +104,13 @@ const server=http.createServer(async(req,res)=>{
     catch(error) { return json(res,503,{ok:false,message:error.message}); }
   }
   try {
+    if(req.method==='GET'&&url.pathname==='/api/billing/status') return json(res,200,{ok:true,billing:BILLING.status()});
+    if(req.method==='GET'&&url.pathname==='/api/beta/status') return json(res,200,{ok:true,entitlement:ENTITLEMENTS.entitlement(ENTITLEMENTS.userId(req)),storage:ENTITLEMENTS.storage,note:'Beta access is server-side scaffolding and is not persisted yet.'});
+    if(req.method==='GET'&&url.pathname==='/api/entitlements') { if(!requireAdmin(req,res)) return; return json(res,200,{ok:true,entitlement:ENTITLEMENTS.entitlement(ENTITLEMENTS.userId(req)),plans:ENTITLEMENTS.PLANS,storage:ENTITLEMENTS.storage}); }
+    if(req.method==='POST'&&url.pathname==='/api/admin/beta-access') { if(!requireAdmin(req,res)) return; const body=await readBody(req); const id=String(body.userId||'').slice(0,160); if(!id) return json(res,400,{ok:false,message:'userId is required'}); const entitlement=ENTITLEMENTS.setBetaStatus(id,String(body.status||'pending')); audit('beta_access.updated',req,{userId:id,status:entitlement.betaStatus}); return json(res,200,{ok:true,entitlement,storage:ENTITLEMENTS.storage}); }
+    if(req.method==='GET'&&url.pathname==='/api/admin/usage') { if(!requireAdmin(req,res)) return; return json(res,200,{ok:true,usage:ENTITLEMENTS.usageFor(ENTITLEMENTS.userId(req)),storage:ENTITLEMENTS.storage}); }
+    if(req.method==='POST'&&url.pathname==='/api/billing/checkout') { if(!requireAdmin(req,res)) return; const body=await readBody(req); if(!body.provider) return json(res,400,{ok:false,message:'provider is required'}); return json(res,503,{ok:false,...await BILLING.adapter(String(body.provider)).createCheckout(body),billing:BILLING.status()}); }
+    if(req.method==='POST'&&url.pathname.match(/^\/api\/billing\/(razorpay|stripe)\/webhook$/)) { const provider=url.pathname.split('/')[3]; const raw=await readBody(req); const signature=req.headers['x-razorpay-signature']||req.headers['stripe-signature']; return json(res,501,{ok:false,...BILLING.verifyWebhook(provider,JSON.stringify(raw),signature)}); }
     if(req.method==='POST'&&url.pathname==='/api/admin/session') {
       if(!authorized(req)) return json(res,401,{ok:false,message:'Admin access requires the server token.'});
       const id=crypto.randomBytes(24).toString('base64url'); adminSessions.set(id,{valid:true,createdAt:new Date().toISOString(),expiresAt:Date.now()+3600000}); audit('session.created',req); return json(res,201,{ok:true,session:id,expiresInSeconds:3600,storage:'process memory'});
@@ -113,7 +122,7 @@ const server=http.createServer(async(req,res)=>{
       const providers={}; for(const name of Object.keys(GOOGLE.PROVIDERS)) providers[name]=await GOOGLE.verify(name);
       const configured={whatsapp:Boolean(WPP_BRIDGE_URL&&WPP_BRIDGE_TOKEN),youtube:Boolean(process.env.YOUTUBE_API_KEY||process.env.GOOGLE_YOUTUBE_API_KEY),webSearch:Boolean(process.env.SEARCH_API_KEY||process.env.TAVILY_API_KEY),outlook:Boolean(process.env.OUTLOOK_CLIENT_ID&&process.env.OUTLOOK_CLIENT_SECRET),slack:Boolean(process.env.SLACK_CLIENT_ID&&process.env.SLACK_CLIENT_SECRET),telegram:Boolean(process.env.TELEGRAM_BOT_TOKEN),notion:Boolean(process.env.NOTION_CLIENT_ID&&process.env.NOTION_CLIENT_SECRET)};
       for(const [name,isConfigured] of Object.entries(configured)) providers[name]=isConfigured?{status:'pending',lastVerifiedAt:null}:{status:'not_connected',lastVerifiedAt:null};
-      return json(res,200,{ok:true,status:{backend:{status:'healthy',value:true},api:{status:'healthy',value:true},'whatsapp-bridge':{status:configured.whatsapp?'configured':'not_connected',value:configured.whatsapp},'ai-automation':{status:Boolean(process.env.GEMINI_API_KEY||process.env.GOOGLE_AI_API_KEY)?'configured':'not_connected',value:Boolean(process.env.GEMINI_API_KEY||process.env.GOOGLE_AI_API_KEY)},'explicit-action-guard':{status:'enforced',value:true}},providers,flags:featureFlags,sessions:{active:adminSessions.size},persistence:{auditLog:'in-memory',sessions:'in-memory',featureFlags:'in-memory'},note:'Statuses never include secrets or token values.'});
+      return json(res,200,{ok:true,status:{backend:{status:'healthy',value:true},api:{status:'healthy',value:true},'whatsapp-bridge':{status:configured.whatsapp?'configured':'not_connected',value:configured.whatsapp},'ai-automation':{status:Boolean(process.env.GEMINI_API_KEY||process.env.GOOGLE_AI_API_KEY)?'configured':'not_connected',value:Boolean(process.env.GEMINI_API_KEY||process.env.GOOGLE_AI_API_KEY)},'explicit-action-guard':{status:'enforced',value:true}},providers,flags:featureFlags,billing:BILLING.status(),sessions:{active:adminSessions.size},persistence:{auditLog:'in-memory',sessions:'in-memory',featureFlags:'in-memory'},note:'Statuses never include secrets or token values.'});
     }
     if(req.method==='GET'&&url.pathname==='/api/admin/audit-log') { if(!requireAdmin(req,res)) return; return json(res,200,{ok:true,entries:auditLog.slice(0,100),storage:'in-memory'}); }
     if(req.method==='GET'&&url.pathname==='/api/admin/feature-flags') { if(!requireAdmin(req,res)) return; return json(res,200,{ok:true,flags:featureFlags,storage:'in-memory'}); }
