@@ -37,7 +37,7 @@ function createActivationKey() {
 }
 
 function json(res, status, body) {
-  res.writeHead(status, {'Content-Type':'application/json; charset=utf-8','Access-Control-Allow-Origin':ALLOWED_ORIGIN,'Access-Control-Allow-Headers':'Content-Type, Authorization, X-Jarvis-Session','Access-Control-Allow-Methods':'GET, POST, OPTIONS'});
+  res.writeHead(status, {'Content-Type':'application/json; charset=utf-8','Access-Control-Allow-Origin':ALLOWED_ORIGIN,'Access-Control-Allow-Headers':'Content-Type, Authorization, X-Jarvis-Session, X-Kalki-User-Id, X-Jarvis-User','Access-Control-Allow-Methods':'GET, POST, OPTIONS'});
   res.end(JSON.stringify(body));
 }
 function authorized(req) { return Boolean(API_TOKEN) && req.headers.authorization === `Bearer ${API_TOKEN}`; }
