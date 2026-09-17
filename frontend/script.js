@@ -223,7 +223,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const listenForCommand = () => { if (!wakeEnabled || !commandRecognition) return; wakeCapturing = true; setWakeStatus("Wake word heard — listening for your command…", true); try { commandRecognition.start(); } catch (error) {} };
     const stopWakeWord = () => { wakeEnabled = false; wakeCapturing = false; try { wakeRecognition?.stop(); commandRecognition?.stop(); } catch (error) {} if (wakeWordToggle) wakeWordToggle.checked = false; if (wakeWordStop) wakeWordStop.hidden = true; setWakeStatus("Off. JARVIS will not use your microphone."); };
     const personalitySettings = document.getElementById("personality-settings");
-    if (settingsToggle && voiceSettings) settingsToggle.addEventListener("click", () => { const open = voiceSettings.hidden; voiceSettings.hidden = !open; if (personalitySettings) personalitySettings.hidden = !open; settingsToggle.setAttribute("aria-expanded", String(open)); });
+    if (settingsToggle && voiceSettings) settingsToggle.addEventListener("click", () => { const open = voiceSettings.hidden; voiceSettings.hidden = !open; if (personalitySettings) personalitySettings.hidden = !open; settingsToggle.setAttribute("aria-expanded", String(open)); if (open) window.setTimeout(() => settingsToggle.scrollIntoView({ behavior: "smooth", block: "start" }), 0); });
     if (wakeWordToggle && wakeWordStatus) {
         if (SpeechRecognitionAPI) {
             wakeRecognition = new SpeechRecognitionAPI(); commandRecognition = new SpeechRecognitionAPI();
