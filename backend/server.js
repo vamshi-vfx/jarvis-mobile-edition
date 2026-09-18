@@ -9,6 +9,7 @@ const { SKILL_HANDLERS, handleSkill } = require('./zapia-skills');
 const AUTOMATION = require('./automation');
 const ENTITLEMENTS = require('./auth-entitlements');
 const BILLING = require('./billing');
+const WHATSAPP_BRIDGE = require('./whatsapp-bridge');
 
 const PORT = Number(process.env.PORT || 8787);
 const API_TOKEN = process.env.JARVIS_API_TOKEN || '';
@@ -75,11 +76,21 @@ const server=http.createServer(async(req,res)=>{
   if(req.method==='OPTIONS') return json(res,204,{});
   const url=new URL(req.url,`http://${req.headers.host}`);
   if(req.method==='GET'&&url.pathname==='/api/health') return json(res,200,{ok:true,service:'jarvis-backend',explicitActionsOnly:true,backgroundReplies:false,whatsappBridge:Boolean(WPP_BRIDGE_URL&&WPP_BRIDGE_TOKEN),googleOAuth:true,skills:Object.keys(SKILLS)});
+  if(req.method==='GET'&&url.pathname==='/api/whatsapp/bridge/status') return json(res,200,{ok:true,...WHATSAPP_BRIDGE.status()});
+  if(req.method==='GET'&&url.pathname==='/api/whatsapp/bridge/health') return json(res,200,WHATSAPP_BRIDGE.health());
+  if(req.method==='POST'&&url.pathname==='/api/whatsapp/bridge/pair') { if(!requireAdmin(req,res)) return; return json(res,409,WHATSAPP_BRIDGE.pairingPlaceholder()); }
+  if(req.method==='POST'&&url.pathname==='/api/whatsapp/bridge/intake') { if(!requireAdmin(req,res)) return; return json(res,200,WHATSAPP_BRIDGE.intake(await readBody(req))); }
+  if(req.method==='GET'&&url.pathname==='/api/whatsapp/bridge/audit') { if(!requireAdmin(req,res)) return; return json(res,200,{ok:true,entries:WHATSAPP_BRIDGE.auditEntries(),storage:'in-memory'}); }
+  if(req.method==='POST'&&url.pathname==='/api/whatsapp/bridge/configure') { if(!requireAdmin(req,res)) return; return json(res,200,{ok:true,...WHATSAPP_BRIDGE.configure(await readBody(req))}); }
+  if(req.method==='POST'&&url.pathname==='/api/whatsapp/bridge/controls') { if(!requireAdmin(req,res)) return; return json(res,200,{ok:true,...WHATSAPP_BRIDGE.updateControls(await readBody(req))}); }
+  if(req.method==='POST'&&url.pathname==='/api/whatsapp/bridge/allowlist') { if(!requireAdmin(req,res)) return; return json(res,200,{ok:true,...WHATSAPP_BRIDGE.setAllowlist(await readBody(req))}); }
+  if(req.method==='POST'&&url.pathname==='/api/whatsapp/bridge/rules') { if(!requireAdmin(req,res)) return; return json(res,200,{ok:true,...WHATSAPP_BRIDGE.setRules(await readBody(req))}); }
   if(req.method==='GET'&&url.pathname==='/api/connectors/status') {
     const providers={};
     for(const name of Object.keys(GOOGLE.PROVIDERS)) providers[name]=await GOOGLE.verify(name);
     const configured={whatsapp:Boolean(WPP_BRIDGE_URL&&WPP_BRIDGE_TOKEN),youtube:Boolean(process.env.YOUTUBE_API_KEY||process.env.GOOGLE_YOUTUBE_API_KEY),webSearch:Boolean(process.env.SEARCH_API_KEY||process.env.TAVILY_API_KEY),outlook:Boolean(process.env.OUTLOOK_CLIENT_ID&&process.env.OUTLOOK_CLIENT_SECRET),slack:Boolean(process.env.SLACK_CLIENT_ID&&process.env.SLACK_CLIENT_SECRET),telegram:Boolean(process.env.TELEGRAM_BOT_TOKEN),notion:Boolean(process.env.NOTION_CLIENT_ID&&process.env.NOTION_CLIENT_SECRET)};
-    for(const [name,isConfigured] of Object.entries(configured)) providers[name]=isConfigured?{status:'pending',lastVerifiedAt:null}:{status:'not_connected',lastVerifiedAt:null};
+    providers.whatsapp=WHATSAPP_BRIDGE.status();
+    for(const [name,isConfigured] of Object.entries(configured)) if(name!=='whatsapp') providers[name]=isConfigured?{status:'pending',lastVerifiedAt:null}:{status:'not_connected',lastVerifiedAt:null};
     return json(res,200,{ok:true,providers,note:'Connected means a safe read-only verification succeeded. Pending means configuration exists but user authorization or provider verification is still required. Secrets and tokens are never returned.'});
   }
   if(req.method==='GET'&&url.pathname.startsWith('/api/connectors/')&&url.pathname.endsWith('/verify')) {
@@ -137,7 +148,7 @@ const server=http.createServer(async(req,res)=>{
       const providers={}; for(const name of Object.keys(GOOGLE.PROVIDERS)) providers[name]=await GOOGLE.verify(name);
       const configured={whatsapp:Boolean(WPP_BRIDGE_URL&&WPP_BRIDGE_TOKEN),youtube:Boolean(process.env.YOUTUBE_API_KEY||process.env.GOOGLE_YOUTUBE_API_KEY),webSearch:Boolean(process.env.SEARCH_API_KEY||process.env.TAVILY_API_KEY),outlook:Boolean(process.env.OUTLOOK_CLIENT_ID&&process.env.OUTLOOK_CLIENT_SECRET),slack:Boolean(process.env.SLACK_CLIENT_ID&&process.env.SLACK_CLIENT_SECRET),telegram:Boolean(process.env.TELEGRAM_BOT_TOKEN),notion:Boolean(process.env.NOTION_CLIENT_ID&&process.env.NOTION_CLIENT_SECRET)};
       for(const [name,isConfigured] of Object.entries(configured)) providers[name]=isConfigured?{status:'pending',lastVerifiedAt:null}:{status:'not_connected',lastVerifiedAt:null};
-      return json(res,200,{ok:true,status:{backend:{status:'healthy',value:true},api:{status:'healthy',value:true},'whatsapp-bridge':{status:configured.whatsapp?'configured':'not_connected',value:configured.whatsapp},'ai-automation':{status:Boolean(process.env.GEMINI_API_KEY||process.env.GOOGLE_AI_API_KEY)?'configured':'not_connected',value:Boolean(process.env.GEMINI_API_KEY||process.env.GOOGLE_AI_API_KEY)},'explicit-action-guard':{status:'enforced',value:true}},providers,flags:featureFlags,billing:BILLING.status(),sessions:{active:adminSessions.size},persistence:{auditLog:'in-memory',sessions:'in-memory',featureFlags:'in-memory'},note:'Statuses never include secrets or token values.'});
+      return json(res,200,{ok:true,status:{backend:{status:'healthy',value:true},api:{status:'healthy',value:true},'whatsapp-bridge':{status:WHATSAPP_BRIDGE.status().status,value:WHATSAPP_BRIDGE.status().paired},'ai-automation':{status:Boolean(process.env.GEMINI_API_KEY||process.env.GOOGLE_AI_API_KEY)?'configured':'not_connected',value:Boolean(process.env.GEMINI_API_KEY||process.env.GOOGLE_AI_API_KEY)},'explicit-action-guard':{status:'enforced',value:true}},whatsappBridge:WHATSAPP_BRIDGE.status(),providers,flags:featureFlags,billing:BILLING.status(),sessions:{active:adminSessions.size},persistence:{auditLog:'in-memory',sessions:'in-memory',featureFlags:'in-memory',whatsappBridge:'in-memory'},note:'Statuses never include secrets or token values.'});
     }
     if(req.method==='GET'&&url.pathname==='/api/admin/audit-log') { if(!requireAdmin(req,res)) return; return json(res,200,{ok:true,entries:auditLog.slice(0,100),storage:'in-memory'}); }
     if(req.method==='GET'&&url.pathname==='/api/admin/feature-flags') { if(!requireAdmin(req,res)) return; return json(res,200,{ok:true,flags:featureFlags,storage:'in-memory'}); }
