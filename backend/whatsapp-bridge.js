@@ -1,36 +1,35 @@
 const crypto = require('node:crypto');
 
-// Safety-first JARVIS WhatsApp bridge control plane. This module never talks to
-// WhatsApp; a separately deployed bridge must implement the adapter contract.
+// Safety-first WhatsApp policy control plane. It never calls WhatsApp. A separately
+// deployed JARVIS bridge must provide verified sender JIDs and group-admin metadata.
 const state = {
-  mode: 'manual_draft_only',
-  paused: true,
-  autoReplyOptIn: false,
-  bridgeConfigured: false,
-  paired: false,
-  health: 'not_configured',
-  allowlist: { chats: [], groups: [] },
-  rules: [],
-  rateLimits: { perMinute: 5, perDay: 50 },
-  seenMessageIds: [],
-  audit: []
+  mode: 'manual_draft_only', paused: true, autoReplyOptIn: false,
+  bridgeConfigured: false, paired: false, health: 'not_configured',
+  allowlist: { chats: [], groups: [] }, rules: [], rateLimits: { perMinute: 5, perDay: 50 },
+  seenMessageIds: [], audit: [], ownerJid: String(process.env.KALKI_OWNER_JID || '').trim(),
+  groups: new Map(), grants: new Map(), counters: new Map()
 };
-const now = () => new Date().toISOString();
-function audit(event, details = {}) { state.audit.unshift({ id: crypto.randomUUID(), event, at: now(), ...details }); state.audit = state.audit.slice(0, 200); }
-function status() { return { provider: 'whatsapp', providerName: 'JARVIS private bridge', status: state.paired && state.health === 'healthy' ? 'connected' : state.bridgeConfigured ? 'pending' : 'not_connected', mode: state.mode, paused: state.paused, autoReplyOptIn: state.autoReplyOptIn, paired: state.paired, health: state.health, allowlist: state.allowlist, rules: state.rules, rateLimits: state.rateLimits, lastAuditAt: state.audit[0]?.at || null, persistence: 'process-memory', execution: 'disabled_until_dedicated_bridge_verification', note: 'No messages are sent by this scaffold. Zapia WhatsApp is never used.' }; }
-function configure(body = {}) { if (typeof body.bridgeConfigured === 'boolean') state.bridgeConfigured = body.bridgeConfigured; audit('bridge.configuration_changed', { configured: state.bridgeConfigured }); return status(); }
-function updateControls(body = {}) {
-  if (body.mode === 'manual_draft_only') state.mode = body.mode;
-  if (body.mode === 'scoped_auto_reply' && state.autoReplyOptIn && !state.paused) state.mode = body.mode;
-  if (typeof body.paused === 'boolean') state.paused = body.paused;
-  if (typeof body.autoReplyOptIn === 'boolean') state.autoReplyOptIn = body.autoReplyOptIn;
-  audit('controls.updated', { mode: state.mode, paused: state.paused, autoReplyOptIn: state.autoReplyOptIn });
-  return status();
+const now=()=>new Date().toISOString();
+function audit(event,details={}) { state.audit.unshift({id:crypto.randomUUID(),event,at:now(),...details}); state.audit=state.audit.slice(0,200); }
+function maskPhone(v){const s=String(v||'').replace(/\D/g,''); return s.length<4?'***':`+${'*'.repeat(Math.max(3,s.length-4))}${s.slice(-4)}`;}
+function normalizeJid(v){return String(v||'').trim().toLowerCase();}
+function question(text){return /[?؟]\s*$/.test(String(text||'')) || /\b(what|why|how|when|where|who|can|is|are|నేమిటి|ఎలా|ఎందుకు|ఎప్పుడు|ఎక్కడ)\b/i.test(String(text||''));}
+function ownerVerified(body){return body.senderVerified===true && normalizeJid(body.senderJid)===normalizeJid(state.ownerJid) && Boolean(state.ownerJid);}
+function status(){
+ const groups=[...state.groups.values()].map(g=>({...g}));
+ const grants=[...state.grants.values()].filter(g=>!g.expiresAt||Date.parse(g.expiresAt)>Date.now()).map(g=>({...g,phone:maskPhone(g.phone)}));
+ return {provider:'whatsapp',providerName:'JARVIS private bridge',status:state.paired&&state.health==='healthy'?'connected':state.bridgeConfigured?'pending':'not_connected',mode:state.mode,paused:state.paused,autoReplyOptIn:state.autoReplyOptIn,paired:state.paired,health:state.health,allowlist:state.allowlist,rules:state.rules,rateLimits:state.rateLimits,ownerConfigured:Boolean(state.ownerJid),groups,grants,lastAuditAt:state.audit[0]?.at||null,persistence:'process-memory',execution:'disabled_until_dedicated_bridge_verification',policy:{defaultOff:true,ownerIdentityRequired:true,verifiedGroupAdminRequired:true,questionsOnly:true,duplicateProtection:true,rateLimited:true},note:'No messages are sent by this scaffold. Zapia WhatsApp is never used.'};
 }
-function setAllowlist(body = {}) { state.allowlist = { chats: Array.isArray(body.chats) ? body.chats.slice(0,100).map(String) : state.allowlist.chats, groups: Array.isArray(body.groups) ? body.groups.slice(0,100).map(String) : state.allowlist.groups }; audit('allowlist.updated', { counts: { chats: state.allowlist.chats.length, groups: state.allowlist.groups.length } }); return status(); }
-function setRules(body = {}) { state.rules = Array.isArray(body.rules) ? body.rules.slice(0,50).filter(r => r && typeof r.keyword === 'string' && r.keyword.trim()).map(r => ({ id: String(r.id || crypto.randomUUID()), keyword: r.keyword.slice(0,100), response: String(r.response || '').slice(0,2000), enabled: r.enabled !== false, requiresApproval: true })) : state.rules; audit('rules.updated', { count: state.rules.length }); return status(); }
-function health() { audit('bridge.health_check_requested'); return { ok: true, provider: 'whatsapp', status: state.health, paired: state.paired, readOnly: true, executed: false, message: state.bridgeConfigured ? 'Dedicated bridge health verification is not deployed; no WhatsApp request was made.' : 'No dedicated bridge configured; no WhatsApp request was made.' }; }
-function pairingPlaceholder() { audit('bridge.pairing_requested'); return { ok: false, paired: false, code: 'PAIRING_NOT_DEPLOYED', message: 'Pairing is a guarded placeholder. Deploy and configure a dedicated JARVIS bridge before pairing; no QR was generated and no account was contacted.' }; }
-function intake(body = {}) { const messageId = String(body.messageId || ''); if (!messageId) return { ok: false, code: 'MESSAGE_ID_REQUIRED' }; if (state.seenMessageIds.includes(messageId)) return { ok: false, duplicate: true, executed: false, message: 'Duplicate suppressed; no action occurred.' }; state.seenMessageIds = [messageId, ...state.seenMessageIds].slice(0, 500); audit('message.reviewed', { messageId, action: 'draft_only' }); return { ok: true, duplicate: false, executed: false, approvalRequired: true, action: 'draft_only', message: 'Inbound message recorded for review only. No auto-reply was generated.' }; }
-function auditEntries() { return state.audit.slice(0,100); }
-module.exports = { status, configure, updateControls, setAllowlist, setRules, health, pairingPlaceholder, intake, auditEntries };
+function configure(body={}) { if(typeof body.bridgeConfigured==='boolean')state.bridgeConfigured=body.bridgeConfigured; if(typeof body.ownerJid==='string'&&body.ownerJid.trim())state.ownerJid=normalizeJid(body.ownerJid); audit('bridge.configuration_changed',{configured:state.bridgeConfigured,ownerConfigured:Boolean(state.ownerJid)}); return status(); }
+function updateControls(body={}) { if(body.mode==='manual_draft_only')state.mode=body.mode; if(body.mode==='scoped_auto_reply'&&state.autoReplyOptIn&&!state.paused)state.mode=body.mode; if(typeof body.paused==='boolean')state.paused=body.paused; if(typeof body.autoReplyOptIn==='boolean')state.autoReplyOptIn=body.autoReplyOptIn; audit('controls.updated',{mode:state.mode,paused:state.paused,autoReplyOptIn:state.autoReplyOptIn}); return status(); }
+function setAllowlist(body={}) { state.allowlist={chats:Array.isArray(body.chats)?body.chats.slice(0,100).map(String):state.allowlist.chats,groups:Array.isArray(body.groups)?body.groups.slice(0,100).map(String):state.allowlist.groups}; audit('allowlist.updated',{counts:{chats:state.allowlist.chats.length,groups:state.allowlist.groups.length}}); return status(); }
+function setRules(body={}) { state.rules=Array.isArray(body.rules)?body.rules.slice(0,50).filter(r=>r&&typeof r.keyword==='string'&&r.keyword.trim()).map(r=>({id:String(r.id||crypto.randomUUID()),keyword:r.keyword.slice(0,100),response:String(r.response||'').slice(0,2000),enabled:r.enabled!==false,requiresApproval:true})):state.rules; audit('rules.updated',{count:state.rules.length}); return status(); }
+function health(){audit('bridge.health_check_requested');return {ok:true,provider:'whatsapp',status:state.health,paired:state.paired,readOnly:true,executed:false,message:state.bridgeConfigured?'Dedicated bridge health verification is not deployed; no WhatsApp request was made.':'No dedicated bridge configured; no WhatsApp request was made.'};}
+function pairingPlaceholder(){audit('bridge.pairing_requested');return {ok:false,paired:false,code:'PAIRING_NOT_DEPLOYED',message:'Pairing is a guarded placeholder. Deploy and configure a dedicated JARVIS bridge before pairing; no QR was generated and no account was contacted.'};}
+function configureGroup(body={}) { const id=String(body.groupId||'').trim(); if(!id)return {ok:false,code:'GROUP_ID_REQUIRED'}; if(!ownerVerified(body))return {ok:false,code:'OWNER_IDENTITY_UNVERIFIED',message:'Exact configured owner JID and verified bridge identity are required.'}; if(body.adminVerified!==true||body.metadataSource!=='bridge')return {ok:false,code:'GROUP_ADMIN_METADATA_REQUIRED',message:'Group admin status must be verified by the bridge; text claims are ignored.'}; const g={groupId:id.slice(0,160),name:String(body.name||'').slice(0,100),adminVerified:true,enabled:body.enabled===true,updatedAt:now()}; state.groups.set(id,g); if(g.enabled&&!state.allowlist.groups.includes(id))state.allowlist.groups.push(id); audit(g.enabled?'group.enabled':'group.configured',{groupId:id}); return {ok:true,group:g,status:status()}; }
+function grant(body={}) { if(!ownerVerified(body))return {ok:false,code:'OWNER_IDENTITY_UNVERIFIED'}; const phone=String(body.phone||body.contactNumber||'').replace(/\D/g,''); if(phone.length<7)return {ok:false,code:'VALID_CONTACT_REQUIRED'}; const scope=String(body.scope||'').slice(0,160); if(!scope)return {ok:false,code:'SCOPE_REQUIRED'}; const expiresAt=body.expiresAt&&Date.parse(body.expiresAt)?new Date(body.expiresAt).toISOString():new Date(Date.now()+7*86400000).toISOString(); const id=crypto.randomUUID(); state.grants.set(id,{id,phone,scope,expiresAt,createdAt:now(),revokedAt:null}); audit('access.grant_created',{grantId:id,phone:maskPhone(phone),scope,expiresAt}); return {ok:true,grant:{id,phone:maskPhone(phone),scope,expiresAt},status:status()}; }
+function revoke(body={}) { if(!ownerVerified(body))return {ok:false,code:'OWNER_IDENTITY_UNVERIFIED'}; const id=String(body.grantId||''); const g=state.grants.get(id); if(!g)return {ok:false,code:'GRANT_NOT_FOUND'}; g.revokedAt=now(); state.grants.set(id,g); audit('access.grant_revoked',{grantId:id}); return {ok:true,grant:{id,revokedAt:g.revokedAt},status:status()}; }
+function ownerCommand(body={}) { if(!ownerVerified(body))return {ok:false,code:'OWNER_IDENTITY_UNVERIFIED',executed:false}; const cmd=String(body.command||'').trim().toLowerCase(); if(cmd==='auto reply set'||cmd==='grant access')return grant(body); if(cmd==='auto reply revoke'||cmd==='revoke access')return revoke(body); if(cmd==='auto reply enable')return updateControls({autoReplyOptIn:true,paused:false,mode:'scoped_auto_reply'}); if(cmd==='auto reply disable')return updateControls({autoReplyOptIn:false,paused:true,mode:'manual_draft_only'}); return {ok:false,code:'OWNER_COMMAND_NOT_RECOGNIZED'}; }
+function intake(body={}) { const id=String(body.messageId||''); if(!id)return {ok:false,code:'MESSAGE_ID_REQUIRED'}; if(state.seenMessageIds.includes(id))return {ok:false,duplicate:true,executed:false,message:'Duplicate suppressed; no action occurred.'}; state.seenMessageIds=[id,...state.seenMessageIds].slice(0,500); if(body.command)return ownerCommand(body); if(state.paused||!state.autoReplyOptIn||state.mode!=='scoped_auto_reply')return {ok:true,duplicate:false,executed:false,action:'ignored',reason:'AUTOREPLY_OFF'}; const gid=String(body.groupId||''); const g=state.groups.get(gid); if(!gid||!g||!g.enabled||!g.adminVerified||!state.allowlist.groups.includes(gid)||body.groupAdminVerified!==true||body.metadataSource!=='bridge')return {ok:true,duplicate:false,executed:false,action:'ignored',reason:'GROUP_ADMIN_OR_ALLOWLIST_NOT_VERIFIED'}; if(!question(body.text))return {ok:true,duplicate:false,executed:false,action:'ignored',reason:'NOT_A_QUESTION'}; audit('message.reviewed',{messageId:id,groupId:gid,action:'question_draft_only'}); return {ok:true,duplicate:false,executed:false,approvalRequired:true,action:'question_draft_only',message:'Question accepted for a draft only. No auto-reply was generated.'}; }
+function auditEntries(){return state.audit.slice(0,100);}
+module.exports={status,configure,updateControls,setAllowlist,setRules,health,pairingPlaceholder,intake,auditEntries,configureGroup,grant,revoke,ownerCommand};

@@ -85,6 +85,11 @@ const server=http.createServer(async(req,res)=>{
   if(req.method==='POST'&&url.pathname==='/api/whatsapp/bridge/controls') { if(!requireAdmin(req,res)) return; return json(res,200,{ok:true,...WHATSAPP_BRIDGE.updateControls(await readBody(req))}); }
   if(req.method==='POST'&&url.pathname==='/api/whatsapp/bridge/allowlist') { if(!requireAdmin(req,res)) return; return json(res,200,{ok:true,...WHATSAPP_BRIDGE.setAllowlist(await readBody(req))}); }
   if(req.method==='POST'&&url.pathname==='/api/whatsapp/bridge/rules') { if(!requireAdmin(req,res)) return; return json(res,200,{ok:true,...WHATSAPP_BRIDGE.setRules(await readBody(req))}); }
+  if(req.method==='GET'&&url.pathname==='/api/whatsapp/policy') { if(!requireAdmin(req,res)) return; return json(res,200,{ok:true,policy:WHATSAPP_BRIDGE.status()}); }
+  if(req.method==='POST'&&url.pathname==='/api/whatsapp/policy/group') { if(!requireAdmin(req,res)) return; return json(res,200,WHATSAPP_BRIDGE.configureGroup(await readBody(req))); }
+  if(req.method==='POST'&&url.pathname==='/api/whatsapp/policy/grant') { if(!requireAdmin(req,res)) return; return json(res,200,WHATSAPP_BRIDGE.grant(await readBody(req))); }
+  if(req.method==='POST'&&url.pathname==='/api/whatsapp/policy/revoke') { if(!requireAdmin(req,res)) return; return json(res,200,WHATSAPP_BRIDGE.revoke(await readBody(req))); }
+  if(req.method==='POST'&&url.pathname==='/api/whatsapp/policy/command') { if(!requireAdmin(req,res)) return; return json(res,200,WHATSAPP_BRIDGE.ownerCommand(await readBody(req))); }
   if(req.method==='GET'&&url.pathname==='/api/connectors/status') {
     const providers={};
     for(const name of Object.keys(GOOGLE.PROVIDERS)) providers[name]=await GOOGLE.verify(name);
