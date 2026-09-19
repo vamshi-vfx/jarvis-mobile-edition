@@ -16,6 +16,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const getPrefs = () => ({ language: "auto", style: "short", name: "", ...readJson(PREFS_KEY, {}) });
     const BACKEND_HEALTH_URL = "https://jarvis-mobile-edition-alpha.vercel.app/api/health";
     const BACKEND_COMMAND_URL = "https://jarvis-mobile-edition-alpha.vercel.app/api/command";
+    const BACKEND_INTERACTION_URL = "https://jarvis-mobile-edition-alpha.vercel.app/api/interaction/analyze";
+    async function analyzeInteraction(text) {
+        try {
+            const response = await fetch(BACKEND_INTERACTION_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text, messages: readMemory().slice(-12), profile: getPrefs(), preferences: { askFollowUps: true } }) });
+            return response.ok ? await response.json() : null;
+        } catch (_) { return null; }
+    }
 
     async function sendBackendCommand(text) {
         const response = await fetch(BACKEND_COMMAND_URL, {
@@ -156,6 +163,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const userText = messageInput.value.trim();
         if (!userText) return;
         showMessage("YOU", userText, "user"); messageInput.value = "";
+        const interaction = await analyzeInteraction(userText);
+        if (interaction?.clarification?.question) { showMessage("KALKI", interaction.clarification.question, "ai"); return; }
+        if (interaction?.interaction === "brief_preview") { showMessage("KALKI", "I can prepare a daily work summary when you ask, but Calendar and Tasks are not connected. I will not invent events, tasks, or priorities. Connect them or tell me what to include.", "ai"); return; }
         const requestedSkill = detectSkill(userText);
         if (requestedSkill && isExplicitAction(userText)) {
             if (requestedSkill === "whatsapp" && handleLocalCommand(userText)) return;
