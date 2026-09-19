@@ -10,6 +10,7 @@ const AUTOMATION = require('./automation');
 const ENTITLEMENTS = require('./auth-entitlements');
 const BILLING = require('./billing');
 const WHATSAPP_BRIDGE = require('./whatsapp-bridge');
+const INTERACTION_BRAIN = require('./interaction-brain');
 
 const PORT = Number(process.env.PORT || 8787);
 const API_TOKEN = process.env.JARVIS_API_TOKEN || '';
@@ -56,6 +57,8 @@ async function whatsappRequest(path,payload) {
 async function routeCommand(body) {
   const text=String(body.text||'').trim(); if(!text) throw new Error('Command text is required');
   const skill=detectSkill(text);
+  const clarification=INTERACTION_BRAIN.clarificationFor(text);
+  if(clarification) return {executed:false,explicitOnly:true,interaction:'clarification',clarification};
   if(!skill || !isExplicitAction(text)) return {executed:false,explicitOnly:true,reason:'Ask with an explicit action (for example: search, create, send, or show).'};
   // Automation is always preview-first. This route never creates reminders or calls providers.
   if(skill==='automation' || skill==='tasks' || /\b(remind(?:er)?|todo|workflow|multi[- ]step)\b/i.test(text)) return AUTOMATION.preview(text);
@@ -76,6 +79,9 @@ const server=http.createServer(async(req,res)=>{
   if(req.method==='OPTIONS') return json(res,204,{});
   const url=new URL(req.url,`http://${req.headers.host}`);
   if(req.method==='GET'&&url.pathname==='/api/health') return json(res,200,{ok:true,service:'jarvis-backend',explicitActionsOnly:true,backgroundReplies:false,whatsappBridge:Boolean(WPP_BRIDGE_URL&&WPP_BRIDGE_TOKEN),googleOAuth:true,skills:Object.keys(SKILLS)});
+  if(req.method==='GET'&&url.pathname==='/api/interaction/brain') return json(res,200,{ok:true,policy:INTERACTION_BRAIN.DEFAULT_POLICY,capabilities:{contextSignals:true,clarification:true,followUps:true,morningGreetingPreview:true},storage:'client-controlled/process-memory only',note:'No proactive delivery, scheduler, calendar/task invention, or external action is enabled.'});
+  if(req.method==='POST'&&url.pathname==='/api/interaction/analyze') { const body=await readBody(req); return json(res,200,INTERACTION_BRAIN.analyze(body)); }
+  if(req.method==='POST'&&url.pathname==='/api/interaction/greeting-preview') { const body=await readBody(req); return json(res,200,{ok:true,...INTERACTION_BRAIN.morningGreetingPreview(body)}); }
   if(req.method==='GET'&&url.pathname==='/api/whatsapp/bridge/status') return json(res,200,{ok:true,...WHATSAPP_BRIDGE.status()});
   if(req.method==='GET'&&url.pathname==='/api/whatsapp/bridge/health') return json(res,200,WHATSAPP_BRIDGE.health());
   if(req.method==='POST'&&url.pathname==='/api/whatsapp/bridge/pair') { if(!requireAdmin(req,res)) return; return json(res,409,WHATSAPP_BRIDGE.pairingPlaceholder()); }
