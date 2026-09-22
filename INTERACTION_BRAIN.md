@@ -1,11 +1,11 @@
-# KALKI Interaction Brain foundation
+# KALKI Interaction Brain
 
-This release adds a safe conversational foundation without background work.
+This release adds conversational guidance while preserving explicit-action-only safety.
 
-- `backend/interaction-brain.js` defines the policy, intent classification, context signals, clarification templates, and morning-greeting preview.
-- `GET /api/interaction/brain` exposes capabilities and safety policy.
-- `POST /api/interaction/analyze` accepts `{text, messages, profile, preferences}` and returns intent, continuity signals, and (when needed) a clarification question.
-- `POST /api/interaction/greeting-preview` returns an opt-in preview only. It never sends, schedules, or invents calendar/tasks data.
-- `/api/command` now returns a clarification response before any provider route when required fields are missing.
+- `backend/interaction-brain.js` classifies greetings, emotions, intent, incomplete requests, and recent context; it returns guidance for acknowledgement, empathy, one useful follow-up, clarification, and a next step.
+- `GET /api/interaction/brain` exposes capabilities and policy.
+- `POST /api/interaction/analyze` accepts `{text, messages, profile, preferences}` and returns conversational guidance without executing anything.
+- `POST /api/interaction/greeting-preview` returns an opt-in preview only. It never sends, schedules, or invents calendar/tasks/weather data.
+- The web client uses the guidance in its AI system instruction and can store local conversation-style controls: language, concise/detailed style, helpful follow-ups, and opt-in greeting preview.
 
-External actions remain explicit and confirmation-gated. Background replies and proactive notifications remain disabled. Profile/context persistence is still client-controlled or process-memory until encrypted durable storage is deployed. Real morning delivery additionally needs an enabled scheduler/notification channel and verified Calendar/Tasks connectors.
+Recent context is limited to the supplied/local chat history. No durable memory is claimed. External actions remain explicit and confirmation-gated. Background replies, scheduled greetings, and proactive notifications remain disabled until a real scheduler/notification channel and verified connectors are deployed.
