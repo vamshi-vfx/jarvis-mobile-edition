@@ -11,7 +11,9 @@
     <div class="ai-panel-body"><div class="ai-status-grid" id="ai-status-grid"></div><div class="ai-actions">
       <button type="button" data-ai-action="screen">▣ Request screen consent</button><button type="button" data-ai-action="camera">◉ Request camera consent</button><button type="button" data-ai-action="file">＋ Choose PDF/source/image</button>
     </div><div class="ai-plan"><label for="ai-plan-input">Plan preview (approval required)</label><textarea id="ai-plan-input" rows="2" placeholder="Describe a multi-step task; KALKI will only prepare a plan."></textarea><button type="button" data-ai-action="plan">Prepare safe plan</button></div><p class="ai-unavailable">Live voice, Gemini Live/OpenRouter, vision processing, and system controls require a configured server/native capability. Unavailable capabilities stay disabled.</p></div>`;
-  const main = document.querySelector('.assistant-main'); if (main) main.appendChild(panel);
+  const voiceMode = document.getElementById('kalki-voice-mode');
+  const host = voiceMode || document.querySelector('.assistant-main');
+  if (host) host.appendChild(panel);
   const grid = panel.querySelector('#ai-status-grid');
   function render() { grid.innerHTML = Object.entries(status).map(([k,v]) => `<span><b>${k.replace(/([A-Z])/g,' $1')}</b><em class="${v===true?'on':''}">${v===true?'ready':v}</em></span>`).join(''); }
   function send(action) { if (!native) { status.execution = 'WebView only'; render(); return; } status.execution = 'awaiting consent'; render(); try { ({screen: native.requestScreenCapture, camera: native.requestCameraPermission, file: native.chooseSourceFile}[action] || (()=>{})).call(native); } catch { status.execution = 'unavailable'; render(); } }

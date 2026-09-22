@@ -1,0 +1,12 @@
+
+/* KALKI two-mode layout: advanced controls belong to voice mode, never chat. */
+.kalki-voice-mode .advanced-intelligence-panel{width:100%;margin:20px auto 0;text-align:left}
+.kalki-voice-mode .advanced-intelligence-panel[hidden]{display:none!important}
+.kalki-voice-mode .ai-panel-head{align-items:flex-start}
+.kalki-voice-mode .ai-actions button{flex:1 1 180px}
+@media(max-width:560px){.kalki-voice-mode .advanced-intelligence-panel{margin-top:16px}.kalki-voice-mode .ai-panel-head{padding:13px}.kalki-voice-mode .ai-panel-body{padding:0 13px 13px}}
+/* Keep the fixed mode bar and composer in separate, safe-area-aware lanes. */
+.mode-tabs{min-height:64px;padding-bottom:calc(7px + env(safe-area-inset-bottom));padding-left:max(8px,env(safe-area-inset-left));padding-right:max(8px,env(safe-area-inset-right))}
+.composer-wrap{bottom:calc(64px + env(safe-area-inset-bottom));padding-left:max(18px,env(safe-area-inset-left));padding-right:max(18px,env(safe-area-inset-right));}
+.assistant-main{padding-bottom:190px}
+@media(max-width:520px){.assistant-main{padding-bottom:178px}.composer-wrap{bottom:calc(64px + env(safe-area-inset-bottom));padding-bottom:10px}.mode-tab{min-width:0;padding-top:7px;padding-bottom:7px}}
