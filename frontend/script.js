@@ -15,6 +15,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const API_KEY_STORAGE = "jarvis_api_key";
     const BACKEND_HEALTH_URL = "https://jarvis-mobile-edition-alpha.vercel.app/api/health";
     const BACKEND_COMMAND_URL = "https://jarvis-mobile-edition-alpha.vercel.app/api/command";
+    const INTERACTION_URL = "https://jarvis-mobile-edition-alpha.vercel.app/api/interaction/analyze";
+    function conversationPreferences() { try { return Object.assign({}, JSON.parse(localStorage.getItem("kalki.preferences") || "{}"), JSON.parse(localStorage.getItem("kalki.conversation") || "{}")); } catch (_) { return {}; } }
+    async function analyzeInteraction(text) {
+        try { const prefs = conversationPreferences(); const r = await fetch(INTERACTION_URL, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({text, messages:readMemory().slice(-12), profile:{displayName:prefs.name||"", language:prefs.language||"auto", responseStyle:prefs.style||"short"}, preferences:{askFollowUps:prefs.followUps !== false}})}); return r.ok ? await r.json() : null; } catch (_) { return null; }
+    }
 
     async function sendBackendCommand(text) {
         const response = await fetch(BACKEND_COMMAND_URL, {
@@ -129,7 +134,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return apiKey;
     }
 
-    async function askGemini() {
+    async function askGemini(interaction = null) {
         const apiKey = getApiKey();
 
         if (!apiKey) {
@@ -162,7 +167,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     body: JSON.stringify({
                         systemInstruction: {
                             parts: [{
-                                text: "You are J.A.R.V.I.S, a helpful personal mobile assistant. Keep replies clear and concise."
+                                text: `You are KALKI, a warm personal assistant who speaks naturally like a helpful friend, not a robotic list generator. Acknowledge statements, show empathy for emotions, ask at most one relevant follow-up when useful, clarify incomplete requests, and offer one sensible next step. Use Telugu/Teluglish naturally when the user does. Never invent calendar, task, weather, connector, or memory facts. Never claim durable memory beyond the conversation supplied. External actions remain explicit and confirmation-gated; do not send, schedule, or act in the background. ${interaction?.guidance?.tone || "Match the user’s language naturally."} ${interaction?.guidance?.style === "detailed" ? "Give a helpful explanation." : "Prefer concise, human replies."} Recent-context available: ${Boolean(interaction?.signals?.continuityAvailable)}.`
                             }]
                         },
                         contents
@@ -316,7 +321,9 @@ document.addEventListener("DOMContentLoaded", () => {
         sendButton.textContent = "...";
 
         try {
-            const reply = await askGemini();
+            const interaction = await analyzeInteraction(userText);
+            if (interaction?.clarification?.question) { showMessage("KALKI", interaction.clarification.question, "ai"); return; }
+            const reply = await askGemini(interaction);
             showMessage("J.A.R.V.I.S", reply, "ai");
             speak(reply);
         } catch (error) {
