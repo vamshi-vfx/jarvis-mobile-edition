@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="style.css?v=assistant-1">
   <link rel="stylesheet" href="everyday-tools.css?v=kalki-1">
   <link rel="stylesheet" href="layout-fix.css?v=two-mode-1">
+  <link rel="stylesheet" href="overrides.css?v=chat-focus-1">
   <style>.advanced-intelligence-panel{margin:18px auto 0;max-width:760px;border:1px solid rgba(176,164,255,.28);border-radius:18px;background:linear-gradient(145deg,rgba(25,29,42,.92),rgba(12,15,24,.9));box-shadow:0 14px 40px #0004;overflow:hidden}.ai-panel-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px}.ai-panel-head strong,.ai-panel-head small{display:block}.ai-panel-head small{color:var(--muted);font-size:10px;margin-top:4px}.ai-collapse{border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--text);font-size:18px}.ai-panel-body{padding:0 16px 16px}.ai-status-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.ai-status-grid span{padding:8px;border:1px solid var(--line);border-radius:10px;background:#ffffff05}.ai-status-grid b,.ai-status-grid em{display:block;font-size:10px}.ai-status-grid b{text-transform:capitalize;color:var(--muted)}.ai-status-grid em{font-style:normal;color:#f0b48c;margin-top:3px}.ai-status-grid em.on{color:var(--green)}.ai-actions{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}.ai-actions button,.ai-plan button{border:1px solid var(--line);border-radius:10px;padding:9px;background:#ffffff08;color:var(--text);font-size:11px}.ai-plan label{display:block;color:var(--muted);font-size:11px;margin-bottom:5px}.ai-plan textarea{width:100%;box-sizing:border-box;resize:vertical;border:1px solid var(--line);border-radius:10px;padding:9px;background:#090b11;color:var(--text);font:inherit;font-size:12px}.ai-plan button{margin-top:7px}.ai-unavailable{color:var(--muted);font-size:10px;line-height:1.4;margin:12px 0 0}@media(max-width:560px){.ai-status-grid{grid-template-columns:repeat(2,1fr)}.ai-actions button{flex:1 1 45%}}</style>
 </head>
 <body>
@@ -15,7 +16,7 @@
     <header class="app-header">
       <button class="icon-button menu-button" type="button" aria-label="Open menu">☰</button>
       <div class="brand-lockup">
-        <div class="brand-mark" aria-hidden="true">K</div>
+        <div class="brand-mark" aria-hidden="true"><img src="1789578396977-559ec457.jpg" alt="KALKI"></div>
         <div><h1>KALKI</h1><p><span class="status-dot"></span> Personal assistant</p></div>
       </div>
       <button id="clear-btn" class="icon-button" type="button" aria-label="Clear conversation">⌫</button>
@@ -69,10 +70,12 @@
 
     <nav class="mode-tabs" aria-label="KALKI modes"><button class="mode-tab is-active" type="button" data-mode="assistant" aria-pressed="true"><span>✦</span><strong>Assistant</strong><small>Chat mode</small></button><button class="mode-tab" type="button" data-mode="kalki" aria-pressed="false"><span>◉</span><strong>KALKI</strong><small>Voice mode</small></button></nav><div class="composer-wrap">
       <div class="composer" role="group" aria-label="Message composer">
-        <button class="composer-icon" type="button" aria-label="Attach a file">＋</button>
+        <button id="attach-btn" class="composer-icon" type="button" aria-label="Attach a file" aria-expanded="false">＋</button>
+        <input id="img-input" type="file" accept="image/*,.pdf,.txt,.doc,.docx" hidden>
         <input id="msg" type="text" placeholder="Message KALKI..." autocomplete="off" enterkeyhint="send">
         <button id="mic-btn" class="composer-icon" type="button" aria-label="Use voice input">🎙</button>
         <button id="send" class="send-button" type="button" aria-label="Send message">↑</button>
+      <div id="attachment-menu" class="attachment-menu" hidden role="menu"><button id="cam-btn" type="button" role="menuitem">📷 Take or choose an image</button><button id="file-btn" type="button" role="menuitem">📎 Choose a file</button></div>
       </div>
       <p class="safe-note"><span>✦</span> JARVIS only takes action when you explicitly ask.</p>
     </div>
@@ -140,6 +143,15 @@
     creatorExport?.addEventListener('click',()=>{if(!creatorApproval.checked)return; const blob=new Blob([JSON.stringify({type:'KALKI Creator Agent planning package',topic:document.getElementById('creator-topic').value,generatedAt:new Date().toISOString(),status:'planning-only',upload:false,publish:false},null,2)],{type:'application/json'}); const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='kalki-creator-plan.json';a.click();URL.revokeObjectURL(a.href);});
     document.getElementById('creator-reset')?.addEventListener('click',()=>{creatorOutput.hidden=true; creatorForm.reset(); creatorPanel.querySelectorAll('[data-creator-stage]').forEach((x,i)=>x.classList.toggle('is-active',i===0));});
 
+    const toolsSection = document.getElementById('everyday-tools');
+    document.getElementById('tools-menu-link')?.addEventListener('click', (event) => { event.preventDefault(); toggleMenu(false); if (toolsSection) { toolsSection.style.display = 'block'; document.querySelector('.welcome')?.setAttribute('hidden',''); document.getElementById('chat')?.setAttribute('hidden',''); document.querySelector('.composer-wrap')?.setAttribute('hidden',''); toolsSection.scrollIntoView({behavior:'smooth',block:'start'}); } });
+    const attachButton = document.getElementById('attach-btn'), attachmentMenu = document.getElementById('attachment-menu'), fileInput = document.getElementById('img-input');
+    function toggleAttachment(open) { if (!attachmentMenu || !attachButton) return; attachmentMenu.hidden = !open; attachButton.setAttribute('aria-expanded', String(open)); }
+    attachButton?.addEventListener('click', (event) => { event.stopPropagation(); toggleAttachment(attachmentMenu?.hidden !== false); });
+    document.getElementById('cam-btn')?.addEventListener('click', () => { toggleAttachment(false); fileInput?.click(); });
+    document.getElementById('file-btn')?.addEventListener('click', () => { toggleAttachment(false); fileInput?.click(); });
+    fileInput?.addEventListener('change', () => { const file = fileInput.files?.[0]; if (file && messageInput) { messageInput.value = `Please review this file: ${file.name}`; messageInput.focus(); } });
+    document.addEventListener('click', (event) => { if (attachmentMenu && !attachmentMenu.contains(event.target) && event.target !== attachButton) toggleAttachment(false); });
     setKalkiMode('assistant');
   </script>
 </body>
