@@ -7,6 +7,7 @@ const { buildDailyYouTubeAnalytics } = require('./youtube-analytics');
 const { buildDailyAiLaunchUpdate } = require('./ai-launch-updates');
 const { SKILL_HANDLERS, handleSkill } = require('./zapia-skills');
 const { TOOL_REGISTRY, detectEverydayTool, runLocalTool, explicit: everydayExplicit, extractAfter } = require('./everyday-tools');
+const ADVANCED = require('./advanced-intelligence-backend');
 
 const PORT = Number(process.env.PORT || 8787);
 const API_TOKEN = process.env.JARVIS_API_TOKEN || '';
@@ -125,6 +126,8 @@ const server=http.createServer(async(req,res)=>{
       return json(res,200,{ok:true,providers,note:'Connected status only; no access tokens are returned.'});
     }
     if(req.method==='GET'&&url.pathname==='/api/skills') return json(res,200,{ok:true,skills:Object.fromEntries(Object.entries(SKILLS).map(([id,meta])=>[id,{id,...meta,handler:Boolean(SKILL_HANDLERS[id])}]))});
+    if(req.method==='GET'&&url.pathname==='/api/intelligence/status') return json(res,200,{ok:true,capabilities:ADVANCED.capabilityStatus(),policy:'explicit consent and approval gates; no autonomous execution'});
+    if(req.method==='POST'&&url.pathname==='/api/intelligence/plan') { const body=await readBody(req); return json(res,200,{ok:true,plan:ADVANCED.preparePlan(body.text)}); }
     if(req.method==='POST'&&url.pathname==='/api/command') return json(res,200,{ok:true,result:await routeCommand(await readBody(req))});
     const directSkillRoutes = {'/api/skills/day-organizer':'dayOrganizer','/api/skills/stay-in-touch':'stayInTouch','/api/skills/whatsapp-audio':'whatsappAudioTranscription','/api/skills/unavailable-time-reply-drafts':'unavailableTimeReplyDrafts'};
     if(req.method==='POST'&&directSkillRoutes[url.pathname]) {
