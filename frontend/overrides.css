@@ -17,3 +17,15 @@ body{padding-bottom:env(safe-area-inset-bottom);}
 @media(max-width:520px){.welcome{padding-top:28px}.welcome-copy{font-size:12px}.suggestions button{padding:8px 10px}.msg{max-width:92%;padding:11px 13px}.composer-wrap{padding-top:8px}.composer{gap:4px;padding-left:8px}.composer-icon{width:30px;flex-basis:30px}.send-button{width:32px;height:32px}.attachment-menu{width:calc(100vw - 28px);max-width:250px}}
 @media(min-width:700px){.assistant-main{padding-left:35px;padding-right:35px}.app-header{padding-left:35px;padding-right:35px}.composer-wrap{padding-left:35px;padding-right:35px}}
 @media(prefers-reduced-motion:reduce){.mode-tab,.attachment-menu{transition:none}}
+
+/* Surface isolation: menu workspaces never render over Assistant chat. */
+.assistant-main > .creator-agent-panel[hidden],
+.assistant-main > .kalki-voice-mode[hidden],
+.assistant-main > .everyday-tools[hidden] { display:none!important; }
+body:not(.utility-mode-active) .creator-agent-panel,
+body:not(.utility-mode-active) .everyday-tools { display:none!important; }
+body.utility-mode-active .creator-agent-panel:not([hidden]) { display:block!important; }
+body.utility-mode-active .everyday-tools:not([hidden]) { display:block!important; }
+body.utility-mode-active .welcome { display:block; }
+body.utility-mode-active .welcome > *:not(#everyday-tools) { display:none!important; }
+body.utility-mode-active .welcome > #everyday-tools { display:block!important; }
