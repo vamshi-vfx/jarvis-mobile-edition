@@ -8,6 +8,7 @@ const { buildDailyAiLaunchUpdate } = require('./ai-launch-updates');
 const { SKILL_HANDLERS, handleSkill } = require('./zapia-skills');
 const { TOOL_REGISTRY, detectEverydayTool, runLocalTool, explicit: everydayExplicit, extractAfter } = require('./everyday-tools');
 const ADVANCED = require('./advanced-intelligence-backend');
+const INTERACTION = require('./interaction-brain');
 
 const PORT = Number(process.env.PORT || 8787);
 const API_TOKEN = process.env.JARVIS_API_TOKEN || '';
@@ -92,6 +93,9 @@ const server=http.createServer(async(req,res)=>{
   if(req.method==='OPTIONS') return json(res,204,{});
   const url=new URL(req.url,`http://${req.headers.host}`);
   if(req.method==='GET'&&url.pathname==='/api/health') return json(res,200,{ok:true,service:'jarvis-backend',explicitActionsOnly:true,backgroundReplies:false,whatsappBridge:Boolean(WPP_BRIDGE_URL&&WPP_BRIDGE_TOKEN),googleOAuth:true,skills:Object.keys(SKILLS),everydayTools:Object.keys(TOOL_REGISTRY)});
+  if(req.method==='GET'&&url.pathname==='/api/interaction/brain') return json(res,200,{ok:true,capabilities:['acknowledgement','follow_up','clarification','emotion_tone','recent_context','opt_in_greeting_preview'],policy:INTERACTION.DEFAULT_POLICY,note:'No background messages or actions are performed.'});
+  if(req.method==='POST'&&url.pathname==='/api/interaction/analyze') { const body=await readBody(req); return json(res,200,INTERACTION.analyze(body)); }
+  if(req.method==='POST'&&url.pathname==='/api/interaction/greeting-preview') { const body=await readBody(req); return json(res,200,{ok:true,preview:INTERACTION.morningGreetingPreview(body)}); }
   if(req.method==='GET'&&url.pathname==='/api/tools') return json(res,200,{ok:true,tools:TOOL_REGISTRY,note:'All tools are explicit-command-only. Live values are returned only from verified provider responses; unavailable values are never guessed.'});
   if(req.method==='GET'&&url.pathname==='/api/connectors/status') return json(res,200,{ok:true,providers:await connectorStatus(),note:'Safe configuration booleans only; secrets and tokens are never returned.'});
   // OAuth start/callback are public by design; signed, short-lived, single-use state
