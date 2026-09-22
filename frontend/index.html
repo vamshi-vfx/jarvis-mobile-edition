@@ -8,7 +8,6 @@
   <link rel="stylesheet" href="style.css?v=assistant-1">
   <link rel="stylesheet" href="everyday-tools.css?v=kalki-1">
   <link rel="stylesheet" href="layout-fix.css?v=two-mode-1">
-  <style>.advanced-intelligence-panel{margin:18px auto 0;max-width:760px;border:1px solid rgba(176,164,255,.28);border-radius:18px;background:linear-gradient(145deg,rgba(25,29,42,.92),rgba(12,15,24,.9));box-shadow:0 14px 40px #0004;overflow:hidden}.ai-panel-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px}.ai-panel-head strong,.ai-panel-head small{display:block}.ai-panel-head small{color:var(--muted);font-size:10px;margin-top:4px}.ai-collapse{border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--text);font-size:18px}.ai-panel-body{padding:0 16px 16px}.ai-status-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.ai-status-grid span{padding:8px;border:1px solid var(--line);border-radius:10px;background:#ffffff05}.ai-status-grid b,.ai-status-grid em{display:block;font-size:10px}.ai-status-grid b{text-transform:capitalize;color:var(--muted)}.ai-status-grid em{font-style:normal;color:#f0b48c;margin-top:3px}.ai-status-grid em.on{color:var(--green)}.ai-actions{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}.ai-actions button,.ai-plan button{border:1px solid var(--line);border-radius:10px;padding:9px;background:#ffffff08;color:var(--text);font-size:11px}.ai-plan label{display:block;color:var(--muted);font-size:11px;margin-bottom:5px}.ai-plan textarea{width:100%;box-sizing:border-box;resize:vertical;border:1px solid var(--line);border-radius:10px;padding:9px;background:#090b11;color:var(--text);font:inherit;font-size:12px}.ai-plan button{margin-top:7px}.ai-unavailable{color:var(--muted);font-size:10px;line-height:1.4;margin:12px 0 0}@media(max-width:560px){.ai-status-grid{grid-template-columns:repeat(2,1fr)}.ai-actions button{flex:1 1 45%}}</style>
 </head>
 <body>
   <div class="app-shell">
@@ -31,12 +30,6 @@
           <button type="button" onclick="document.getElementById('msg').value='Help me plan my day';document.getElementById('msg').focus()">Plan my day <span>→</span></button>
           <button type="button" onclick="document.getElementById('msg').value='Search the web for ';document.getElementById('msg').focus()">Search the web <span>→</span></button>
         </div>
-        <section id="everyday-tools" class="everyday-tools" aria-label="KALKI Everyday Tools">
-          <div class="tools-heading"><strong>KALKI Everyday Tools</strong><small>Tap to prepare a command — nothing runs automatically.</small></div>
-          <div class="tool-grid">
-            <button data-tool-command="Tell me the time">🕒 Time</button><button data-tool-command="Tell me a joke">😄 Joke</button><button data-tool-command="Give me motivation">✨ Motivation</button><button data-tool-command="Roll a dice">🎲 Dice</button><button data-tool-command="Flip a coin">🪙 Coin</button><button data-tool-command="Generate a strong password">🔐 Password</button><button data-tool-command="Open YouTube">▶ YouTube</button><button data-tool-command="Open Google">🔎 Google</button>
-          </div>
-        </section>
       </section>
 
       <section id="kalki-share-preview" class="share-preview" hidden aria-label="Shared content preview">
@@ -55,6 +48,21 @@
       <section id="kalki-voice-mode" class="kalki-voice-mode" hidden aria-labelledby="kalki-voice-title"><div class="voice-mode-head"><div><p class="eyebrow">KALKI VOICE MODE</p><h2 id="kalki-voice-title">Speak with KALKI</h2><p>Foreground voice controls only. KALKI listens or speaks only when you choose.</p></div><span class="voice-mode-badge">EXPLICIT ONLY</span></div><div class="voice-orb" id="voice-orb" aria-live="polite"><span class="voice-orb-core">✦</span><span class="voice-orb-ring"></span></div><p id="voice-mode-state" class="voice-mode-state">Ready when you are</p><p id="voice-response-preview" class="voice-response-preview">Telugu response preview will appear here after a chosen voice interaction.</p><div class="voice-mode-actions" role="group" aria-label="KALKI voice controls"><button id="voice-mode-mic" type="button"><span>🎙</span> Listen</button><button id="voice-mode-speak" type="button"><span>◖</span> Speak preview</button><button id="voice-mode-wake" type="button"><span>◌</span> Wake word off</button></div><p class="voice-mode-boundary">“Hey Jarvis” remains foreground-only and uses the existing native bridge when available. No background listening or action runs automatically.</p></section>
     </main>
 
+    <section id="tools-workspace" class="tools-view" hidden aria-labelledby="tools-workspace-title">
+      <div class="tools-view-head">
+        <div><p class="eyebrow">KALKI WORKSPACE</p><h2 id="tools-workspace-title">Tools</h2><p>Consent-first tools for preparing commands and local workflows. Nothing runs automatically.</p></div>
+        <button id="tools-back" class="tools-back" type="button">← Assistant</button>
+      </div>
+      <div id="tools-panel-host" class="tools-panel-host">
+        <section id="everyday-tools" class="everyday-tools utility-panel" aria-label="KALKI Everyday Tools">
+          <div class="tools-heading"><strong>KALKI Everyday Tools</strong><small>Tap to prepare a command — nothing runs automatically.</small></div>
+          <div class="tool-grid">
+            <button data-tool-command="Tell me the time">🕒 Time</button><button data-tool-command="Tell me a joke">😄 Joke</button><button data-tool-command="Give me motivation">✨ Motivation</button><button data-tool-command="Roll a dice">🎲 Dice</button><button data-tool-command="Flip a coin">🪙 Coin</button><button data-tool-command="Generate a strong password">🔐 Password</button><button data-tool-command="Open YouTube">▶ YouTube</button><button data-tool-command="Open Google">🔎 Google</button>
+          </div>
+        </section>
+      </div>
+    </section>
+
     <nav class="mode-tabs" aria-label="KALKI modes"><button class="mode-tab is-active" type="button" data-mode="assistant" aria-pressed="true"><span>✦</span><strong>Assistant</strong><small>Chat mode</small></button><button class="mode-tab" type="button" data-mode="kalki" aria-pressed="false"><span>◉</span><strong>KALKI</strong><small>Voice mode</small></button></nav><div class="composer-wrap">
       <div class="composer" role="group" aria-label="Message composer">
         <button class="composer-icon" type="button" aria-label="Attach a file">＋</button>
@@ -71,7 +79,7 @@
     <p class="eyebrow">KALKI</p><h2>Assistant</h2>
     <button class="sheet-link" type="button">＋ New conversation</button>
     <a class="sheet-link" href="connectors.html">◇ Connectors</a>
-    <a class="sheet-link" href="#everyday-tools" id="tools-menu-link">⌁ Tools</a><button id="settings-toggle" class="sheet-link" type="button" aria-expanded="false">⚙ Settings</button>
+    <button class="sheet-link" type="button" id="tools-menu-link">⌁ Tools</button><button id="settings-toggle" class="sheet-link" type="button" aria-expanded="false">⚙ Settings</button>
     <section id="voice-settings" class="voice-settings" hidden aria-label="Voice settings">
       <div class="voice-setting-row">
         <div><strong>Wake word</strong><small>Foreground only · “Hey Jarvis”</small></div>
@@ -114,7 +122,17 @@
     document.getElementById('voice-mode-mic')?.addEventListener('click', () => { voiceState && (voiceState.textContent = 'Listening… speak your command'); voiceOrb?.classList.add('is-listening'); document.getElementById('mic-btn')?.click(); setTimeout(() => voiceOrb?.classList.remove('is-listening'), 1800); });
     document.getElementById('voice-mode-speak')?.addEventListener('click', () => { const text = 'నమస్కారం. నేను KALKI. మీ explicit command కోసం సిద్ధంగా ఉన్నాను.'; voicePreview && (voicePreview.textContent = text); voiceState && (voiceState.textContent = 'Speaking preview'); if ('speechSynthesis' in window) { speechSynthesis.cancel(); speechSynthesis.speak(new SpeechSynthesisUtterance(text)); } });
     document.getElementById('voice-mode-wake')?.addEventListener('click', () => { const toggle = document.getElementById('wake-word-toggle'); if (!toggle) return; toggle.click(); const button = document.getElementById('voice-mode-wake'); if (button) { button.innerHTML = toggle.checked ? '<span>◌</span> Wake word on' : '<span>◌</span> Wake word off'; } voiceState && (voiceState.textContent = toggle.checked ? 'Foreground wake word armed' : 'Wake word is off'); });
-    document.getElementById('tools-menu-link')?.addEventListener('click', () => toggleMenu(false));
+    const toolsWorkspace = document.getElementById('tools-workspace');
+    const assistantView = document.querySelector('.assistant-main');
+    function setToolsView(open) {
+      if (toolsWorkspace) toolsWorkspace.hidden = !open;
+      if (assistantView) assistantView.hidden = open;
+      document.body.classList.toggle('tools-open', open);
+      if (open) window.scrollTo({top: 0, behavior: 'smooth'});
+    }
+    document.getElementById('tools-menu-link')?.addEventListener('click', () => { toggleMenu(false); setToolsView(true); });
+    document.getElementById('tools-back')?.addEventListener('click', () => setToolsView(false));
+    setToolsView(false);
     setKalkiMode('assistant');
   </script>
 </body>
