@@ -54,6 +54,7 @@ public final class WakeWordService extends Service {
     private boolean listening;
     private boolean stopping;
     private boolean ttsReady;
+    private String pendingSpeech;
     private long session;
     private long handledSession = -1L;
     private String lastCallbackText = "";
@@ -70,6 +71,7 @@ public final class WakeWordService extends Service {
                 int result = tts.setLanguage(new Locale("te", "IN"));
                 if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED)
                     tts.setLanguage(new Locale("en", "IN"));
+                if (pendingSpeech != null) { tts.speak(pendingSpeech, TextToSpeech.QUEUE_FLUSH, null, "kalki-ack"); pendingSpeech = null; }
             }
         });
         if (!SpeechRecognizer.isRecognitionAvailable(this)) return;
@@ -141,7 +143,7 @@ public final class WakeWordService extends Service {
         if (command == null || command.trim().isEmpty()) return;
         mode = Mode.WAKE; sendBroadcast(new Intent(ACTION_COMMAND).setPackage(getPackageName()).putExtra(EXTRA_COMMAND, command.trim()));
     }
-    private void speak(String value) { if (ttsReady && tts != null) tts.speak(value, TextToSpeech.QUEUE_FLUSH, null, "kalki-ack"); }
+    private void speak(String value) { if (ttsReady && tts != null) tts.speak(value, TextToSpeech.QUEUE_FLUSH, null, "kalki-ack"); else pendingSpeech = value; }
     private void stopWithSpeech() { speak("ఆపుతున్నాను Boss"); stopping = true; handler.removeCallbacksAndMessages(null); stopSelf(); }
 
     private Notification notification() {
