@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0b0d12">
   <title>KALKI — Personal AI Assistant</title>
-  <link rel="stylesheet" href="style.css?v=assistant-1">
+  <link rel="stylesheet" href="style.css?v=gemini-key-settings-1">
   <link rel="stylesheet" href="everyday-tools.css?v=kalki-1">
   <link rel="stylesheet" href="layout-fix.css?v=two-mode-1">
   <link rel="stylesheet" href="overrides.css?v=chat-focus-1">
@@ -111,7 +111,16 @@
     <a class="sheet-link" href="connectors.html">◇ Connectors</a>
     <a class="sheet-link" href="../" target="_blank" rel="noopener noreferrer" aria-label="Open the KALKI product website in a new tab">ⓘ KALKI product site ↗</a>
     <a class="sheet-link" href="#creator-agent-panel" id="creator-agent-link">✦ Creator Agent</a><a class="sheet-link" href="#social-agent-panel" id="social-agent-link">◎ Social Automation Agent</a><a class="sheet-link" href="#everyday-tools" id="tools-menu-link">⌁ Tools</a><button id="settings-toggle" class="sheet-link" type="button" aria-expanded="false">⚙ Settings</button>
-    <section id="voice-settings" class="voice-settings" hidden aria-label="Voice settings">
+    <section id="voice-settings" class="voice-settings" hidden aria-label="Settings">
+      <section id="gemini-api-settings" class="api-key-settings" aria-labelledby="gemini-key-title">
+        <div class="api-key-heading"><strong id="gemini-key-title">Gemini API key</strong><small>Required for AI chat and voice replies</small></div>
+        <label class="api-key-label" for="gemini-api-key">Google AI Studio key</label>
+        <input id="gemini-api-key" class="api-key-input" type="password" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="100" aria-describedby="gemini-key-privacy gemini-key-status" placeholder="Paste your Gemini API key">
+        <p id="gemini-key-privacy" class="api-key-help">Saved only in this browser or device. When you ask KALKI for an AI reply, the key is sent directly from this page to Google’s Gemini API over HTTPS. It is not stored on KALKI’s server. Anyone with access to this browser profile may be able to access browser-local data.</p>
+        <p id="gemini-key-status" class="api-key-status" role="status" aria-live="polite">No key saved on this device.</p>
+        <div class="api-key-actions"><button id="save-api-key" type="button" class="api-key-save">Save key on this device</button><button id="clear-api-key" type="button" class="api-key-clear">Clear saved key</button></div>
+        <a class="api-key-link" href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer">Get a Gemini API key from Google AI Studio ↗</a>
+      </section>
       <div class="voice-setting-row">
         <div><strong>Wake word</strong><small>Foreground only · “Hey Jarvis”</small></div>
         <label class="switch"><input id="wake-word-toggle" type="checkbox"><span aria-hidden="true"></span><span class="sr-only">Enable wake word</span></label>
@@ -124,7 +133,7 @@
   </aside>
   <div class="sheet-backdrop"></div>
 
-  <script src="script.js?v=kalki-redesign-1"></script>
+  <script src="script.js?v=gemini-key-settings-1"></script>
   <script src="advanced-intelligence.js"></script>
   <script src="social-agent.js?v=local-preview-1"></script>
   <script>

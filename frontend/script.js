@@ -10,6 +10,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const wakeToggle = document.getElementById("wake-word-toggle");
     const wakeStatus = document.getElementById("wake-word-status");
     const wakeStop = document.getElementById("wake-word-stop");
+    const apiKeyInput = document.getElementById("gemini-api-key");
+    const apiKeyStatus = document.getElementById("gemini-key-status");
+    const apiKeySettings = document.getElementById("gemini-api-settings");
+    const saveApiKeyButton = document.getElementById("save-api-key");
+    const clearApiKeyButton = document.getElementById("clear-api-key");
 
     const MEMORY_KEY = "jarvis_chat_memory";
     const API_KEY_STORAGE = "jarvis_api_key";
@@ -120,18 +125,66 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function getApiKey() {
-        let apiKey = localStorage.getItem(API_KEY_STORAGE);
+        try { return (localStorage.getItem(API_KEY_STORAGE) || "").trim(); }
+        catch (_) { return ""; }
+    }
 
-        if (!apiKey) {
-            apiKey = prompt("Mee Gemini API key enter cheyyandi:");
+    function setApiKeyStatus(message, state = "") {
+        if (!apiKeyStatus) return;
+        apiKeyStatus.textContent = message;
+        apiKeyStatus.classList.toggle("is-saved", state === "saved");
+        apiKeyStatus.classList.toggle("is-error", state === "error");
+    }
 
-            if (apiKey && apiKey.trim()) {
-                apiKey = apiKey.trim();
-                localStorage.setItem(API_KEY_STORAGE, apiKey);
-            }
+    function refreshApiKeyStatus() {
+        if (apiKeyInput) apiKeyInput.value = ""; // Never place a saved secret back into the visible field.
+        setApiKeyStatus(getApiKey()
+            ? "Key saved locally · not verified with Google."
+            : "No key saved on this device.", getApiKey() ? "saved" : "");
+    }
+
+    function saveApiKey() {
+        const value = apiKeyInput?.value.trim() || "";
+        if (!value) {
+            setApiKeyStatus("Enter your Gemini API key first. Nothing was saved.", "error");
+            apiKeyInput?.focus();
+            return;
         }
+        // Harmless local format check only. This does not contact Google or verify the key.
+        if (!/^AIza[0-9A-Za-z_-]{20,}$/.test(value)) {
+            setApiKeyStatus("This does not look like a Google API key (expected an AIza… key). Check it and try again. Nothing was saved.", "error");
+            apiKeyInput?.focus();
+            return;
+        }
+        try {
+            localStorage.setItem(API_KEY_STORAGE, value);
+            if (apiKeyInput) apiKeyInput.value = "";
+            setApiKeyStatus("Key saved locally · format looks plausible, but Google has not verified it.", "saved");
+        } catch (_) {
+            setApiKeyStatus("Could not save in this browser. Check device storage settings and try again.", "error");
+        }
+    }
 
-        return apiKey;
+    function clearApiKey() {
+        try { localStorage.removeItem(API_KEY_STORAGE); }
+        catch (_) { setApiKeyStatus("Could not clear browser-local storage.", "error"); return; }
+        if (apiKeyInput) apiKeyInput.value = "";
+        setApiKeyStatus("Saved key cleared from this browser/device.");
+    }
+
+    function openApiKeySettings() {
+        if (voiceSettings) voiceSettings.hidden = false;
+        if (settingsToggle) settingsToggle.setAttribute("aria-expanded", "true");
+        document.body.classList.add("menu-open");
+        setApiKeyStatus("A Gemini API key is required for AI chat and voice replies. Add it here to continue.", "error");
+        const voiceState = document.getElementById("voice-mode-state");
+        const voicePreview = document.getElementById("voice-response-preview");
+        if (voiceState) voiceState.textContent = "Gemini API key needed — open Settings to add it.";
+        if (voicePreview) voicePreview.textContent = "Your voice command was heard, but KALKI needs a Gemini API key before it can generate a reply.";
+        window.setTimeout(() => {
+            apiKeySettings?.scrollIntoView({ behavior: "smooth", block: "center" });
+            apiKeyInput?.focus({ preventScroll: true });
+        }, 180);
     }
 
     async function askGemini(interaction = null) {
@@ -156,13 +209,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
         for (const modelName of MODEL_NAMES) {
             try {
-                const apiUrl =
-                    apiBase + modelName + ":generateContent?key=" + apiKey;
+                const apiUrl = apiBase + modelName + ":generateContent";
 
                 const response = await fetch(apiUrl, {
                     method: "POST",
                     headers: {
-                        "Content-Type": "application/json"
+                        "Content-Type": "application/json",
+                        "x-goog-api-key": apiKey
                     },
                     body: JSON.stringify({
                         systemInstruction: {
@@ -316,6 +369,11 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         if (handleLocalCommand(userText)) return;
+        if (!getApiKey()) {
+            showMessage("KALKI", "I need your Gemini API key before I can generate an AI reply. Settings is open so you can add it locally; no request was sent to Google.", "ai");
+            openApiKeySettings();
+            return;
+        }
         messageInput.disabled = true;
         sendButton.disabled = true;
         sendButton.textContent = "...";
@@ -523,6 +581,9 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     wakeToggle?.addEventListener("change", () => wakeToggle.checked ? enableWakeListening() : stopWakeListening());
     wakeStop?.addEventListener("click", stopWakeListening);
+    saveApiKeyButton?.addEventListener("click", saveApiKey);
+    clearApiKeyButton?.addEventListener("click", clearApiKey);
+    apiKeyInput?.addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); saveApiKey(); } });
 
     if (sendButton) sendButton.addEventListener("click", sendMessage);
     if (clearButton) clearButton.addEventListener("click", clearChat);
@@ -544,6 +605,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (wakeToggle) wakeToggle.checked = false; // opt-in every session; never silently arm the mic
     setWakeStatus(wakeRecognition ? "Off. JARVIS will not use your microphone." : "Voice recognition is unavailable in this WebView.");
     loadSavedChat();
+    refreshApiKeyStatus();
     checkBackendStatus();
     console.log("JARVIS AI fallback system loaded successfully.");
 });
