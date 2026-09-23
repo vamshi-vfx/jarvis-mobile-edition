@@ -29,3 +29,9 @@ body.utility-mode-active .everyday-tools:not([hidden]) { display:block!important
 body.utility-mode-active .welcome { display:block; }
 body.utility-mode-active .welcome > *:not(#everyday-tools) { display:none!important; }
 body.utility-mode-active .welcome > #everyday-tools { display:block!important; }
+
+/* Unified Zapia-style assistant: one chat surface, no separate mode bar. */
+:root{--mode-h:0px}
+.assistant-main{padding-bottom:calc(var(--composer-h) + 24px)!important}
+.composer-wrap{bottom:0!important;padding-bottom:calc(12px + env(safe-area-inset-bottom))!important}
+body.has-conversation:not(.utility-mode-active) .welcome{display:none!important}

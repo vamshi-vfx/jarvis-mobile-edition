@@ -7,9 +7,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const openWhatsAppButton = document.getElementById("open-whatsapp");
     const settingsToggle = document.getElementById("settings-toggle");
     const voiceSettings = document.getElementById("voice-settings");
-    const wakeToggle = document.getElementById("wake-word-toggle");
-    const wakeStatus = document.getElementById("wake-word-status");
-    const wakeStop = document.getElementById("wake-word-stop");
     const apiKeyInput = document.getElementById("gemini-api-key");
     const apiKeyStatus = document.getElementById("gemini-key-status");
     const apiKeySettings = document.getElementById("gemini-api-settings");
@@ -41,15 +38,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function checkBackendStatus() {
         try {
-            const response = await fetch(BACKEND_HEALTH_URL, { cache: "no-store" });
-            const data = await response.json();
-            if (data?.ok && data?.whatsappBridge) {
-                showMessage("J.A.R.V.I.S", "Secure backend and WhatsApp bridge online. Explicit commands only.", "ai");
-            } else if (data?.ok) {
-                showMessage("J.A.R.V.I.S", "Backend online. WhatsApp bridge is not connected.", "ai");
-            }
-        } catch (error) {
-            showMessage("SYSTEM", "Backend connection unavailable. Local AI mode active.", "ai");
+            await fetch(BACKEND_HEALTH_URL, { cache: "no-store" });
+        } catch (_) {
+            // Keep connection diagnostics out of the conversation surface.
         }
     }
 
@@ -62,12 +53,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let recognition = null;
     let isListening = false;
-    let wakeRecognition = null;
-    let commandRecognition = null;
-    let wakeEnabled = false;
-    let wakePermissionGranted = false;
-    let wakeCaptureInProgress = false;
-    const WAKE_WORD_KEY = "jarvis_wake_word_enabled";
 
     function readMemory() {
         try {
@@ -97,11 +82,13 @@ document.addEventListener("DOMContentLoaded", () => {
         message.className = type === "user" ? "msg user" : "msg";
 
         const senderElement = document.createElement("strong");
-        senderElement.textContent = `${sender}: `;
+        const displaySender = sender === "J.A.R.V.I.S" ? "KALKI" : sender;
+        senderElement.textContent = `${displaySender}: `;
 
         message.appendChild(senderElement);
         message.appendChild(document.createTextNode(text));
         chatBox.appendChild(message);
+        document.body.classList.toggle("has-conversation", chatBox.children.length > 0);
         chatBox.scrollTop = chatBox.scrollHeight;
 
         if (save) addToMemory(sender, text, type);
@@ -109,18 +96,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function loadSavedChat() {
         const memory = readMemory();
-
-        if (memory.length === 0) {
-            showMessage(
-                "J.A.R.V.I.S",
-                "System online. AI brain ready.",
-                "ai"
-            );
-            return;
-        }
-
+        const transientStatus = new Set([
+            "System online. AI brain ready.",
+            "Secure backend and WhatsApp bridge online. Explicit commands only.",
+            "Backend online. WhatsApp bridge is not connected.",
+            "Backend connection unavailable. Local AI mode active."
+        ]);
         memory.forEach((item) => {
-            showMessage(item.sender, item.text, item.type, false);
+            if (transientStatus.has(String(item.text || "").trim())) return;
+            const sender = item.sender === "J.A.R.V.I.S" ? "KALKI" : item.sender;
+            showMessage(sender || "KALKI", item.text || "", item.type || "ai", false);
         });
     }
 
@@ -177,11 +162,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (voiceSettings) voiceSettings.hidden = false;
         if (settingsToggle) settingsToggle.setAttribute("aria-expanded", "true");
         document.body.classList.add("menu-open");
-        setApiKeyStatus("A Gemini API key is required for AI chat and voice replies. Add it here to continue.", "error");
-        const voiceState = document.getElementById("voice-mode-state");
-        const voicePreview = document.getElementById("voice-response-preview");
-        if (voiceState) voiceState.textContent = "Gemini API key needed — open Settings to add it.";
-        if (voicePreview) voicePreview.textContent = "Your voice command was heard, but KALKI needs a Gemini API key before it can generate a reply.";
+        setApiKeyStatus("A Gemini API key is required for AI chat replies. Add it here to continue.", "error");
         window.setTimeout(() => {
             apiKeySettings?.scrollIntoView({ behavior: "smooth", block: "center" });
             apiKeyInput?.focus({ preventScroll: true });
@@ -383,8 +364,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const interaction = await analyzeInteraction(userText);
             if (interaction?.clarification?.question) { showMessage("KALKI", interaction.clarification.question, "ai"); return; }
             const reply = await askGemini(interaction);
-            showMessage("J.A.R.V.I.S", reply, "ai");
-            speak(reply);
+            showMessage("KALKI", reply, "ai");
         } catch (error) {
             console.error("JARVIS AI Error:", error);
             showMessage("SYSTEM", error.message, "ai");
@@ -398,13 +378,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function clearChat() {
         localStorage.removeItem(MEMORY_KEY);
-        if (chatBox) chatBox.innerHTML = "";
+        if (chatBox) chatBox.replaceChildren();
+        document.body.classList.remove("has-conversation");
         if (messageInput) messageInput.value = "";
-        showMessage(
-            "J.A.R.V.I.S",
-            "Memory cleared. System ready.",
-            "ai"
-        );
     }
 
     function setupVoice() {
@@ -443,93 +419,6 @@ document.addEventListener("DOMContentLoaded", () => {
             isListening = false;
             if (micButton) micButton.textContent = "🎙️";
         };
-    }
-
-    function setWakeStatus(text, active = false) {
-        if (!wakeStatus) return;
-        wakeStatus.textContent = text;
-        wakeStatus.classList.toggle("active", active);
-    }
-
-    function stopWakeListening() {
-        wakeEnabled = false;
-        wakeCaptureInProgress = false;
-        localStorage.setItem(WAKE_WORD_KEY, "0");
-        try { wakeRecognition?.stop(); commandRecognition?.stop(); } catch (_) { /* already stopped */ }
-        if (wakeToggle) wakeToggle.checked = false;
-        if (wakeStop) wakeStop.hidden = true;
-        setWakeStatus("Off. JARVIS will not use your microphone.");
-    }
-
-    function listenForCommand() {
-        if (!commandRecognition || !wakeEnabled) return;
-        wakeCaptureInProgress = true;
-        setWakeStatus("Wake word heard — listening for your command…", true);
-        try { commandRecognition.start(); } catch (_) { /* recognition may still be closing */ }
-    }
-
-    function startWakeListening() {
-        if (!wakeRecognition || !wakeEnabled) return;
-        wakeCaptureInProgress = false;
-        setWakeStatus("Armed in foreground — say “Hey Jarvis”.", true);
-        try { wakeRecognition.start(); } catch (_) { /* one-shot recognizer is already starting */ }
-    }
-
-    async function enableWakeListening() {
-        if (!wakeRecognition) {
-            if (wakeToggle) wakeToggle.checked = false;
-            setWakeStatus("This browser/WebView does not support voice recognition.");
-            return;
-        }
-        // Permission is requested only as a direct consequence of the user's toggle.
-        try {
-            if (!wakePermissionGranted && navigator.mediaDevices?.getUserMedia) {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                stream.getTracks().forEach(track => track.stop());
-                wakePermissionGranted = true;
-            }
-            wakeEnabled = true;
-            localStorage.setItem(WAKE_WORD_KEY, "1");
-            if (wakeStop) wakeStop.hidden = false;
-            startWakeListening();
-        } catch (_) {
-            if (wakeToggle) wakeToggle.checked = false;
-            setWakeStatus("Microphone permission was not granted. Wake word is off.");
-        }
-    }
-
-    function setupWakeWord() {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) return;
-        wakeRecognition = new SpeechRecognition();
-        wakeRecognition.lang = "en-IN";
-        wakeRecognition.continuous = false;
-        wakeRecognition.interimResults = false;
-        commandRecognition = new SpeechRecognition();
-        commandRecognition.lang = "en-IN";
-        commandRecognition.continuous = false;
-        commandRecognition.interimResults = false;
-        wakeRecognition.onresult = (event) => {
-            const heard = event.results[0][0].transcript.trim();
-            const match = heard.match(/(?:hey|hai|hi)\\s+(?:jarvis|jaarvis|jarv[ie]s|jervis)\\b[,:;.!\\s]*(.*)$/i);
-            if (!match) return;
-            const remainder = match[1].trim();
-            if (remainder) {
-                if (messageInput) messageInput.value = remainder;
-                sendMessage();
-            } else listenForCommand();
-        };
-        wakeRecognition.onerror = (event) => {
-            if (wakeEnabled && event.error !== "not-allowed") setWakeStatus("Armed in foreground — say “Hey Jarvis”.", true);
-        };
-        wakeRecognition.onend = () => { if (wakeEnabled && !wakeCaptureInProgress) startWakeListening(); };
-        commandRecognition.onresult = (event) => {
-            const command = event.results[0][0].transcript.trim();
-            wakeCaptureInProgress = false;
-            if (command && messageInput) { messageInput.value = command; sendMessage(); }
-        };
-        commandRecognition.onerror = () => { wakeCaptureInProgress = false; if (wakeEnabled) setWakeStatus("Armed in foreground — say “Hey Jarvis”.", true); };
-        commandRecognition.onend = () => { wakeCaptureInProgress = false; if (wakeEnabled) startWakeListening(); };
     }
 
     function installAndroidSharePreview() {
@@ -580,8 +469,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (voiceSettings) voiceSettings.hidden = !open;
         settingsToggle.setAttribute("aria-expanded", String(open));
     });
-    wakeToggle?.addEventListener("change", () => wakeToggle.checked ? enableWakeListening() : stopWakeListening());
-    wakeStop?.addEventListener("click", stopWakeListening);
     saveApiKeyButton?.addEventListener("click", saveApiKey);
     clearApiKeyButton?.addEventListener("click", clearApiKey);
     apiKeyInput?.addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); saveApiKey(); } });
@@ -602,9 +489,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     installAndroidSharePreview();
     setupVoice();
-    setupWakeWord();
-    if (wakeToggle) wakeToggle.checked = false; // opt-in every session; never silently arm the mic
-    setWakeStatus(wakeRecognition ? "Off. JARVIS will not use your microphone." : "Voice recognition is unavailable in this WebView.");
     loadSavedChat();
     refreshApiKeyStatus();
     checkBackendStatus();

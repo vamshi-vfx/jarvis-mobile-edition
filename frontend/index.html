@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="style.css?v=gemini-key-settings-1">
   <link rel="stylesheet" href="everyday-tools.css?v=kalki-1">
   <link rel="stylesheet" href="layout-fix.css?v=two-mode-1">
-  <link rel="stylesheet" href="overrides.css?v=chat-focus-1">
+  <link rel="stylesheet" href="overrides.css?v=zapia-unified-1">
   <link rel="stylesheet" href="social-agent.css?v=local-preview-1">
   <style>.advanced-intelligence-panel{margin:18px auto 0;max-width:760px;border:1px solid rgba(176,164,255,.28);border-radius:18px;background:linear-gradient(145deg,rgba(25,29,42,.92),rgba(12,15,24,.9));box-shadow:0 14px 40px #0004;overflow:hidden}.ai-panel-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px}.ai-panel-head strong,.ai-panel-head small{display:block}.ai-panel-head small{color:var(--muted);font-size:10px;margin-top:4px}.ai-collapse{border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--text);font-size:18px}.ai-panel-body{padding:0 16px 16px}.ai-status-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.ai-status-grid span{padding:8px;border:1px solid var(--line);border-radius:10px;background:#ffffff05}.ai-status-grid b,.ai-status-grid em{display:block;font-size:10px}.ai-status-grid b{text-transform:capitalize;color:var(--muted)}.ai-status-grid em{font-style:normal;color:#f0b48c;margin-top:3px}.ai-status-grid em.on{color:var(--green)}.ai-actions{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}.ai-actions button,.ai-plan button{border:1px solid var(--line);border-radius:10px;padding:9px;background:#ffffff08;color:var(--text);font-size:11px}.ai-plan label{display:block;color:var(--muted);font-size:11px;margin-bottom:5px}.ai-plan textarea{width:100%;box-sizing:border-box;resize:vertical;border:1px solid var(--line);border-radius:10px;padding:9px;background:#090b11;color:var(--text);font:inherit;font-size:12px}.ai-plan button{margin-top:7px}.ai-unavailable{color:var(--muted);font-size:10px;line-height:1.4;margin:12px 0 0}@media(max-width:560px){.ai-status-grid{grid-template-columns:repeat(2,1fr)}.ai-actions button{flex:1 1 45%}}</style>
 </head>
@@ -66,7 +66,6 @@
         </form>
         <section id="creator-output" class="creator-output" hidden aria-live="polite"><div class="creator-output-head"><strong id="creator-output-title">Creator plan</strong><span id="creator-output-state">BRIEF READY</span></div><div id="creator-cards" class="creator-cards"></div><div class="creator-preview"><div><strong>Workflow preview</strong><p id="creator-workflow"></p></div><div class="creator-boundary">No video rendering worker or provider is configured. Asset search terms are planning-only; use original, licensed, or permissioned footage/music.</div></div><div class="creator-approval"><label><input id="creator-approval" type="checkbox"> I explicitly approve exporting this planning package (no upload or publish).</label><button id="creator-export" type="button" disabled>Download plan placeholder</button><button id="creator-reset" type="button" class="creator-secondary">Start over</button></div></section>
       </section>
-      <section id="kalki-voice-mode" class="kalki-voice-mode" hidden aria-labelledby="kalki-voice-title"><div class="voice-mode-head"><div><p class="eyebrow">KALKI VOICE MODE</p><h2 id="kalki-voice-title">Speak with KALKI</h2><p>Foreground voice controls only. KALKI listens or speaks only when you choose.</p></div><span class="voice-mode-badge">EXPLICIT ONLY</span></div><div class="voice-orb" id="voice-orb" aria-live="polite"><span class="voice-orb-core">✦</span><span class="voice-orb-ring"></span></div><p id="voice-mode-state" class="voice-mode-state">Ready when you are</p><p id="voice-response-preview" class="voice-response-preview">Telugu response preview will appear here after a chosen voice interaction.</p><div class="voice-mode-actions" role="group" aria-label="KALKI voice controls"><button id="voice-mode-mic" type="button"><span>🎙</span> Listen</button><button id="voice-mode-speak" type="button"><span>◖</span> Speak preview</button><button id="voice-mode-wake" type="button"><span>◌</span> Wake word off</button></div><p class="voice-mode-boundary">“Hey Jarvis” remains foreground-only and uses the existing native bridge when available. No background listening or action runs automatically.</p></section>
       <section id="social-agent-panel" class="social-agent-panel" hidden aria-labelledby="social-agent-title">
         <header class="social-head"><div><p class="eyebrow">KALKI · AGENTS</p><h2 id="social-agent-title">Social Automation Agent</h2><p>Build and test Instagram automation rules privately. This workspace stores drafts and simulation records in this browser only.</p></div><span id="social-agent-connection-state" class="social-pending">INSTAGRAM · PENDING</span></header>
         <p class="social-boundary"><strong>Safe preview mode:</strong> no Meta OAuth is configured, and this agent has no Instagram API, webhook, or send capability. “Start” enables only the local simulator. Every DM remains a draft; confirming approval records consent locally and <strong>never sends or publishes</strong>.</p>
@@ -91,7 +90,7 @@
       </section>
     </main>
 
-    <nav class="mode-tabs" aria-label="KALKI modes"><button class="mode-tab is-active" type="button" data-mode="assistant" aria-pressed="true"><span>✦</span><strong>Assistant</strong><small>Chat mode</small></button><button class="mode-tab" type="button" data-mode="kalki" aria-pressed="false"><span>◉</span><strong>KALKI</strong><small>Voice mode</small></button></nav><div class="composer-wrap">
+    <div class="composer-wrap">
       <div class="composer" role="group" aria-label="Message composer">
         <button id="attach-btn" class="composer-icon" type="button" aria-label="Attach a file" aria-expanded="false">＋</button>
         <input id="img-input" type="file" accept="image/*,.pdf,.txt,.doc,.docx" hidden>
@@ -100,7 +99,7 @@
         <button id="send" class="send-button" type="button" aria-label="Send message">↑</button>
       <div id="attachment-menu" class="attachment-menu" hidden role="menu"><button id="cam-btn" type="button" role="menuitem">📷 Take or choose an image</button><button id="file-btn" type="button" role="menuitem">📎 Choose a file</button></div>
       </div>
-      <p class="safe-note"><span>✦</span> JARVIS only takes action when you explicitly ask.</p>
+      <p class="safe-note"><span>✦</span> KALKI only takes action when you explicitly ask.</p>
     </div>
   </div>
 
@@ -113,7 +112,7 @@
     <a class="sheet-link" href="#creator-agent-panel" id="creator-agent-link">✦ Creator Agent</a><a class="sheet-link" href="#social-agent-panel" id="social-agent-link">◎ Social Automation Agent</a><a class="sheet-link" href="#everyday-tools" id="tools-menu-link">⌁ Tools</a><button id="settings-toggle" class="sheet-link" type="button" aria-expanded="false">⚙ Settings</button>
     <section id="voice-settings" class="voice-settings" hidden aria-label="Settings">
       <section id="gemini-api-settings" class="api-key-settings" aria-labelledby="gemini-key-title">
-        <div class="api-key-heading"><strong id="gemini-key-title">Gemini API key</strong><small>Required for AI chat and voice replies</small></div>
+        <div class="api-key-heading"><strong id="gemini-key-title">Gemini API key</strong><small>Required for AI chat replies</small></div>
         <label class="api-key-label" for="gemini-api-key">Google AI Studio key</label>
         <input id="gemini-api-key" class="api-key-input" type="password" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="100" aria-describedby="gemini-key-privacy gemini-key-status" placeholder="Paste your Gemini API key">
         <p id="gemini-key-privacy" class="api-key-help">Saved only in this browser or device. When you ask KALKI for an AI reply, the key is sent directly from this page to Google’s Gemini API over HTTPS. It is not stored on KALKI’s server. Anyone with access to this browser profile may be able to access browser-local data.</p>
@@ -121,19 +120,12 @@
         <div class="api-key-actions"><button id="save-api-key" type="button" class="api-key-save">Save key on this device</button><button id="clear-api-key" type="button" class="api-key-clear">Clear saved key</button></div>
         <a class="api-key-link" href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer">Get a Gemini API key from Google AI Studio ↗</a>
       </section>
-      <div class="voice-setting-row">
-        <div><strong>Wake word</strong><small>Foreground only · “Hey Jarvis”</small></div>
-        <label class="switch"><input id="wake-word-toggle" type="checkbox"><span aria-hidden="true"></span><span class="sr-only">Enable wake word</span></label>
-      </div>
-      <p id="wake-word-status" class="voice-status">Off. JARVIS will not use your microphone.</p>
-      <button id="wake-word-stop" class="voice-stop" type="button" hidden>Stop listening</button>
-      <p class="voice-disclaimer">Requires microphone permission. WebView cannot provide reliable background wake-word listening; keep JARVIS open and in the foreground.</p>
     </section>
     <a class="sheet-link" href="admin.html">▣ Admin dashboard</a>
   </aside>
   <div class="sheet-backdrop"></div>
 
-  <script src="script.js?v=gemini-key-settings-1"></script>
+  <script src="script.js?v=zapia-unified-1"></script>
   <script src="advanced-intelligence.js"></script>
   <script src="social-agent.js?v=local-preview-1"></script>
   <script>
@@ -142,46 +134,26 @@
     menu?.addEventListener('click', () => toggleMenu(true));
     document.querySelector('.sheet-close')?.addEventListener('click', () => toggleMenu(false));
     backdrop?.addEventListener('click', () => toggleMenu(false));
-    const modeTabs = document.querySelectorAll('.mode-tab');
-    const voiceMode = document.getElementById('kalki-voice-mode');
-    const assistantMain = document.getElementById('assistant-section');
     const chatSurface = document.getElementById('chat');
     const composerWrap = document.querySelector('.composer-wrap');
-    const voiceState = document.getElementById('voice-mode-state');
-    const voicePreview = document.getElementById('voice-response-preview');
-    const voiceOrb = document.getElementById('voice-orb');
     const welcomeSurface = document.querySelector('.welcome');
     const sharePreview = document.getElementById('kalki-share-preview');
-    // One controller owns every surface. This prevents a menu workspace from
-    // leaking into the chat home when the bottom tabs are used.
     function setSurface(surface) {
       const assistant = surface === 'assistant';
-      const voice = surface === 'kalki';
       const creator = surface === 'creator';
       const tools = surface === 'tools';
       const social = surface === 'social';
-      document.body.classList.toggle('kalki-mode-active', voice);
-      document.body.classList.toggle('utility-mode-active', !assistant && !voice);
+      document.body.classList.remove('kalki-mode-active');
+      document.body.classList.toggle('utility-mode-active', !assistant);
       if (welcomeSurface) welcomeSurface.hidden = !assistant && !tools;
       if (sharePreview) sharePreview.hidden = !assistant;
       if (chatSurface) chatSurface.hidden = !assistant;
       if (creatorPanel) creatorPanel.hidden = !creator;
-      if (voiceMode) voiceMode.hidden = !voice;
       if (toolsSection) toolsSection.hidden = !tools;
       if (socialAgentPanel) socialAgentPanel.hidden = !social;
       if (composerWrap) composerWrap.hidden = !assistant;
-      modeTabs.forEach(tab => { const active = (surface === 'kalki' && tab.dataset.mode === 'kalki') || (surface !== 'kalki' && tab.dataset.mode === 'assistant'); tab.classList.toggle('is-active', active); tab.setAttribute('aria-pressed', String(active)); });
-      if (surface === 'kalki') { voiceState && (voiceState.textContent = 'Ready when you are'); voicePreview && (voicePreview.textContent = 'Telugu response preview will appear here after a chosen voice interaction.'); }
       window.scrollTo({top: 0, behavior: 'smooth'});
     }
-    function setKalkiMode(mode) { setSurface(mode === 'kalki' ? 'kalki' : 'assistant'); }
-    modeTabs.forEach(tab => tab.addEventListener('click', () => setKalkiMode(tab.dataset.mode)));
-    // Bottom Assistant is the hard reset back to a clean chat surface.
-    document.querySelector('[data-mode=\"assistant\"]')?.addEventListener('click', () => setSurface('assistant'));
-
-    document.getElementById('voice-mode-mic')?.addEventListener('click', () => { voiceState && (voiceState.textContent = 'Listening… speak your command'); voiceOrb?.classList.add('is-listening'); document.getElementById('mic-btn')?.click(); setTimeout(() => voiceOrb?.classList.remove('is-listening'), 1800); });
-    document.getElementById('voice-mode-speak')?.addEventListener('click', () => { const text = 'నమస్కారం. నేను KALKI. మీ explicit command కోసం సిద్ధంగా ఉన్నాను.'; voicePreview && (voicePreview.textContent = text); voiceState && (voiceState.textContent = 'Speaking preview'); if ('speechSynthesis' in window) { speechSynthesis.cancel(); speechSynthesis.speak(new SpeechSynthesisUtterance(text)); } });
-    document.getElementById('voice-mode-wake')?.addEventListener('click', () => { const toggle = document.getElementById('wake-word-toggle'); if (!toggle) return; toggle.click(); const button = document.getElementById('voice-mode-wake'); if (button) { button.innerHTML = toggle.checked ? '<span>◌</span> Wake word on' : '<span>◌</span> Wake word off'; } voiceState && (voiceState.textContent = toggle.checked ? 'Foreground wake word armed' : 'Wake word is off'); });
     const creatorPanel = document.getElementById('creator-agent-panel');
     const socialAgentPanel = document.getElementById('social-agent-panel');
     const creatorLink = document.getElementById('creator-agent-link');
@@ -207,7 +179,7 @@
     document.getElementById('file-btn')?.addEventListener('click', () => { toggleAttachment(false); fileInput?.click(); });
     fileInput?.addEventListener('change', () => { const file = fileInput.files?.[0]; if (file && messageInput) { messageInput.value = `Please review this file: ${file.name}`; messageInput.focus(); } });
     document.addEventListener('click', (event) => { if (attachmentMenu && !attachmentMenu.contains(event.target) && event.target !== attachButton) toggleAttachment(false); });
-    setKalkiMode('assistant');
+    setSurface('assistant');
   </script>
 </body>
 </html>
