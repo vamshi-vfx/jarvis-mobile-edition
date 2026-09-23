@@ -150,16 +150,17 @@ document.addEventListener("DOMContentLoaded", () => {
             apiKeyInput?.focus();
             return;
         }
-        // Harmless local format check only. This does not contact Google or verify the key.
-        if (!/^AIza[0-9A-Za-z_-]{20,}$/.test(value)) {
-            setApiKeyStatus("This does not look like a Google API key (expected an AIza… key). Check it and try again. Nothing was saved.", "error");
+        // Shape check only. This neither contacts Google nor authenticates the key.
+        const plausibleGeminiKey = /^(?:AIza[A-Za-z0-9_-]{20,96}|AQ\.[A-Za-z0-9_-]{20,96})$/.test(value);
+        if (!plausibleGeminiKey) {
+            setApiKeyStatus("Use a standard AIza… key or an AI Studio authorization key starting AQ. This local format check does not verify the key with Google. Nothing was saved.", "error");
             apiKeyInput?.focus();
             return;
         }
         try {
             localStorage.setItem(API_KEY_STORAGE, value);
             if (apiKeyInput) apiKeyInput.value = "";
-            setApiKeyStatus("Key saved locally · format looks plausible, but Google has not verified it.", "saved");
+            setApiKeyStatus("Key saved locally · format looks plausible only; Google has not verified it.", "saved");
         } catch (_) {
             setApiKeyStatus("Could not save in this browser. Check device storage settings and try again.", "error");
         }
