@@ -1,0 +1,39 @@
+name: Build KALKI GitHub Pages site
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'website/**'
+      - '.github/workflows/kalki-site.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: kalki-site-build
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: website/package-lock.json
+      - run: npm ci --prefix website
+      - run: npm run check --prefix website
+      - run: npm run build --prefix website
+      - name: Commit static Pages output to root
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html assets/kalki-site/
+          if git diff --cached --quiet; then
+            echo "Static output is already current."
+          else
+            git commit -m "chore: publish KALKI website build"
+            git push origin main
+          fi
