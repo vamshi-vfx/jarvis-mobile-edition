@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="layout-fix.css?v=two-mode-1">
   <link rel="stylesheet" href="overrides.css?v=zapia-unified-1">
   <link rel="stylesheet" href="social-agent.css?v=local-preview-1">
-  <link rel="stylesheet" href="professional-ui.css?v=20260926-1">
+  <link rel="stylesheet" href="professional-ui.css?v=20260926-2">
   <style>.advanced-intelligence-panel{margin:18px auto 0;max-width:760px;border:1px solid rgba(176,164,255,.28);border-radius:18px;background:linear-gradient(145deg,rgba(25,29,42,.92),rgba(12,15,24,.9));box-shadow:0 14px 40px #0004;overflow:hidden}.ai-panel-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px}.ai-panel-head strong,.ai-panel-head small{display:block}.ai-panel-head small{color:var(--muted);font-size:10px;margin-top:4px}.ai-collapse{border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--text);font-size:18px}.ai-panel-body{padding:0 16px 16px}.ai-status-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.ai-status-grid span{padding:8px;border:1px solid var(--line);border-radius:10px;background:#ffffff05}.ai-status-grid b,.ai-status-grid em{display:block;font-size:10px}.ai-status-grid b{text-transform:capitalize;color:var(--muted)}.ai-status-grid em{font-style:normal;color:#f0b48c;margin-top:3px}.ai-status-grid em.on{color:var(--green)}.ai-actions{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}.ai-actions button,.ai-plan button{border:1px solid var(--line);border-radius:10px;padding:9px;background:#ffffff08;color:var(--text);font-size:11px}.ai-plan label{display:block;color:var(--muted);font-size:11px;margin-bottom:5px}.ai-plan textarea{width:100%;box-sizing:border-box;resize:vertical;border:1px solid var(--line);border-radius:10px;padding:9px;background:#090b11;color:var(--text);font:inherit;font-size:12px}.ai-plan button{margin-top:7px}.ai-unavailable{color:var(--muted);font-size:10px;line-height:1.4;margin:12px 0 0}@media(max-width:560px){.ai-status-grid{grid-template-columns:repeat(2,1fr)}.ai-actions button{flex:1 1 45%}}</style>
 </head>
 <body>
@@ -112,6 +112,21 @@
     <a class="sheet-link" href="../" target="_blank" rel="noopener noreferrer" aria-label="Open the KALKI product website in a new tab">ⓘ KALKI product site ↗</a>
     <a class="sheet-link" href="#creator-agent-panel" id="creator-agent-link">✦ Creator Agent</a><a class="sheet-link" href="#social-agent-panel" id="social-agent-link">◎ Social Automation Agent</a><a class="sheet-link" href="#everyday-tools" id="tools-menu-link">⌁ Tools</a><button id="settings-toggle" class="sheet-link" type="button" aria-expanded="false">⚙ Settings</button>
     <section id="voice-settings" class="voice-settings" hidden aria-label="Settings">
+      <section class="voice-output-settings" aria-labelledby="tts-settings-title">
+        <div class="voice-setting-heading"><strong id="tts-settings-title">Voice replies</strong><small>Uses the voice available in this browser or device.</small></div>
+        <label class="kalki-toggle" for="tts-auto-read"><input id="tts-auto-read" type="checkbox"><span>Automatically read KALKI replies aloud</span></label>
+        <button id="tts-stop-button" class="voice-setting-button" type="button">Stop speaking</button>
+        <p id="tts-status" class="voice-setting-status" role="status" aria-live="polite">Use the speaker button on a reply, or enable automatic reading.</p>
+      </section>
+      <section class="desktop-agent-settings" aria-labelledby="desktop-agent-title">
+        <div class="voice-setting-heading"><strong id="desktop-agent-title">Desktop companion</strong><small>Connect a local agent to open approved apps on this computer.</small></div>
+        <p class="desktop-agent-note">This version only opens Calculator, Notes, or a blank browser tab after you approve. It cannot run terminal commands or read files.</p>
+        <label class="api-key-label" for="desktop-pair-code">One-time pairing code</label>
+        <input id="desktop-pair-code" class="api-key-input" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" pattern="[0-9]{8}" placeholder="8-digit code from the desktop agent">
+        <div class="api-key-actions"><button id="desktop-pair-button" type="button" class="api-key-save">Pair this desktop</button><button id="desktop-unpair-button" type="button" class="api-key-clear">Disconnect</button></div>
+        <p id="desktop-agent-status" class="api-key-status" role="status" aria-live="polite">Not paired in this browser session.</p>
+        <a class="api-key-link" href="../desktop-agent/README.md" target="_blank" rel="noopener noreferrer">Desktop agent setup and safety details ↗</a>
+      </section>
       <section id="gemini-api-settings" class="api-key-settings" aria-labelledby="gemini-key-title">
         <div class="api-key-heading"><strong id="gemini-key-title">Gemini API key</strong><small>Required for AI chat replies</small></div>
         <label class="api-key-label" for="gemini-api-key">Google AI Studio key</label>
@@ -126,7 +141,7 @@
   </aside>
   <div class="sheet-backdrop"></div>
 
-  <script src="script.js?v=zapia-unified-1"></script>
+  <script src="script.js?v=desktop-tts-1"></script>
   <script src="advanced-intelligence.js"></script>
   <script src="social-agent.js?v=local-preview-1"></script>
   <script>

@@ -12,8 +12,20 @@ document.addEventListener("DOMContentLoaded", () => {
     const apiKeySettings = document.getElementById("gemini-api-settings");
     const saveApiKeyButton = document.getElementById("save-api-key");
     const clearApiKeyButton = document.getElementById("clear-api-key");
+    const ttsAutoRead = document.getElementById("tts-auto-read");
+    const ttsStopButton = document.getElementById("tts-stop-button");
+    const ttsStatus = document.getElementById("tts-status");
+    const desktopPairCodeInput = document.getElementById("desktop-pair-code");
+    const desktopPairButton = document.getElementById("desktop-pair-button");
+    const desktopUnpairButton = document.getElementById("desktop-unpair-button");
+    const desktopAgentStatus = document.getElementById("desktop-agent-status");
 
     const MEMORY_KEY = "jarvis_chat_memory";
+    const TTS_AUTO_READ_KEY = "kalki.tts.autoRead";
+    const DESKTOP_AGENT_URL = "http://127.0.0.1:43187";
+    let desktopSessionToken = null;
+    let activeUtterance = null;
+    let activeSpeakButton = null;
     const API_KEY_STORAGE = "jarvis_api_key";
     const BACKEND_HEALTH_URL = "https://jarvis-mobile-edition-alpha.vercel.app/api/health";
     const BACKEND_COMMAND_URL = "https://jarvis-mobile-edition-alpha.vercel.app/api/command";
@@ -87,11 +99,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
         message.appendChild(senderElement);
         message.appendChild(document.createTextNode(text));
+        const canSpeak = type === "ai" && sender !== "SYSTEM" && sender !== "YOU";
+        let speakButton = null;
+        if (canSpeak) {
+            speakButton = document.createElement("button");
+            speakButton.type = "button";
+            speakButton.className = "speak-button";
+            speakButton.textContent = "🔊 Read aloud";
+            speakButton.setAttribute("aria-label", `Read ${displaySender}'s reply aloud`);
+            speakButton.setAttribute("aria-pressed", "false");
+            speakButton.addEventListener("click", () => {
+                if (activeSpeakButton === speakButton && window.speechSynthesis?.speaking) stopSpeaking();
+                else speak(text, speakButton);
+            });
+            message.appendChild(speakButton);
+        }
+
         chatBox.appendChild(message);
         document.body.classList.toggle("has-conversation", chatBox.children.length > 0);
         chatBox.scrollTop = chatBox.scrollHeight;
 
         if (save) addToMemory(sender, text, type);
+        if (save && canSpeak && ttsAutoRead?.checked) speak(text, speakButton);
     }
 
     function loadSavedChat() {
@@ -237,14 +266,42 @@ document.addEventListener("DOMContentLoaded", () => {
         throw new Error(lastError);
     }
 
-    function speak(text) {
-        if (!("speechSynthesis" in window)) return;
+    function resetSpeakButton() {
+        if (activeSpeakButton?.isConnected) {
+            activeSpeakButton.textContent = "🔊 Read aloud";
+            activeSpeakButton.setAttribute("aria-pressed", "false");
+        }
+        activeSpeakButton = null;
+        activeUtterance = null;
+    }
 
-        speechSynthesis.cancel();
-        const voice = new SpeechSynthesisUtterance(text);
-        voice.lang = "en-IN";
-        voice.rate = 0.95;
-        speechSynthesis.speak(voice);
+    function stopSpeaking() {
+        if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+        resetSpeakButton();
+    }
+
+    function speak(text, button = null) {
+        if (!("speechSynthesis" in window) || !("SpeechSynthesisUtterance" in window)) {
+            if (ttsStatus) ttsStatus.textContent = "Text-to-speech is not supported by this browser.";
+            return;
+        }
+        stopSpeaking();
+        const utterance = new SpeechSynthesisUtterance(String(text));
+        const hasTeluguScript = Array.from(String(text)).some((character) => {
+            const codePoint = character.codePointAt(0) || 0;
+            return codePoint >= 0x0C00 && codePoint <= 0x0C7F;
+        });
+        utterance.lang = hasTeluguScript ? "te-IN" : "en-IN";
+        utterance.rate = 0.96;
+        activeUtterance = utterance;
+        activeSpeakButton = button;
+        if (button) {
+            button.textContent = "⏹ Stop";
+            button.setAttribute("aria-pressed", "true");
+        }
+        utterance.onend = () => { if (activeUtterance === utterance) resetSpeakButton(); };
+        utterance.onerror = () => { if (activeUtterance === utterance) resetSpeakButton(); };
+        window.speechSynthesis.speak(utterance);
     }
 
     // Skill router: no background actions. A skill runs only after an explicit command.
@@ -321,6 +378,147 @@ document.addEventListener("DOMContentLoaded", () => {
         return false;
     }
 
+    function setDesktopAgentStatus(message, state = "") {
+        if (!desktopAgentStatus) return;
+        desktopAgentStatus.textContent = message;
+        desktopAgentStatus.classList.toggle("is-saved", state === "connected");
+        desktopAgentStatus.classList.toggle("is-error", state === "error");
+    }
+
+    function openVoiceSettingsPanel() {
+        if (voiceSettings) voiceSettings.hidden = false;
+        if (settingsToggle) settingsToggle.setAttribute("aria-expanded", "true");
+        document.body.classList.add("menu-open");
+    }
+
+    async function pairDesktopAgent() {
+        const code = desktopPairCodeInput?.value.trim() || "";
+        if (code.length !== 8 || Array.from(code).some((character) => character < "0" || character > "9")) {
+            setDesktopAgentStatus("Enter the 8-digit one-time code shown in the desktop agent terminal.", "error");
+            desktopPairCodeInput?.focus();
+            return;
+        }
+        if (!window.isSecureContext) {
+            setDesktopAgentStatus("Open KALKI over HTTPS on the same computer as the agent.", "error");
+            return;
+        }
+        setDesktopAgentStatus("Connecting to the local desktop agent…");
+        try {
+            const response = await fetch(`${DESKTOP_AGENT_URL}/v1/pair`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ code })
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || !data.ok || !data.token) throw new Error(data.message || "Pairing failed.");
+            desktopSessionToken = data.token;
+            if (desktopPairCodeInput) desktopPairCodeInput.value = "";
+            setDesktopAgentStatus("Paired for this browser session. Each desktop action still needs approval.", "connected");
+            refreshPendingDesktopApprovals(true);
+        } catch (error) {
+            const message = error?.message && error.message !== "Failed to fetch"
+                ? error.message
+                : "Could not reach the agent. Start it on this computer, allow local-network access, and try again.";
+            setDesktopAgentStatus(message, "error");
+        }
+    }
+
+    function refreshPendingDesktopApprovals(connected) {
+        chatBox?.querySelectorAll('.desktop-action-card[data-desktop-state="pending"]').forEach((card) => {
+            const approve = card.querySelector(".desktop-approve-button");
+            const status = card.querySelector(".desktop-action-status");
+            if (approve) approve.disabled = !connected;
+            if (status) status.textContent = connected
+                ? "Nothing happens until you approve."
+                : "Pair the desktop in Settings before approving.";
+        });
+    }
+
+    function detectDesktopAction(text) {
+        const normalized = normalizeCommand(text).replace(/[.!?]+$/g, "").trim();
+        const names = "calculator|calc|notes|notepad|text editor|browser|web browser";
+        const forward = normalized.match(new RegExp(`^(?:please\\s+)?(?:open|launch|start)\\s+(?:the\\s+)?(${names})(?:\\s+please)?$`, "i"));
+        const reverse = normalized.match(new RegExp(`^(${names})\\s+(?:open|launch|start)$`, "i"));
+        const requested = (forward?.[1] || reverse?.[1] || "").toLowerCase();
+        if (!requested) return null;
+        if (requested === "calculator" || requested === "calc") return { id: "calculator", label: "Calculator" };
+        if (requested === "notes" || requested === "notepad" || requested === "text editor") return { id: "notes", label: "the text editor" };
+        return { id: "browser", label: "a blank tab in your default browser" };
+    }
+
+    async function executeDesktopAction(action) {
+        if (!desktopSessionToken) throw new Error("Pair this desktop in Settings first.");
+        const response = await fetch(`${DESKTOP_AGENT_URL}/v1/command`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${desktopSessionToken}`
+            },
+            body: JSON.stringify({ action })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !data.ok) {
+            if (response.status === 401) {
+                desktopSessionToken = null;
+                setDesktopAgentStatus("This browser lost its pairing. Restart the agent to create a fresh code.", "error");
+                refreshPendingDesktopApprovals(false);
+            }
+            throw new Error(data.message || "Desktop action was not completed.");
+        }
+        return data.message || "Desktop action completed.";
+    }
+
+    function showDesktopApprovalCard(action) {
+        if (!chatBox) return;
+        const card = document.createElement("div");
+        card.className = "msg desktop-action-card";
+        card.dataset.desktopState = "pending";
+        const title = document.createElement("strong");
+        title.textContent = "KALKI desktop action";
+        const copy = document.createElement("p");
+        copy.textContent = `Open ${action.label} on the paired computer?`;
+        const status = document.createElement("p");
+        status.className = "desktop-action-status";
+        status.textContent = desktopSessionToken ? "Nothing happens until you approve." : "Pair the desktop in Settings before approving.";
+        const actions = document.createElement("div");
+        actions.className = "desktop-action-buttons";
+        const approve = document.createElement("button");
+        approve.type = "button";
+        approve.className = "desktop-approve-button";
+        approve.textContent = "Approve & open";
+        approve.disabled = !desktopSessionToken;
+        const cancel = document.createElement("button");
+        cancel.type = "button";
+        cancel.className = "desktop-cancel-button";
+        cancel.textContent = "Cancel";
+        actions.append(approve, cancel);
+        card.append(title, copy, status, actions);
+        if (!desktopSessionToken) {
+            const settingsButton = document.createElement("button");
+            settingsButton.type = "button";
+            settingsButton.className = "desktop-settings-button";
+            settingsButton.textContent = "Open Settings to pair";
+            settingsButton.addEventListener("click", openVoiceSettingsPanel);
+            card.appendChild(settingsButton);
+        }
+        cancel.addEventListener("click", () => { card.dataset.desktopState = "cancelled"; status.textContent = "Cancelled. Nothing was opened."; actions.remove(); });
+        approve.addEventListener("click", async () => {
+            approve.disabled = true;
+            cancel.disabled = true;
+            status.textContent = "Waiting for the local agent…";
+            try {
+                const result = await executeDesktopAction(action.id);
+                card.dataset.desktopState = "completed";
+                status.textContent = result;
+            } catch (error) {
+                status.textContent = error.message || "Desktop action failed. Nothing else was attempted.";
+            }
+        });
+        chatBox.appendChild(card);
+        document.body.classList.add("has-conversation");
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
     async function sendMessage() {
         if (!messageInput || !sendButton) return;
 
@@ -331,6 +529,11 @@ document.addEventListener("DOMContentLoaded", () => {
         messageInput.value = "";
 
         const commandText = normalizeCommand(userText);
+        const desktopAction = detectDesktopAction(commandText);
+        if (desktopAction) {
+            showDesktopApprovalCard(desktopAction);
+            return;
+        }
         const everydayTool = detectEverydayTool(commandText);
         const requestedSkill = detectSkill(commandText);
         if ((everydayTool || requestedSkill) && isExplicitAction(commandText)) {
@@ -340,9 +543,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 showMessage("KALKI", result.message || "Command received.", "ai");
                 if (result.url && result.executed && (result.tool === "openYouTube" || result.tool === "openGoogle" || result.tool === "youtubeSearch" || result.tool === "wikipedia")) window.open(result.url, "_blank", "noopener");
                 if (result.notify && result.seconds) {
-                    window.setTimeout(() => { const text = "⏰ Timer complete!"; showMessage("KALKI", text, "ai"); speak(text); if (window.Notification && Notification.permission === "granted") new Notification("KALKI", { body: text }); }, result.seconds * 1000);
+                    window.setTimeout(() => { const text = "⏰ Timer complete!"; showMessage("KALKI", text, "ai"); if (!ttsAutoRead?.checked) speak(text); if (window.Notification && Notification.permission === "granted") new Notification("KALKI", { body: text }); }, result.seconds * 1000);
                     if (window.Notification && Notification.permission === "default") Notification.requestPermission().catch(() => {});
-                } else if (result.speak) speak(result.message || "Done");
+                } else if (result.speak && !ttsAutoRead?.checked) speak(result.message || "Done");
             } catch (error) {
                 console.error("JARVIS backend bridge error:", error);
                 showMessage("SYSTEM", "Backend command bridge unavailable. Nothing was executed.", "ai");
@@ -377,6 +580,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function clearChat() {
+        stopSpeaking();
         localStorage.removeItem(MEMORY_KEY);
         if (chatBox) chatBox.replaceChildren();
         document.body.classList.remove("has-conversation");
@@ -463,6 +667,54 @@ document.addEventListener("DOMContentLoaded", () => {
         if (isListening) recognition.stop();
         else recognition.start();
     }
+
+    if (ttsAutoRead) {
+        try { ttsAutoRead.checked = localStorage.getItem(TTS_AUTO_READ_KEY) === "true"; }
+        catch (_) { ttsAutoRead.checked = false; }
+        if (ttsStatus) ttsStatus.textContent = ttsAutoRead.checked
+            ? "Automatic reading is on for new KALKI replies; it stays on this device."
+            : "Use the speaker button on a reply, or enable automatic reading.";
+        ttsAutoRead.addEventListener("change", () => {
+            try { localStorage.setItem(TTS_AUTO_READ_KEY, String(ttsAutoRead.checked)); }
+            catch (_) { /* The per-message speaker remains available if storage is disabled. */ }
+            if (ttsStatus) ttsStatus.textContent = ttsAutoRead.checked
+                ? "Automatic reading is on for new KALKI replies; it stays on this device."
+                : "Automatic reading is off. Use the speaker button on any reply.";
+        });
+    }
+    ttsStopButton?.addEventListener("click", () => {
+        stopSpeaking();
+        if (ttsStatus) ttsStatus.textContent = "Speech stopped.";
+    });
+    if (!("speechSynthesis" in window) && ttsStatus) {
+        ttsStatus.textContent = "This browser does not provide text-to-speech.";
+    }
+    desktopPairButton?.addEventListener("click", pairDesktopAgent);
+    desktopPairCodeInput?.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") { event.preventDefault(); pairDesktopAgent(); }
+    });
+    desktopUnpairButton?.addEventListener("click", async () => {
+        if (!desktopSessionToken) {
+            setDesktopAgentStatus("No active pairing in this page. Restart the agent if it is still paired elsewhere.");
+            return;
+        }
+        try {
+            const response = await fetch(`${DESKTOP_AGENT_URL}/v1/disconnect`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${desktopSessionToken}` },
+                body: JSON.stringify({})
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || !data.ok) throw new Error(data.message || "Could not disconnect.");
+            desktopSessionToken = null;
+            setDesktopAgentStatus(data.message || "Disconnected. The agent created a new one-time code.");
+            refreshPendingDesktopApprovals(false);
+        } catch (_) {
+            desktopSessionToken = null;
+            setDesktopAgentStatus("Could not reach the agent. This page cleared its token; restart the agent to reset pairing.", "error");
+            refreshPendingDesktopApprovals(false);
+        }
+    });
 
     settingsToggle?.addEventListener("click", () => {
         const open = voiceSettings?.hasAttribute("hidden");

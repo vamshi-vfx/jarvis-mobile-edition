@@ -288,3 +288,59 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+
+/* Voice and local desktop companion controls */
+.side-sheet { overflow-y: auto; overscroll-behavior: contain; }
+.voice-output-settings, .desktop-agent-settings {
+  margin: 12px 0;
+  padding: 13px;
+  border: 1px solid rgba(179, 185, 207, .14);
+  border-radius: 14px;
+  background: rgba(255,255,255,.025);
+}
+.voice-setting-heading { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+.voice-setting-heading strong { color: #e9eaf2; font-size: 12px; }
+.voice-setting-heading small, .desktop-agent-note, .voice-setting-status { color: #9aa4b7; font-size: 10px; line-height: 1.5; }
+.kalki-toggle { display: flex; align-items: flex-start; gap: 9px; color: #dce0ea; font-size: 11px; line-height: 1.45; }
+.kalki-toggle input { width: 16px; height: 16px; flex: 0 0 16px; accent-color: #a99cff; }
+.voice-setting-button, .desktop-settings-button {
+  margin-top: 9px;
+  padding: 8px 10px;
+  border: 1px solid rgba(179, 185, 207, .18);
+  border-radius: 9px;
+  background: rgba(255,255,255,.045);
+  color: #dce0ea;
+  font-size: 10px;
+}
+.voice-setting-button:hover, .desktop-settings-button:hover { border-color: rgba(177,164,255,.45); background: rgba(177,164,255,.08); }
+.desktop-agent-note { margin: 0 0 9px; }
+#desktop-pair-code { font-size: 14px; letter-spacing: .16em; }
+.desktop-agent-settings .api-key-actions { flex-wrap: wrap; }
+.desktop-agent-settings .api-key-status, .voice-setting-status { overflow-wrap: anywhere; }
+.speak-button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  margin-top: 9px;
+  padding: 5px 9px;
+  border: 1px solid rgba(177,164,255,.20);
+  border-radius: 9px;
+  background: rgba(177,164,255,.07);
+  color: #c8beff;
+  font-size: 10px;
+  cursor: pointer;
+}
+.speak-button:hover { border-color: rgba(177,164,255,.55); background: rgba(177,164,255,.13); }
+.speak-button:focus-visible, .voice-setting-button:focus-visible, .desktop-action-buttons button:focus-visible, #desktop-pair-code:focus-visible { outline: 2px solid #b7abff; outline-offset: 2px; }
+.desktop-action-card { width: min(100%, 520px); border-color: rgba(177,164,255,.32); background: linear-gradient(145deg, rgba(27,29,45,.98), rgba(17,21,32,.98)); }
+.desktop-action-card > p { margin-top: 7px; color: #dfe2eb; font-size: 13px; line-height: 1.5; }
+.desktop-action-card .desktop-action-status { color: #a8b1c2; font-size: 11px; }
+.desktop-action-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.desktop-action-buttons button { min-height: 36px; padding: 8px 11px; border: 1px solid rgba(179,185,207,.18); border-radius: 10px; background: rgba(255,255,255,.05); color: #e6e8ef; font-size: 11px; }
+.desktop-action-buttons .desktop-approve-button { border-color: rgba(177,164,255,.38); background: linear-gradient(145deg,#a99cff,#8071e8); color: #100e1b; font-weight: 700; }
+.desktop-action-buttons button:disabled { opacity: .48; cursor: not-allowed; }
+.desktop-action-card .desktop-settings-button { margin-top: 10px; }
+@media (max-width: 560px) {
+  .voice-output-settings, .desktop-agent-settings { padding: 11px; }
+  .desktop-action-buttons button { flex: 1 1 42%; }
+}
