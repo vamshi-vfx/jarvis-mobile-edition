@@ -366,3 +366,16 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   color: #ff9cac;
   box-shadow: 0 0 0 3px rgba(255,91,122,.08);
 }
+
+/* Let the document scroll naturally; keep only the composer fixed. */
+html, body { height: auto; min-height: 100%; overflow-x: hidden; overflow-y: auto; }
+body { min-height: 100vh; min-height: 100dvh; }
+.app-shell { height: auto; min-height: 100vh; min-height: 100dvh; overflow: visible; }
+.assistant-main {
+  height: auto;
+  min-height: calc(100vh - var(--header-h, 72px));
+  min-height: calc(100dvh - var(--header-h, 72px));
+  overflow: visible;
+  overscroll-behavior: auto;
+  padding-bottom: calc(var(--composer-h, 92px) + 42px + env(safe-area-inset-bottom)) !important;
+}
