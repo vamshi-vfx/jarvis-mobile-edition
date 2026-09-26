@@ -344,3 +344,25 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   .voice-output-settings, .desktop-agent-settings { padding: 11px; }
   .desktop-action-buttons button { flex: 1 1 42%; }
 }
+.voice-select {
+  display: block;
+  width: 100%;
+  min-height: 39px;
+  margin: 5px 0 8px;
+  padding: 8px 10px;
+  border: 1px solid rgba(179, 185, 207, .2);
+  border-radius: 9px;
+  background: #111521;
+  color: #e7e9f0;
+  font: inherit;
+  font-size: 11px;
+}
+.voice-select:focus-visible { outline: 2px solid #b7abff; outline-offset: 2px; }
+.voice-mode-status { min-height: 14px; margin: 7px 0 0; color: #929bad; font-size: 10px; line-height: 1.4; text-align: center; }
+.voice-mode-status.is-active { color: #c7bcff; }
+.voice-conversation-toggle[aria-pressed="true"], .voice-conversation-toggle.is-voice-active {
+  border-color: rgba(255,128,151,.55);
+  background: rgba(255,91,122,.13);
+  color: #ff9cac;
+  box-shadow: 0 0 0 3px rgba(255,91,122,.08);
+}

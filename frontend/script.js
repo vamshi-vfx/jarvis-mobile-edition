@@ -4,7 +4,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const sendButton = document.getElementById("send");
     const clearButton = document.getElementById("clear-btn");
     const micButton = document.getElementById("mic-btn");
-    const openWhatsAppButton = document.getElementById("open-whatsapp");
     const settingsToggle = document.getElementById("settings-toggle");
     const voiceSettings = document.getElementById("voice-settings");
     const apiKeyInput = document.getElementById("gemini-api-key");
@@ -15,6 +14,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const ttsAutoRead = document.getElementById("tts-auto-read");
     const ttsStopButton = document.getElementById("tts-stop-button");
     const ttsStatus = document.getElementById("tts-status");
+    const ttsVoiceSelect = document.getElementById("tts-voice-select");
+    const ttsVoiceHelp = document.getElementById("tts-voice-help");
+    const voiceInputLanguage = document.getElementById("voice-input-language");
+    const voiceModeStatus = document.getElementById("voice-mode-status");
     const desktopPairCodeInput = document.getElementById("desktop-pair-code");
     const desktopPairButton = document.getElementById("desktop-pair-button");
     const desktopUnpairButton = document.getElementById("desktop-unpair-button");
@@ -22,10 +25,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const MEMORY_KEY = "jarvis_chat_memory";
     const TTS_AUTO_READ_KEY = "kalki.tts.autoRead";
+    const TTS_VOICE_KEY = "kalki.tts.voiceURI";
+    const VOICE_INPUT_LANGUAGE_KEY = "kalki.voice.inputLanguage";
+    const VOICE_STOP_PHRASES = new Set([
+        "stop", "stop voice", "stop voice chat", "stop voice mode", "stop listening", "stop talking", "end voice chat", "end conversation", "voice off", "turn off voice", "turn off voice chat", "pause voice", "pause voice chat", "cancel voice", "cancel voice chat", "quit voice", "quit voice chat", "goodbye", "that's all", "that's enough",
+        "aapu", "aapeyi", "aapey", "aapandi", "voice aapu", "voice aapeyi", "voice aapey", "voice aapandi", "chaalu", "chalu",
+        "ఆపు", "ఆపేయి", "ఆపండి", "చాలు", "వాయిస్ ఆపు", "వాయిస్ ఆపేయి", "వాయిస్ ఆపండి", "మాట్లాడటం ఆపు", "మాట్లాడడం ఆపండి", "వినడం ఆపు", "వినడం ఆపండి"
+    ]);
     const DESKTOP_AGENT_URL = "http://127.0.0.1:43187";
     let desktopSessionToken = null;
     let activeUtterance = null;
     let activeSpeakButton = null;
+    let voiceConversationActive = false;
+    let voiceTurnPending = false;
+    let recognitionStarting = false;
+    let voiceRestartTimer = null;
     const API_KEY_STORAGE = "jarvis_api_key";
     const BACKEND_HEALTH_URL = "https://jarvis-mobile-edition-alpha.vercel.app/api/health";
     const BACKEND_COMMAND_URL = "https://jarvis-mobile-edition-alpha.vercel.app/api/command";
@@ -120,7 +134,7 @@ document.addEventListener("DOMContentLoaded", () => {
         chatBox.scrollTop = chatBox.scrollHeight;
 
         if (save) addToMemory(sender, text, type);
-        if (save && canSpeak && ttsAutoRead?.checked) speak(text, speakButton);
+        if (save && canSpeak && (ttsAutoRead?.checked || voiceConversationActive)) speak(text, speakButton);
     }
 
     function loadSavedChat() {
@@ -275,23 +289,35 @@ document.addEventListener("DOMContentLoaded", () => {
         activeUtterance = null;
     }
 
-    function stopSpeaking() {
+    function stopSpeaking(resumeVoice = true) {
         if ("speechSynthesis" in window) window.speechSynthesis.cancel();
         resetSpeakButton();
+        if (resumeVoice && voiceConversationActive) scheduleVoiceListening(350);
     }
 
     function speak(text, button = null) {
         if (!("speechSynthesis" in window) || !("SpeechSynthesisUtterance" in window)) {
             if (ttsStatus) ttsStatus.textContent = "Text-to-speech is not supported by this browser.";
+            if (voiceConversationActive) scheduleVoiceListening(500);
             return;
         }
-        stopSpeaking();
+        stopSpeaking(false);
+        if (voiceConversationActive && isListening && recognition) {
+            try { recognition.stop(); } catch (_) { /* Already stopped by the browser. */ }
+        }
         const utterance = new SpeechSynthesisUtterance(String(text));
-        const hasTeluguScript = Array.from(String(text)).some((character) => {
-            const codePoint = character.codePointAt(0) || 0;
-            return codePoint >= 0x0C00 && codePoint <= 0x0C7F;
-        });
-        utterance.lang = hasTeluguScript ? "te-IN" : "en-IN";
+        const voices = window.speechSynthesis.getVoices();
+        const selectedVoice = getSelectedTtsVoice(voices);
+        if (selectedVoice) {
+            utterance.voice = selectedVoice;
+            utterance.lang = selectedVoice.lang || "en-IN";
+        } else {
+            const hasTeluguScript = Array.from(String(text)).some((character) => {
+                const codePoint = character.codePointAt(0) || 0;
+                return codePoint >= 0x0C00 && codePoint <= 0x0C7F;
+            });
+            utterance.lang = hasTeluguScript ? "te-IN" : "en-IN";
+        }
         utterance.rate = 0.96;
         activeUtterance = utterance;
         activeSpeakButton = button;
@@ -299,8 +325,16 @@ document.addEventListener("DOMContentLoaded", () => {
             button.textContent = "⏹ Stop";
             button.setAttribute("aria-pressed", "true");
         }
-        utterance.onend = () => { if (activeUtterance === utterance) resetSpeakButton(); };
-        utterance.onerror = () => { if (activeUtterance === utterance) resetSpeakButton(); };
+        utterance.onend = () => {
+            if (activeUtterance !== utterance) return;
+            resetSpeakButton();
+            if (voiceConversationActive) scheduleVoiceListening(550);
+        };
+        utterance.onerror = () => {
+            if (activeUtterance !== utterance) return;
+            resetSpeakButton();
+            if (voiceConversationActive) scheduleVoiceListening(700);
+        };
         window.speechSynthesis.speak(utterance);
     }
 
@@ -325,6 +359,13 @@ document.addEventListener("DOMContentLoaded", () => {
     function detectSkill(text) {
         return Object.entries(SKILL_REGISTRY)
             .find(([, skill]) => skill.keywords.test(text))?.[0] || null;
+    }
+    function normalizeVoiceStopPhrase(text) {
+        return String(text || "").normalize("NFC").toLowerCase()
+            .replace(/^\s*(?:kalki|కల్కి)[,\s]*/i, "")
+            .replace(/[.,!?;:…]+/g, " ")
+            .replace(/\s+/g, " ").trim()
+            .replace(/\s+(?:please|now)$/i, "").trim();
     }
     function detectEverydayTool(text) {
         if (/\b(time|what time|samayam)\b/i.test(text)) return "time";
@@ -372,6 +413,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const command = normalizeCommand(text);
         if (/\b(open|launch|start)\s+(the\s+)?whatsapp\b/i.test(command)
             || /\bwhatsapp\s+(open|launch|start)\b/i.test(command)) {
+            if (voiceConversationActive) stopVoiceConversation(true, "Voice chat stopped while opening WhatsApp.");
             openWhatsApp();
             return true;
         }
@@ -524,14 +566,31 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const userText = messageInput.value.trim();
         if (!userText) return;
+        if (voiceConversationActive) {
+            voiceTurnPending = true;
+            if (isListening && recognition) {
+                try { recognition.stop(); } catch (_) { /* Recognition may already have ended. */ }
+            }
+        }
 
         showMessage("YOU", userText, "user");
         messageInput.value = "";
 
         const commandText = normalizeCommand(userText);
+        const spokenControl = normalizeVoiceStopPhrase(userText);
+        if (voiceConversationActive && VOICE_STOP_PHRASES.has(spokenControl)) {
+            stopVoiceConversation(true);
+            showMessage("KALKI", "Voice conversation stopped.", "ai");
+            if (!ttsAutoRead?.checked) speak("Voice conversation stopped.");
+            return;
+        }
         const desktopAction = detectDesktopAction(commandText);
         if (desktopAction) {
             showDesktopApprovalCard(desktopAction);
+            if (voiceConversationActive) {
+                showMessage("KALKI", "I paused voice listening. Please approve this desktop action on screen before it opens.", "ai");
+                stopVoiceConversation(true, "Waiting for your on-screen approval.");
+            }
             return;
         }
         const everydayTool = detectEverydayTool(commandText);
@@ -543,20 +602,27 @@ document.addEventListener("DOMContentLoaded", () => {
                 showMessage("KALKI", result.message || "Command received.", "ai");
                 if (result.url && result.executed && (result.tool === "openYouTube" || result.tool === "openGoogle" || result.tool === "youtubeSearch" || result.tool === "wikipedia")) window.open(result.url, "_blank", "noopener");
                 if (result.notify && result.seconds) {
-                    window.setTimeout(() => { const text = "⏰ Timer complete!"; showMessage("KALKI", text, "ai"); if (!ttsAutoRead?.checked) speak(text); if (window.Notification && Notification.permission === "granted") new Notification("KALKI", { body: text }); }, result.seconds * 1000);
+                    window.setTimeout(() => { const text = "⏰ Timer complete!"; showMessage("KALKI", text, "ai"); if (!ttsAutoRead?.checked && !voiceConversationActive) speak(text); if (window.Notification && Notification.permission === "granted") new Notification("KALKI", { body: text }); }, result.seconds * 1000);
                     if (window.Notification && Notification.permission === "default") Notification.requestPermission().catch(() => {});
-                } else if (result.speak && !ttsAutoRead?.checked) speak(result.message || "Done");
+                } else if (result.speak && !ttsAutoRead?.checked && !voiceConversationActive) speak(result.message || "Done");
             } catch (error) {
                 console.error("JARVIS backend bridge error:", error);
                 showMessage("SYSTEM", "Backend command bridge unavailable. Nothing was executed.", "ai");
+            } finally {
+                finishVoiceTurn();
             }
             return;
         }
 
-        if (handleLocalCommand(userText)) return;
+        if (handleLocalCommand(userText)) {
+            finishVoiceTurn();
+            return;
+        }
         if (!getApiKey()) {
             showMessage("KALKI", "I need your Gemini API key before I can generate an AI reply. Settings is open so you can add it locally; no request was sent to Google.", "ai");
             openApiKeySettings();
+            if (voiceConversationActive) stopVoiceConversation(true, "Voice chat paused. Add your AI key in Settings to continue.");
+            else finishVoiceTurn();
             return;
         }
         messageInput.disabled = true;
@@ -575,7 +641,8 @@ document.addEventListener("DOMContentLoaded", () => {
             messageInput.disabled = false;
             sendButton.disabled = false;
             sendButton.textContent = "SEND";
-            messageInput.focus();
+            finishVoiceTurn();
+            if (!voiceConversationActive) messageInput.focus();
         }
     }
 
@@ -587,42 +654,149 @@ document.addEventListener("DOMContentLoaded", () => {
         if (messageInput) messageInput.value = "";
     }
 
-    function setupVoice() {
-        const SpeechRecognition =
-            window.SpeechRecognition || window.webkitSpeechRecognition;
+    function setVoiceModeStatus(message, active = voiceConversationActive) {
+        if (voiceModeStatus) {
+            voiceModeStatus.textContent = message;
+            voiceModeStatus.classList.toggle("is-active", active);
+        }
+        if (micButton) {
+            micButton.textContent = active ? "⏹" : "🎙";
+            micButton.setAttribute("aria-label", active ? "Stop voice conversation" : "Start voice conversation");
+            micButton.setAttribute("title", active ? "Stop voice conversation" : "Start voice conversation");
+            micButton.setAttribute("aria-pressed", String(active));
+            micButton.classList.toggle("is-voice-active", active);
+        }
+    }
 
-        if (!SpeechRecognition) return;
+    function scheduleVoiceListening(delay = 500) {
+        window.clearTimeout(voiceRestartTimer);
+        if (!voiceConversationActive || voiceTurnPending || document.hidden) return;
+        voiceRestartTimer = window.setTimeout(beginVoiceListening, delay);
+    }
+
+    function beginVoiceListening() {
+        if (!voiceConversationActive || !recognition || isListening || recognitionStarting || voiceTurnPending || document.hidden) return;
+        if (window.speechSynthesis?.speaking || window.speechSynthesis?.pending) {
+            scheduleVoiceListening(450);
+            return;
+        }
+        if (voiceInputLanguage && recognition.lang !== voiceInputLanguage.value) recognition.lang = voiceInputLanguage.value;
+        recognitionStarting = true;
+        try {
+            recognition.start();
+        } catch (_) {
+            recognitionStarting = false;
+            stopVoiceConversation(false, "Could not start the microphone. Check permission, then tap the mic to retry.");
+        }
+    }
+
+    function finishVoiceTurn() {
+        voiceTurnPending = false;
+        if (!voiceConversationActive) return;
+        if (window.speechSynthesis?.speaking || window.speechSynthesis?.pending) return;
+        scheduleVoiceListening(550);
+    }
+
+    function startVoiceConversation() {
+        if (!recognition) {
+            setVoiceModeStatus("Voice input is not supported in this browser. Try Chrome or Edge.", false);
+            return;
+        }
+        if (voiceConversationActive) return;
+        stopSpeaking(false);
+        voiceConversationActive = true;
+        voiceTurnPending = false;
+        if ("speechSynthesis" in window && "SpeechSynthesisUtterance" in window) {
+            setVoiceModeStatus("Voice chat is on. Listening after the greeting…", true);
+            speak("Hi, I’m KALKI. I’m listening.", null);
+        } else {
+            setVoiceModeStatus("Voice chat is on. Speak after the microphone starts.", true);
+            beginVoiceListening();
+        }
+    }
+
+    function stopVoiceConversation(keepSpeech = false, statusMessage = "Voice conversation stopped.") {
+        const recognitionMayBeActive = isListening || recognitionStarting;
+        voiceConversationActive = false;
+        voiceTurnPending = false;
+        recognitionStarting = false;
+        window.clearTimeout(voiceRestartTimer);
+        if (recognition && recognitionMayBeActive) {
+            try { recognition.stop(); } catch (_) { /* Already stopped by the browser. */ }
+        }
+        if (!keepSpeech) stopSpeaking(false);
+        setVoiceModeStatus(statusMessage, false);
+    }
+
+    function toggleVoice() {
+        if (voiceConversationActive) stopVoiceConversation();
+        else startVoiceConversation();
+    }
+
+    function setupVoice() {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            setVoiceModeStatus("Voice chat needs a browser with speech recognition, such as Chrome or Edge.", false);
+            return;
+        }
 
         recognition = new SpeechRecognition();
-        recognition.lang = "en-IN";
+        recognition.lang = voiceInputLanguage?.value || "en-IN";
         recognition.continuous = false;
         recognition.interimResults = false;
 
         recognition.onstart = () => {
+            recognitionStarting = false;
             isListening = true;
-            if (micButton) micButton.textContent = "STOP";
+            if (!voiceConversationActive) {
+                try { recognition.stop(); } catch (_) { /* Stop a late start after the user has exited voice mode. */ }
+                return;
+            }
+            setVoiceModeStatus("Listening… speak naturally. Tap ⏹ to stop.", true);
         };
 
         recognition.onresult = (event) => {
-            const text = event.results[0][0].transcript;
-            if (messageInput) {
-                messageInput.value = text;
-                messageInput.focus();
+            const text = Array.from(event.results || [])
+                .filter((result) => result.isFinal)
+                .map((result) => result[0]?.transcript || "")
+                .join(" ").trim();
+            if (!text || !messageInput || !voiceConversationActive) return;
+            messageInput.value = text;
+            voiceTurnPending = true;
+            setVoiceModeStatus("Heard you. KALKI is thinking…", true);
+            sendMessage();
+        };
+
+        recognition.onerror = (event) => {
+            recognitionStarting = false;
+            isListening = false;
+            const code = event?.error || "unknown";
+            if (code === "not-allowed" || code === "service-not-allowed" || code === "audio-capture") {
+                stopVoiceConversation(false, "Microphone unavailable. Check the browser permission and tap the mic to retry.");
+                return;
+            }
+            if (voiceConversationActive) {
+                setVoiceModeStatus(code === "no-speech" ? "I didn’t hear anything. Listening again…" : "Voice input paused briefly. Trying again…", true);
+                scheduleVoiceListening(850);
             }
         };
 
-        recognition.onerror = () => {
-            showMessage(
-                "SYSTEM",
-                "Voice input work avvaledu. Mic permission check cheyyandi.",
-                "ai"
-            );
+        recognition.onend = () => {
+            recognitionStarting = false;
+            isListening = false;
+            if (!voiceConversationActive || voiceTurnPending || window.speechSynthesis?.speaking) return;
+            setVoiceModeStatus("Listening again…", true);
+            scheduleVoiceListening(500);
         };
 
-        recognition.onend = () => {
-            isListening = false;
-            if (micButton) micButton.textContent = "🎙️";
-        };
+        document.addEventListener("visibilitychange", () => {
+            if (document.hidden && voiceConversationActive) {
+                stopVoiceConversation(false, "Voice chat stopped because KALKI is in the background.");
+            }
+        });
+        window.addEventListener("pagehide", () => {
+            if (voiceConversationActive) stopVoiceConversation(false, "Voice chat stopped.");
+        });
     }
 
     function installAndroidSharePreview() {
@@ -659,27 +833,106 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    function toggleVoice() {
-        if (!recognition) {
-            showMessage("SYSTEM", "Mee browser voice input support cheyyadam ledu.", "ai");
+    function voiceOptionValue(voice) {
+        return voice.voiceURI || `${voice.name}::${voice.lang}`;
+    }
+
+    function getSelectedTtsVoice(voices) {
+        const selected = ttsVoiceSelect?.value || "auto";
+        if (selected === "auto") return null;
+        return voices.find((voice) => voiceOptionValue(voice) === selected) || null;
+    }
+
+    function populateTtsVoiceOptions() {
+        if (!ttsVoiceSelect) return;
+        if (!("speechSynthesis" in window)) {
+            const option = document.createElement("option");
+            option.value = "auto";
+            option.textContent = "Browser default voice";
+            ttsVoiceSelect.replaceChildren(option);
+            ttsVoiceSelect.value = "auto";
             return;
         }
-        if (isListening) recognition.stop();
-        else recognition.start();
+
+        const voices = window.speechSynthesis.getVoices();
+        let saved = "";
+        try { saved = localStorage.getItem(TTS_VOICE_KEY) || ""; } catch (_) { /* Use a session-only choice. */ }
+        const previous = ttsVoiceSelect.value;
+        const autoOption = document.createElement("option");
+        autoOption.value = "auto";
+        autoOption.textContent = "Automatic by reply language";
+        const options = [autoOption, ...voices.map((voice) => {
+            const option = document.createElement("option");
+            option.value = voiceOptionValue(voice);
+            option.textContent = `${voice.name} · ${voice.lang || "device voice"}`;
+            return option;
+        })];
+        ttsVoiceSelect.replaceChildren(...options);
+        if (saved === "auto") {
+            ttsVoiceSelect.value = "auto";
+            if (ttsVoiceHelp) ttsVoiceHelp.textContent = "KALKI will follow the browser’s language-based voice choice.";
+            return;
+        }
+
+        const chosen = voices.find((voice) => voiceOptionValue(voice) === saved)
+            || voices.find((voice) => voiceOptionValue(voice) === previous)
+            || voices.find((voice) => voice.lang?.toLowerCase() === (voiceInputLanguage?.value || "en-IN").toLowerCase())
+            || voices.find((voice) => voice.lang?.toLowerCase().startsWith("en-in"))
+            || voices.find((voice) => voice.default)
+            || voices[0];
+        if (chosen) {
+            ttsVoiceSelect.value = voiceOptionValue(chosen);
+            try { localStorage.setItem(TTS_VOICE_KEY, ttsVoiceSelect.value); } catch (_) { /* Keep this choice for this page only. */ }
+            if (ttsVoiceHelp) ttsVoiceHelp.textContent = `KALKI will keep using ${chosen.name} (${chosen.lang}) on this device. Choose a Telugu voice if available for Telugu pronunciation.`;
+        } else {
+            ttsVoiceSelect.value = "auto";
+            if (ttsVoiceHelp) ttsVoiceHelp.textContent = "No device voice list is available yet; KALKI will use your browser’s default voice.";
+        }
+    }
+
+    function initializeVoiceControls() {
+        if (voiceInputLanguage) {
+            let savedLanguage = "en-IN";
+            try { savedLanguage = localStorage.getItem(VOICE_INPUT_LANGUAGE_KEY) || savedLanguage; } catch (_) { /* Keep default. */ }
+            if (!["en-IN", "te-IN"].includes(savedLanguage)) savedLanguage = "en-IN";
+            voiceInputLanguage.value = savedLanguage;
+            voiceInputLanguage.addEventListener("change", () => {
+                const language = voiceInputLanguage.value === "te-IN" ? "te-IN" : "en-IN";
+                try { localStorage.setItem(VOICE_INPUT_LANGUAGE_KEY, language); } catch (_) { /* Session-only preference. */ }
+                if (recognition) recognition.lang = language;
+                if (voiceConversationActive) {
+                    if (isListening && recognition) recognition.stop();
+                    else scheduleVoiceListening(150);
+                }
+            });
+        }
+        ttsVoiceSelect?.addEventListener("change", () => {
+            try { localStorage.setItem(TTS_VOICE_KEY, ttsVoiceSelect.value); } catch (_) { /* Use this page's selection only. */ }
+            const voice = getSelectedTtsVoice(window.speechSynthesis?.getVoices?.() || []);
+            if (ttsVoiceHelp) ttsVoiceHelp.textContent = voice
+                ? `KALKI will keep using ${voice.name} (${voice.lang}) on this device.`
+                : "KALKI will follow the browser’s language-based voice choice.";
+        });
+        if ("speechSynthesis" in window) {
+            populateTtsVoiceOptions();
+            window.speechSynthesis.onvoiceschanged = populateTtsVoiceOptions;
+        } else {
+            populateTtsVoiceOptions();
+        }
     }
 
     if (ttsAutoRead) {
         try { ttsAutoRead.checked = localStorage.getItem(TTS_AUTO_READ_KEY) === "true"; }
         catch (_) { ttsAutoRead.checked = false; }
         if (ttsStatus) ttsStatus.textContent = ttsAutoRead.checked
-            ? "Automatic reading is on for new KALKI replies; it stays on this device."
-            : "Use the speaker button on a reply, or enable automatic reading.";
+            ? "Text replies will be read aloud automatically. Voice chat always speaks while active."
+            : "Text chat stays quiet unless you tap Read aloud. Voice chat speaks while active.";
         ttsAutoRead.addEventListener("change", () => {
             try { localStorage.setItem(TTS_AUTO_READ_KEY, String(ttsAutoRead.checked)); }
             catch (_) { /* The per-message speaker remains available if storage is disabled. */ }
             if (ttsStatus) ttsStatus.textContent = ttsAutoRead.checked
-                ? "Automatic reading is on for new KALKI replies; it stays on this device."
-                : "Automatic reading is off. Use the speaker button on any reply.";
+                ? "Text replies will be read aloud automatically. Voice chat always speaks while active."
+                : "Text chat stays quiet unless you tap Read aloud. Voice chat speaks while active.";
         });
     }
     ttsStopButton?.addEventListener("click", () => {
@@ -728,7 +981,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (sendButton) sendButton.addEventListener("click", sendMessage);
     if (clearButton) clearButton.addEventListener("click", clearChat);
     if (micButton) micButton.addEventListener("click", toggleVoice);
-    if (openWhatsAppButton) openWhatsAppButton.addEventListener("click", openWhatsApp);
 
     if (messageInput) {
         messageInput.addEventListener("keydown", (event) => {
@@ -740,6 +992,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     installAndroidSharePreview();
+    initializeVoiceControls();
     setupVoice();
     loadSavedChat();
     refreshApiKeyStatus();

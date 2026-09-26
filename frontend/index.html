@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="layout-fix.css?v=two-mode-1">
   <link rel="stylesheet" href="overrides.css?v=zapia-unified-1">
   <link rel="stylesheet" href="social-agent.css?v=local-preview-1">
-  <link rel="stylesheet" href="professional-ui.css?v=20260926-2">
+  <link rel="stylesheet" href="professional-ui.css?v=voice-conversation-1">
   <style>.advanced-intelligence-panel{margin:18px auto 0;max-width:760px;border:1px solid rgba(176,164,255,.28);border-radius:18px;background:linear-gradient(145deg,rgba(25,29,42,.92),rgba(12,15,24,.9));box-shadow:0 14px 40px #0004;overflow:hidden}.ai-panel-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px}.ai-panel-head strong,.ai-panel-head small{display:block}.ai-panel-head small{color:var(--muted);font-size:10px;margin-top:4px}.ai-collapse{border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--text);font-size:18px}.ai-panel-body{padding:0 16px 16px}.ai-status-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.ai-status-grid span{padding:8px;border:1px solid var(--line);border-radius:10px;background:#ffffff05}.ai-status-grid b,.ai-status-grid em{display:block;font-size:10px}.ai-status-grid b{text-transform:capitalize;color:var(--muted)}.ai-status-grid em{font-style:normal;color:#f0b48c;margin-top:3px}.ai-status-grid em.on{color:var(--green)}.ai-actions{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}.ai-actions button,.ai-plan button{border:1px solid var(--line);border-radius:10px;padding:9px;background:#ffffff08;color:var(--text);font-size:11px}.ai-plan label{display:block;color:var(--muted);font-size:11px;margin-bottom:5px}.ai-plan textarea{width:100%;box-sizing:border-box;resize:vertical;border:1px solid var(--line);border-radius:10px;padding:9px;background:#090b11;color:var(--text);font:inherit;font-size:12px}.ai-plan button{margin-top:7px}.ai-unavailable{color:var(--muted);font-size:10px;line-height:1.4;margin:12px 0 0}@media(max-width:560px){.ai-status-grid{grid-template-columns:repeat(2,1fr)}.ai-actions button{flex:1 1 45%}}</style>
 </head>
 <body>
@@ -19,7 +19,7 @@
       <button class="icon-button menu-button" type="button" aria-label="Open menu">☰</button>
       <div class="brand-lockup">
         <div class="brand-mark" aria-hidden="true"><img src="1789578396977-559ec457.jpg" alt="KALKI"></div>
-        <div><h1>KALKI</h1><p><span class="status-dot"></span> Personal assistant</p></div>
+        <div><h1>KALKI</h1><p><span class="status-dot"></span> Voice assistant · talk or type</p></div>
       </div>
       <button id="clear-btn" class="icon-button" type="button" aria-label="Clear conversation">⌫</button>
     </header>
@@ -29,7 +29,7 @@
         <div class="welcome-orb">✦</div>
         <p class="eyebrow">YOUR AI COMPANION</p>
         <h2>How can I help<br><em>today?</em></h2>
-        <p class="welcome-copy">Ask me anything, or give me an explicit command. Your conversations stay on this device.</p>
+        <p class="welcome-copy">Talk with KALKI hands-free, or type a message. Tap the microphone to start or stop voice conversation.</p>
         <div class="suggestions" aria-label="Suggestions">
           <button type="button" onclick="document.getElementById('msg').value='Help me plan my day';document.getElementById('msg').focus()">Plan my day <span>→</span></button>
           <button type="button" onclick="document.getElementById('msg').value='Search the web for ';document.getElementById('msg').focus()">Search the web <span>→</span></button>
@@ -95,12 +95,13 @@
       <div class="composer" role="group" aria-label="Message composer">
         <button id="attach-btn" class="composer-icon" type="button" aria-label="Attach a file" aria-expanded="false">＋</button>
         <input id="img-input" type="file" accept="image/*,.pdf,.txt,.doc,.docx" hidden>
-        <input id="msg" type="text" placeholder="Message KALKI..." autocomplete="off" enterkeyhint="send">
-        <button id="mic-btn" class="composer-icon" type="button" aria-label="Use voice input">🎙</button>
+        <input id="msg" type="text" placeholder="Talk or message KALKI..." autocomplete="off" enterkeyhint="send">
+        <button id="mic-btn" class="composer-icon voice-conversation-toggle" type="button" aria-label="Start voice conversation" title="Start voice conversation" aria-pressed="false">🎙</button>
         <button id="send" class="send-button" type="button" aria-label="Send message">↑</button>
       <div id="attachment-menu" class="attachment-menu" hidden role="menu"><button id="cam-btn" type="button" role="menuitem">📷 Take or choose an image</button><button id="file-btn" type="button" role="menuitem">📎 Choose a file</button></div>
       </div>
       <p class="safe-note"><span>✦</span> KALKI only takes action when you explicitly ask.</p>
+      <p id="voice-mode-status" class="voice-mode-status" role="status" aria-live="polite">Tap 🎙 to start a voice conversation. Tap again to stop.</p>
     </div>
   </div>
 
@@ -113,8 +114,14 @@
     <a class="sheet-link" href="#creator-agent-panel" id="creator-agent-link">✦ Creator Agent</a><a class="sheet-link" href="#social-agent-panel" id="social-agent-link">◎ Social Automation Agent</a><a class="sheet-link" href="#everyday-tools" id="tools-menu-link">⌁ Tools</a><button id="settings-toggle" class="sheet-link" type="button" aria-expanded="false">⚙ Settings</button>
     <section id="voice-settings" class="voice-settings" hidden aria-label="Settings">
       <section class="voice-output-settings" aria-labelledby="tts-settings-title">
-        <div class="voice-setting-heading"><strong id="tts-settings-title">Voice replies</strong><small>Uses the voice available in this browser or device.</small></div>
-        <label class="kalki-toggle" for="tts-auto-read"><input id="tts-auto-read" type="checkbox"><span>Automatically read KALKI replies aloud</span></label>
+        <div class="voice-setting-heading"><strong id="tts-settings-title">Voice conversation</strong><small>Choose a consistent voice and how KALKI listens.</small></div>
+        <label class="api-key-label" for="tts-voice-select">KALKI speaking voice</label>
+        <select id="tts-voice-select" class="voice-select" aria-describedby="tts-voice-help"><option value="">Loading voices from this device…</option></select>
+        <p id="tts-voice-help" class="voice-setting-status">The chosen browser voice stays on this device. Voice availability depends on your browser.</p>
+        <label class="api-key-label" for="voice-input-language">Listening language</label>
+        <select id="voice-input-language" class="voice-select"><option value="en-IN">English (India)</option><option value="te-IN">Telugu (India)</option></select>
+        <p class="voice-setting-status">Microphone listens only while voice mode is on. Browser speech recognition may use the browser’s own speech service.</p>
+        <label class="kalki-toggle" for="tts-auto-read"><input id="tts-auto-read" type="checkbox"><span>Automatically read KALKI replies aloud in text chat</span></label>
         <button id="tts-stop-button" class="voice-setting-button" type="button">Stop speaking</button>
         <p id="tts-status" class="voice-setting-status" role="status" aria-live="polite">Use the speaker button on a reply, or enable automatic reading.</p>
       </section>
@@ -141,7 +148,7 @@
   </aside>
   <div class="sheet-backdrop"></div>
 
-  <script src="script.js?v=desktop-tts-1"></script>
+  <script src="script.js?v=voice-conversation-1"></script>
   <script src="advanced-intelligence.js"></script>
   <script src="social-agent.js?v=local-preview-1"></script>
   <script>
