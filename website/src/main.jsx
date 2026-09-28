@@ -3,12 +3,14 @@ import { createRoot } from 'react-dom/client';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import {
   ArrowDown, ArrowRight, ArrowUpRight, AudioLines, Check, ChevronDown,
-  CircleDot, Code2, Eye, Fingerprint, Menu, MessageCircle, Mic,
+  CircleDot, Code2, Eye, Fingerprint, Image as ImageIcon, Menu, MessageCircle, Mic,
   ShieldCheck, Sparkles, WandSparkles, X, Zap
 } from 'lucide-react';
 import './styles.css';
 import logoAsset from './assets/kalki-logo.jpg';
 
+// Keep Three.js and the WebGL effect out of the initial page bundle until requested.
+const ImageGeneration = React.lazy(() => import('img-fx').then(module => ({ default: module.ImageGeneration })));
 const APP = '/jarvis-mobile-edition/frontend/';
 const LOGO = logoAsset;
 
@@ -19,6 +21,7 @@ const capabilities = [
   { icon: WandSparkles, number: '04', title: 'Creator ideas, shaped', copy: 'The creator workspace prepares a brief, script outline, metadata and asset ideas. It does not render a video or upload / publish content.', status: 'PLANNING PREVIEW', tone: 'violet', href: APP },
   { icon: CircleDot, number: '05', title: 'Automation, safely explored', copy: 'The social-agent workspace is a browser-local simulator. Meta / Instagram connection, live triggers and sending are not configured.', status: 'SIMULATOR ONLY', tone: 'rose', href: APP },
   { icon: ShieldCheck, number: '06', title: 'You stay in the loop', copy: 'KALKI is built around explicit commands. This product site does not start listening, connect accounts, send messages, or run tasks in the background.', status: 'USER CONTROLLED', tone: 'cyan', href: '#control' },
+  { icon: ImageIcon, number: '07', title: 'Image generation effect', copy: 'Try a WebGL pixel-mosaic reveal on the KALKI logo. It animates an existing image; it does not generate new artwork.', status: 'VISUAL DEMO', tone: 'violet', href: '#image-effect' },
 ];
 
 const statusItems = [
@@ -48,7 +51,7 @@ function CardSpotlight({ children, className = '', href, icon: Icon, number, tit
 
 function Nav() {
   const [open, setOpen] = useState(false);
-  const links = [['Product', '#product'], ['Capabilities', '#capabilities'], ['Status', '#status'], ['FAQ', '#faq']];
+  const links = [['Product', '#product'], ['Capabilities', '#capabilities'], ['Image effect', '#image-effect'], ['Status', '#status'], ['FAQ', '#faq']];
   return <header className="site-header">
     <nav className="nav shell" aria-label="Main navigation">
       <a className="brand" href="#top" aria-label="KALKI home"><img src={LOGO} alt="" /><span>KALKI<span className="brand-dot">.</span></span></a>
@@ -132,6 +135,50 @@ function CapabilitySection() {
   </section>;
 }
 
+const imagePresets = [
+  { id: 'pixels-organic', label: 'Organic pixels' },
+  { id: 'pixels-mechanic', label: 'Mechanic pixels' },
+  { id: 'sweep-gradient', label: 'Gradient sweep' },
+];
+
+function ImageEffectSection() {
+  const reduced = useReducedMotion();
+  const [preset, setPreset] = useState('pixels-organic');
+  const [running, setRunning] = useState(false);
+  const [runId, setRunId] = useState(0);
+  const replay = () => { setRunning(true); setRunId(id => id + 1); };
+  const choosePreset = id => { setPreset(id); replay(); };
+
+  return <section className="image-effect-section section-pad" id="image-effect">
+    <div className="shell image-effect-grid">
+      <Reveal className="image-effect-copy">
+        <div className="eyebrow"><span className="eyebrow-line" />IMAGE REVEAL · WEBGL</div>
+        <h2>See an image<br /><span>resolve into view.</span></h2>
+        <p>Choose a pixel-mosaic style and preview it on the KALKI logo. This is an image-reveal effect for an existing image—not an AI image generator.</p>
+        <div className="image-preset-list" role="group" aria-label="Choose an image reveal preset">
+          {imagePresets.map(option => <button key={option.id} type="button" className={`image-preset ${preset === option.id ? 'is-active' : ''}`} aria-pressed={preset === option.id} onClick={() => choosePreset(option.id)}>{option.label}</button>)}
+        </div>
+        <div className="image-effect-actions">
+          <button className="button primary" type="button" onClick={replay}><Sparkles size={15} />{running ? 'Replay effect' : 'Play effect'}</button>
+          {running && <button className="image-effect-stop" type="button" onClick={() => setRunning(false)}>Stop preview</button>}
+        </div>
+        <p className="image-effect-note" role="status" aria-live="polite">{reduced ? 'Reduced motion is enabled; the image stays still.' : 'WebGL preview starts only when you press Play.'}</p>
+      </Reveal>
+      <Reveal className="image-effect-visual" delay={0.12}>
+        <div className="image-effect-stage">
+          <span className="image-effect-stage-label">KALKI · IMAGE LAB</span>
+          {running ? <React.Suspense fallback={<div className="image-effect-loading" role="status">Preparing WebGL preview…</div>}><ImageGeneration key={`${preset}-${runId}`} preset={preset} images={[LOGO]} autoReveal={!reduced} className="image-effect-renderer">
+            <div className="image-effect-canvas" role="img" aria-label="KALKI logo image reveal preview" />
+          </ImageGeneration></React.Suspense> : <button type="button" className="image-effect-placeholder" onClick={replay} aria-label="Play image reveal preview">
+            <img src={LOGO} alt="KALKI logo" /><span><Sparkles size={15} /> Play image reveal</span>
+          </button>}
+          <span className="image-effect-footnote">PRESET · {imagePresets.find(item => item.id === preset)?.label.toUpperCase()}</span>
+        </div>
+      </Reveal>
+    </div>
+  </section>;
+}
+
 function ControlSection() {
   return <section className="control-section section-pad" id="control">
     <div className="shell control-panel">
@@ -182,7 +229,7 @@ function Footer() {
 }
 
 function App() {
-  return <><a className="skip-link" href="#main">Skip to content</a><div className="top-note"><span className="top-dot" /> PRIVATE BETA <span className="top-divider">/</span> Capabilities are evolving; integrations are not generally available.</div><Nav /><main id="main"><Hero /><StatusTicker /><ProductSection /><CapabilitySection /><ControlSection /><StatusSection /><FAQ /><section className="closing"><Spotlight /><div className="shell closing-inner"><Reveal><div className="closing-emblem"><img src={LOGO} alt="" /></div><div className="eyebrow"><span className="eyebrow-line" />THE NEXT CHAPTER</div><h2>Meet your assistant.<br /><span>Keep the final say.</span></h2><p>Explore the current KALKI private beta—then tell us what a more thoughtful personal AI should feel like.</p><a className="button primary" href={APP}>Enter KALKI <ArrowUpRight size={17} /></a><div className="closing-fine">No billing configured · No account connection required to view the product site</div></Reveal></div></section></main><Footer /></>;
+  return <><a className="skip-link" href="#main">Skip to content</a><div className="top-note"><span className="top-dot" /> PRIVATE BETA <span className="top-divider">/</span> Capabilities are evolving; integrations are not generally available.</div><Nav /><main id="main"><Hero /><StatusTicker /><ProductSection /><CapabilitySection /><ImageEffectSection /><ControlSection /><StatusSection /><FAQ /><section className="closing"><Spotlight /><div className="shell closing-inner"><Reveal><div className="closing-emblem"><img src={LOGO} alt="" /></div><div className="eyebrow"><span className="eyebrow-line" />THE NEXT CHAPTER</div><h2>Meet your assistant.<br /><span>Keep the final say.</span></h2><p>Explore the current KALKI private beta—then tell us what a more thoughtful personal AI should feel like.</p><a className="button primary" href={APP}>Enter KALKI <ArrowUpRight size={17} /></a><div className="closing-fine">No billing configured · No account connection required to view the product site</div></Reveal></div></section></main><Footer /></>;
 }
 
 createRoot(document.getElementById('root')).render(<React.StrictMode><App /></React.StrictMode>);
