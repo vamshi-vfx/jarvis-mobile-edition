@@ -49,7 +49,11 @@ body.utility-mode-active .kalki-effects-panel:not([hidden]){display:block!import
 .kalki-image-renderer{isolation:isolate}
 .kalki-image-canvas{display:block;width:100%;height:100%;border-radius:inherit;object-fit:cover}
 .kalki-image-render-fallback{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;width:min(100%,210px);height:210px;padding:12px;border:1px solid rgba(128,213,227,.26);border-radius:18px;background:#0b1018;color:#b7c2d1;font-size:10px;line-height:1.45;text-align:center}
-.kalki-image-render-fallback img{max-width:100%;max-height:115px;object-fit:contain}
+.kalki-image-fallback-visual{position:relative;display:grid;place-items:center;width:min(100%,178px);height:120px;overflow:hidden;border:1px solid rgba(128,213,227,.22);border-radius:11px;background:radial-gradient(ellipse at 50% 44%,rgba(72,119,157,.2),transparent 70%),linear-gradient(145deg,#101a25,#0b1018);box-shadow:inset 0 0 24px rgba(58,137,165,.08)}
+.kalki-image-fallback-visual img{display:block;width:100%;height:100%;max-width:none;max-height:none;padding:8px;object-fit:contain;clip-path:inset(0 100% 0 0);animation:kalki-image-fallback-reveal 1.25s cubic-bezier(.2,.75,.25,1) .12s both}
+.kalki-image-fallback-visual::after{position:absolute;inset:0;content:"";pointer-events:none;background:linear-gradient(105deg,transparent 39%,rgba(113,224,240,.26) 47%,rgba(205,251,255,.9) 50%,rgba(113,224,240,.3) 53%,transparent 61%);transform:translateX(-110%);mix-blend-mode:screen;animation:kalki-image-fallback-sweep 1.08s cubic-bezier(.25,.7,.2,1) .12s both}
+@keyframes kalki-image-fallback-reveal{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+@keyframes kalki-image-fallback-sweep{from{transform:translateX(-110%)}to{transform:translateX(110%)}}
 .kalki-image-render-fallback p{margin:0}
 .kalki-image-placeholder{position:relative;padding:0;cursor:pointer}
 .kalki-image-placeholder img{display:block;width:100%;height:100%;padding:17px;object-fit:contain;opacity:.9}
@@ -68,4 +72,4 @@ body.utility-mode-active .kalki-effects-panel:not([hidden]){display:block!import
 .kalki-metal-button{display:grid;place-items:center;width:66px;height:66px;border:1px solid rgba(227,231,243,.3);border-radius:50%;background:linear-gradient(145deg,#a8b2c0,#454c5b);color:#f4f6fb;font-size:25px;box-shadow:0 7px 24px #0007;cursor:pointer}
 .kalki-effect-card .metal-fx-canvas,.kalki-effect-card canvas{max-width:100%}
 @media(max-width:700px){#kalki-effects-panel{padding:18px 14px 80px}.kalki-effects-grid{grid-template-columns:1fr}.kalki-effects-panel-head{align-items:center}.kalki-effect-card{padding:15px}}
-@media(prefers-reduced-motion:reduce){.kalki-effects-button{transition:none}.kalki-effect-card{scroll-behavior:auto}}
+@media(prefers-reduced-motion:reduce){.kalki-effects-button{transition:none}.kalki-effect-card{scroll-behavior:auto}.kalki-image-fallback-visual img{clip-path:none;animation:none}.kalki-image-fallback-visual::after{display:none;animation:none}}
