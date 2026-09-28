@@ -19,6 +19,8 @@ for (const name of ['bot-avatars', 'border-beam', 'thinking-orbs', 'voice-glow',
 }
 assert.match(bundle, /React\.lazy\(\(\) => import\('\.\/assistant-effects-lab\.jsx'\)\)/, 'the heavy visual effects lab must load lazily when requested');
 assert.match(bundle, /ThinkingOrb=\{ThinkingOrb\} BorderBeam=\{BorderBeam\} VoiceBeam=\{VoiceBeam\} BotAvatar=\{BotAvatar\}/, 'the visual effects lab must receive its Libraries.dev components');
+assert.match(bundle, /mountKalkiEffects\(options = \{\}\)/, 'the runtime must mount with the current panel visibility');
+assert.match(bundle, /KalkiEffectsRuntime panelOpen=\{panelOpen\}/, 'the effects lab must open reliably after navigation');
 for (const marker of ['ThinkingOrb', 'BorderBeam', 'VoiceBeam', 'BotAvatar', 'kalki:assistant-state', 'kalki:voice-state']) {
   assert.ok(bundle.includes(marker), `${marker} must be wired into the assistant effects runtime`);
 }

@@ -82,29 +82,19 @@ function AssistantPortals({ assistantState, voiceState, reduced }) {
   </>;
 }
 
-function KalkiEffectsRuntime() {
+function KalkiEffectsRuntime({ panelOpen = false }) {
   const reduced = useReducedMotion();
   const [assistantState, setAssistantState] = useState(() => window.kalkiAssistantState || 'idle');
   const [voiceState, setVoiceState] = useState(() => window.kalkiVoiceState || { active: false, listening: false, message: '' });
-  const [panelOpen, setPanelOpen] = useState(() => {
-    const panel = document.getElementById('kalki-effects-panel');
-    return Boolean(panel && !panel.hidden);
-  });
 
   useEffect(() => {
     const onAssistant = event => setAssistantState(event.detail?.state || 'idle');
     const onVoice = event => setVoiceState(event.detail || { active: false, listening: false, message: '' });
-    const onSurface = () => {
-      const panel = document.getElementById('kalki-effects-panel');
-      setPanelOpen(Boolean(panel && !panel.hidden));
-    };
     window.addEventListener('kalki:assistant-state', onAssistant);
     window.addEventListener('kalki:voice-state', onVoice);
-    window.addEventListener('kalki:surface-change', onSurface);
     return () => {
       window.removeEventListener('kalki:assistant-state', onAssistant);
       window.removeEventListener('kalki:voice-state', onVoice);
-      window.removeEventListener('kalki:surface-change', onSurface);
     };
   }, []);
 
@@ -117,11 +107,13 @@ function KalkiEffectsRuntime() {
 }
 
 let effectsRoot = null;
-export function mountKalkiEffects() {
+export function mountKalkiEffects(options = {}) {
   const target = document.getElementById('kalki-effects-react-root');
   if (!target) return null;
+  const panel = document.getElementById('kalki-effects-panel');
+  const panelOpen = typeof options.panelOpen === 'boolean' ? options.panelOpen : Boolean(panel && !panel.hidden);
   if (!effectsRoot) effectsRoot = createRoot(target);
-  effectsRoot.render(<React.StrictMode><KalkiEffectsRuntime /></React.StrictMode>);
+  effectsRoot.render(<React.StrictMode><KalkiEffectsRuntime panelOpen={panelOpen} /></React.StrictMode>);
   document.body.classList.add('kalki-effects-ready');
   return effectsRoot;
 }

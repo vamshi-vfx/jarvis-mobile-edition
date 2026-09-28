@@ -165,19 +165,23 @@
   <script>
     let kalkiEffectsPromise = null;
     window.ensureKalkiEffects = function ensureKalkiEffects() {
+      window.kalkiEffectsRequested = true;
       if (!kalkiEffectsPromise) {
         const errorBox = document.getElementById('kalki-effects-load-error');
         if (errorBox) errorBox.hidden = true;
         kalkiEffectsPromise = import('./effects/assistant-effects.js?v=1')
-          .then((module) => module.mountKalkiEffects?.())
           .catch((error) => {
             console.error('KALKI visual effects could not load.', error);
-            if (errorBox) { errorBox.hidden = false; errorBox.textContent = `Effects loading detail: ${error?.message || 'unknown error'}`; }
+            if (errorBox) errorBox.hidden = false;
             kalkiEffectsPromise = null;
             return null;
           });
       }
-      return kalkiEffectsPromise;
+      return kalkiEffectsPromise.then((module) => {
+        const panel = document.getElementById('kalki-effects-panel');
+        module?.mountKalkiEffects?.({ panelOpen: Boolean(panel && !panel.hidden) });
+        return module;
+      });
     };
     const menu = document.querySelector('.menu-button'), sheet = document.querySelector('.side-sheet'), backdrop = document.querySelector('.sheet-backdrop');
     function toggleMenu(open) { document.body.classList.toggle('menu-open', open); }
@@ -206,7 +210,8 @@
       if (effectsPanel) effectsPanel.hidden = !effects;
       if (composerWrap) composerWrap.hidden = !assistant;
       window.dispatchEvent(new CustomEvent('kalki:surface-change', {detail: {surface}}));
-      if (effects || assistant) window.ensureKalkiEffects?.();
+      if (effects) window.kalkiEffectsRequested = true;
+      if (window.kalkiEffectsRequested) window.ensureKalkiEffects?.();
       window.scrollTo({top: 0, behavior: 'smooth'});
     }
     const creatorPanel = document.getElementById('creator-agent-panel');
