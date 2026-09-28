@@ -28,7 +28,7 @@ for (const marker of ['<Liquid', '<MetalFx', '<ImageGeneration', 'pixels-organic
   assert.ok(lab.toLowerCase().includes(marker.toLowerCase()), `assistant effects lab must include ${marker}`);
 }
 assert.match(appHtml, /id="kalki-effects-panel"/, 'the real assistant needs an Effects panel');
-assert.match(appHtml, /import\('\.\/effects\/assistant-effects\.js\?v=1'\)/, 'the static assistant must dynamically import the generated bundle');
+assert.match(appHtml, /import\('\.\/effects\/assistant-effects\.js\?v=2'\)/, 'the static assistant must dynamically import the current generated bundle');
 assert.match(appHtml, /id="kalki-avatar-root"[\s\S]*id="kalki-thinking-root"[\s\S]*id="kalki-composer-effects-root"/, 'the assistant needs all three effect mount points');
 assert.match(appScript, /publishKalkiAssistantState\("solving"\)[\s\S]*publishKalkiAssistantState\("idle"\)/, 'Gemini work must publish solving and idle states');
 assert.match(appScript, /kalki:voice-state[\s\S]*ensureKalkiEffects/, 'voice state must synchronize without another microphone stream');

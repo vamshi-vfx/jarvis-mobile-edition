@@ -169,7 +169,7 @@
       if (!kalkiEffectsPromise) {
         const errorBox = document.getElementById('kalki-effects-load-error');
         if (errorBox) errorBox.hidden = true;
-        kalkiEffectsPromise = import('./effects/assistant-effects.js?v=1')
+        kalkiEffectsPromise = import('./effects/assistant-effects.js?v=2')
           .catch((error) => {
             console.error('KALKI visual effects could not load.', error);
             if (errorBox) errorBox.hidden = false;
