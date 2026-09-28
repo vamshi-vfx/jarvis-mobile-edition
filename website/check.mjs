@@ -44,6 +44,8 @@ assert.match(lab, /new URL\('\.\.\/1789578396977-559ec457\.jpg', window\.locatio
 assert.match(lab, /This is not AI image generation/, 'image reveal must not be described as image generation');
 assert.match(lab, /separate composer-style card[\s\S]*does not surround the live message composer/, 'the beam preview must not claim to wrap the real composer');
 assert.match(lab, /URL\.createObjectURL\(file\)/, 'selected images must remain local browser object URLs');
+assert.match(lab, /ImageRevealErrorBoundary[\s\S]*needs WebGL support in this browser[\s\S]*other previews remain available/, 'a WebGL failure must stay isolated to the image reveal card rather than blanking the lab');
+assert.match(assistantCss, /\.kalki-image-render-fallback/, 'the local image fallback must be styled within the image reveal card');
 assert.match(lab, /<img className="kalki-image-canvas" src=\{image\} alt="Local image reveal preview" \/>/, 'the reveal renderer must retain a local-image fallback beneath the effect');
 assert.match(frameHtml, /src="\.\/src\/assistant-effects-standalone\.jsx"/, 'the effects page must boot the standalone React app');
 assert.match(effectsBuild, /base:\s*'\.\/'/, 'the standalone build must use relative asset URLs');
