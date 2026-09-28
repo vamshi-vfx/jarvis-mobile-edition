@@ -35,6 +35,7 @@ assert.match(css, /pointer-events:none/, 'assistant composer visuals must not bl
 assert.ok(!/ImageEffectSection|BotAvatarsSection|ImageGeneration|BotAvatar|image-effect|bot-avatars/.test(jsx), 'Libraries.dev demos belong in the assistant, not the product website');
 assert.ok(!/image-effect|bot-avatar/.test(css), 'marketing-site demo styles should be removed');
 assert.match(effectsBuild, /assistant-effects\.js/, 'the assistant bundle must have a stable entry filename');
+assert.match(effectsBuild, /process\.env\.NODE_ENV.*production/, 'browser libraries must use production mode without a Node process global');
 assert.match(html, /<html lang="en">/, 'public site must be English-only');
 assert.match(html, /jarvis-mobile-edition\/frontend\//, 'KALKI app backlink must point to the existing app');
 assert.match(jsx, /useReducedMotion/, 'product site motion must respect reduced-motion preferences');
