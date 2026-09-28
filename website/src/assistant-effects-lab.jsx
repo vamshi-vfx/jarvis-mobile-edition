@@ -4,7 +4,7 @@ import { ImageGeneration } from 'img-fx';
 import { Liquid } from 'liquid-gooey';
 import { MetalFx } from 'metal-fx';
 
-const logoAsset = new URL('1789578396977-559ec457.jpg', window.location.href).href;
+const logoAsset = new URL('../1789578396977-559ec457.jpg', window.location.href).href;
 const imagePresets = [
   { id: 'pixels-organic', label: 'Organic pixels' },
   { id: 'pixels-mechanic', label: 'Mechanic pixels' },
@@ -99,11 +99,11 @@ export default function AssistantEffectsLab({ assistantState, voiceState, Thinki
       <PanelCard id="thinking-orb" eyebrow="THINKING ORBS · 2D CANVAS" title="Choose a thought state">
         <label className="kalki-effect-control" htmlFor="kalki-orb-state">Orb state<select id="kalki-orb-state" value={orbState} onChange={event => setOrbState(event.target.value)}>{orbStates.map(state => <option key={state} value={state}>{state.charAt(0).toUpperCase() + state.slice(1)}</option>)}</select></label>
         <div className="kalki-effect-preview kalki-orb-preview"><ThinkingOrb state={orbState} size={64} theme="dark" speed={0.9} /><span>{orbState}</span></div>
-        <p className="kalki-effect-hint">The assistant also shows a small live orb while KALKI is solving or listening.</p>
+        <p className="kalki-effect-hint">Preview all nine thought states here; this orb demo never sends a request or starts a background task.</p>
       </PanelCard>
 
       <PanelCard id="border-beam" eyebrow="BORDER BEAM" title="An animated edge for the composer">
-        <p className="kalki-effect-copy">This beam also wraps KALKI’s real message composer while it is focused, thinking, or in voice mode.</p>
+        <p className="kalki-effect-copy">Preview the Libraries.dev beam around a composer-style card. Opening this demo does not alter or send your chat message.</p>
         <div className="kalki-beam-preview-wrap"><BorderBeam size="md" colorVariant="ocean" theme="dark" strength={0.8} active={beamActive && !reduced}><div className="kalki-beam-preview">KALKI · READY FOR YOUR MESSAGE</div></BorderBeam></div>
         <button className="kalki-effects-button" type="button" aria-pressed={beamActive} onClick={() => setBeamActive(value => !value)}>{beamActive ? 'Pause beam' : 'Resume beam'}</button>
       </PanelCard>
@@ -124,7 +124,7 @@ export default function AssistantEffectsLab({ assistantState, voiceState, Thinki
         <div className="kalki-avatar-roster" role="group" aria-label="Assistant avatar roster">
           {[['KALKI guide', 'ghost', 'default'], ['Idea scout', 'star', 'working'], ['Creator', 'flower', 'working'], ['Night monitor', 'droid', 'sleeping']].map(([name, shape, state]) => <div className="kalki-avatar-roster-item" key={name}><BotAvatar type={shape} face="eyes" state={state} size={34} seed={shape.length / 20} theme="dark" interactive={false} aria-label={`${name}, ${state}`} /><span>{name}<small>{shape} · {state}</small></span></div>)}
         </div>
-        <p className="kalki-effect-hint">Ghost is the featured KALKI avatar in the assistant header; the roster shows additional 2D agent faces.</p>
+        <p className="kalki-effect-hint">Ghost is KALKI’s featured avatar preview; the roster shows additional 2D agent faces.</p>
       </PanelCard>
 
       <PanelCard id="metal-fx" eyebrow="METAL FX · WEBGL2" title="A liquid-metal accent">
