@@ -10,6 +10,9 @@ assert.ok(packageJson.dependencies['framer-motion'], 'Framer Motion must be inst
 assert.ok(packageJson.devDependencies.tailwindcss, 'Tailwind CSS must be installed');
 assert.ok(packageJson.dependencies['img-fx'], 'img-fx must be installed');
 assert.ok(packageJson.dependencies.three, 'three must be installed for the image effect');
+assert.ok(packageJson.dependencies['bot-avatars'], 'bot-avatars must be installed');
+assert.match(jsx, /import \{ BotAvatar \} from 'bot-avatars'/, 'BotAvatar must be integrated');
+assert.match(jsx, /'ghost'.*'sleeping'/s, 'Ghost avatar and states must be available');
 assert.match(jsx, /<ImageGeneration/, 'the Libraries.dev image reveal must be integrated');
 assert.match(jsx, /pixels-organic.*pixels-mechanic.*sweep-gradient/s, 'all image reveal presets must be available');
 assert.match(html, /<html lang="en">/, 'public site must be English-only');
@@ -20,4 +23,4 @@ assert.match(jsx, /SIMULATOR ONLY/, 'social integration status must remain hones
 assert.match(jsx, /NOT RELEASED/, 'Android release status must remain honest');
 assert.match(jsx, /NOT CONFIGURED/, 'billing status must remain honest');
 assert.ok(!/https?:\/\/(?:www\.)?irisxai\.in/i.test(jsx), 'reference website must not be linked as copied content');
-console.log('Static checks passed: image reveal, presets, English language, app backlink, reduced motion, honest status labels, reference-site independence.');
+console.log('Static checks passed: image reveal, bot avatars, presets, English language, app backlink, reduced motion, honest status labels, reference-site independence.');

@@ -8,6 +8,7 @@
     "check": "node --check publish.mjs && node --check vite.config.js && node check.mjs"
   },
   "dependencies": {
+    "bot-avatars": "^0.1.1",
     "framer-motion": "^12.23.12",
     "img-fx": "^0.5.1",
     "lucide-react": "^0.468.0",
