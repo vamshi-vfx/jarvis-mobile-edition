@@ -294,7 +294,7 @@ document.addEventListener("DOMContentLoaded", () => {
         time: async () => sendBackendCommand("tell me the current time"),
         weather: async (goal) => sendBackendCommand(`check weather for this request: ${goal}`),
         news: async () => sendBackendCommand("show tech news"),
-        crypto: async () => sendBackendCommand("show bitcoin price in INR")
+        crypto: async () => sendBackendCommand("show bitcoin price")
     });
     const AGENT_TOOL_NAMES = Object.freeze({
         time: "Time", weather: "Weather", news: "Tech news", crypto: "Bitcoin price"
