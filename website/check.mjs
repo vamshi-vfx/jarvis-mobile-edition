@@ -18,6 +18,7 @@ for (const name of ['bot-avatars', 'border-beam', 'thinking-orbs', 'voice-glow',
   assert.ok(packageJson.dependencies[name], `${name} must be installed for the assistant effects bundle`);
 }
 assert.match(bundle, /React\.lazy\(\(\) => import\('\.\/assistant-effects-lab\.jsx'\)\)/, 'the heavy visual effects lab must load lazily when requested');
+assert.match(bundle, /ThinkingOrb=\{ThinkingOrb\} BorderBeam=\{BorderBeam\} VoiceBeam=\{VoiceBeam\} BotAvatar=\{BotAvatar\}/, 'the visual effects lab must receive its Libraries.dev components');
 for (const marker of ['ThinkingOrb', 'BorderBeam', 'VoiceBeam', 'BotAvatar', 'kalki:assistant-state', 'kalki:voice-state']) {
   assert.ok(bundle.includes(marker), `${marker} must be wired into the assistant effects runtime`);
 }

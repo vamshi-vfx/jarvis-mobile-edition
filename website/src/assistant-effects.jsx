@@ -111,7 +111,7 @@ function KalkiEffectsRuntime() {
   return <>
     <AssistantPortals assistantState={assistantState} voiceState={voiceState} reduced={reduced} />
     {panelOpen && <React.Suspense fallback={<div className="kalki-effects-loading" role="status">Loading KALKI visual effects…</div>}>
-      <VisualEffectsLab assistantState={assistantState} voiceState={voiceState} />
+      <VisualEffectsLab assistantState={assistantState} voiceState={voiceState} ThinkingOrb={ThinkingOrb} BorderBeam={BorderBeam} VoiceBeam={VoiceBeam} BotAvatar={BotAvatar} />
     </React.Suspense>}
   </>;
 }

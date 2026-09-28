@@ -172,7 +172,7 @@
           .then((module) => module.mountKalkiEffects?.())
           .catch((error) => {
             console.error('KALKI visual effects could not load.', error);
-            if (errorBox) errorBox.hidden = false;
+            if (errorBox) { errorBox.hidden = false; errorBox.textContent = `Effects loading detail: ${error?.message || 'unknown error'}`; }
             kalkiEffectsPromise = null;
             return null;
           });
