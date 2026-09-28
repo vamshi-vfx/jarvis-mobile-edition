@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="social-agent.css?v=local-preview-1">
   <link rel="stylesheet" href="professional-ui.css?v=scroll-fix-1">
   <link rel="stylesheet" href="motion-enhancements.css?v=0.1.0">
-  <link rel="stylesheet" href="kalki-effects.css?v=2">
+  <link rel="stylesheet" href="kalki-effects.css?v=3">
   <style>.advanced-intelligence-panel{margin:18px auto 0;max-width:760px;border:1px solid rgba(176,164,255,.28);border-radius:18px;background:linear-gradient(145deg,rgba(25,29,42,.92),rgba(12,15,24,.9));box-shadow:0 14px 40px #0004;overflow:hidden}.ai-panel-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px}.ai-panel-head strong,.ai-panel-head small{display:block}.ai-panel-head small{color:var(--muted);font-size:10px;margin-top:4px}.ai-collapse{border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--text);font-size:18px}.ai-panel-body{padding:0 16px 16px}.ai-status-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.ai-status-grid span{padding:8px;border:1px solid var(--line);border-radius:10px;background:#ffffff05}.ai-status-grid b,.ai-status-grid em{display:block;font-size:10px}.ai-status-grid b{text-transform:capitalize;color:var(--muted)}.ai-status-grid em{font-style:normal;color:#f0b48c;margin-top:3px}.ai-status-grid em.on{color:var(--green)}.ai-actions{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}.ai-actions button,.ai-plan button{border:1px solid var(--line);border-radius:10px;padding:9px;background:#ffffff08;color:var(--text);font-size:11px}.ai-plan label{display:block;color:var(--muted);font-size:11px;margin-bottom:5px}.ai-plan textarea{width:100%;box-sizing:border-box;resize:vertical;border:1px solid var(--line);border-radius:10px;padding:9px;background:#090b11;color:var(--text);font:inherit;font-size:12px}.ai-plan button{margin-top:7px}.ai-unavailable{color:var(--muted);font-size:10px;line-height:1.4;margin:12px 0 0}@media(max-width:560px){.ai-status-grid{grid-template-columns:repeat(2,1fr)}.ai-actions button{flex:1 1 45%}}</style>
 </head>
 <body>
@@ -59,8 +59,9 @@
       <section id="chat" class="chat" aria-live="polite" aria-label="Conversation"></section>
       <section id="kalki-effects-panel" class="kalki-effects-panel" hidden aria-labelledby="kalki-effects-title">
         <header class="kalki-effects-panel-head"><div><p class="eyebrow">KALKI · ASSISTANT UI</p><h2 id="kalki-effects-title" tabindex="-1">Visual effects</h2></div><button id="kalki-effects-close" class="kalki-effects-back" type="button">← Back to chat</button></header>
-        <p id="kalki-effects-load-error" class="kalki-effects-load-error" role="status" hidden>The visual effects lab could not be opened. Check your connection and try again.</p>
-        <iframe id="kalki-effects-frame" class="kalki-effects-frame" title="KALKI visual effects lab" loading="eager" scrolling="no" src="about:blank" data-src="effects/index.html?v=standalone-1"></iframe>
+        <p id="kalki-effects-load-error" class="kalki-effects-load-error" role="alert" hidden>The visual effects lab could not be opened. Check your connection, then reopen the panel to try again.</p>
+        <p id="kalki-effects-loading" class="kalki-effects-loading" role="status" aria-live="polite" hidden>Loading visual effects…</p>
+        <iframe id="kalki-effects-frame" class="kalki-effects-frame" title="KALKI visual effects lab" loading="lazy" scrolling="no" src="about:blank" data-src="effects/index.html?v=standalone-3" aria-busy="true"></iframe>
       </section>
       <section id="creator-agent-panel" class="creator-agent-panel" hidden aria-labelledby="creator-agent-title">
         <div class="creator-agent-head"><div><p class="eyebrow">KALKI CREATOR AGENT</p><h2 id="creator-agent-title">Short-video studio</h2><p>Prepare a Telugu/Teluglish creator brief in stages. Nothing is rendered, uploaded, or published here.</p></div><span class="creator-safe-badge">EXPLICIT ONLY</span></div>
@@ -160,44 +161,81 @@
   <script src="advanced-intelligence.js"></script>
   <script src="social-agent.js?v=local-preview-1"></script>
   <script>
+    const kalkiEffectsPanel = document.getElementById('kalki-effects-panel');
     const kalkiEffectsFrame = document.getElementById('kalki-effects-frame');
     const kalkiEffectsError = document.getElementById('kalki-effects-load-error');
+    const kalkiEffectsLoading = document.getElementById('kalki-effects-loading');
+    let kalkiEffectsReady = false;
+    let kalkiEffectsFailed = false;
+    let kalkiEffectsLoadTimer = 0;
     function sendKalkiEffectsState() {
       const frameWindow = kalkiEffectsFrame?.contentWindow;
       if (!frameWindow || kalkiEffectsFrame.getAttribute('src') === 'about:blank') return;
       frameWindow.postMessage({
         type: 'kalki-state',
         assistantState: window.kalkiAssistantState || 'idle',
-        voiceState: window.kalkiVoiceState || {active:false, listening:false, processing:false}
+        voiceState: {
+          active: Boolean(window.kalkiVoiceState?.active),
+          listening: Boolean(window.kalkiVoiceState?.listening),
+          processing: Boolean(window.kalkiVoiceState?.processing)
+        }
       }, window.location.origin);
     }
-    window.ensureKalkiEffects = function ensureKalkiEffects() {
-      const panel = document.getElementById('kalki-effects-panel');
-      if (panel && !panel.hidden && kalkiEffectsFrame) {
-        if (kalkiEffectsFrame.getAttribute('src') === 'about:blank') {
-          if (kalkiEffectsError) kalkiEffectsError.hidden = true;
-          kalkiEffectsFrame.setAttribute('src', kalkiEffectsFrame.dataset.src);
+    function startKalkiEffects(retry = false) {
+      if (!kalkiEffectsFrame || !kalkiEffectsPanel || kalkiEffectsPanel.hidden) return;
+      if (kalkiEffectsFrame.getAttribute('src') === 'about:blank' || retry) {
+        kalkiEffectsReady = false;
+        kalkiEffectsFailed = false;
+        if (kalkiEffectsError) kalkiEffectsError.hidden = true;
+        if (kalkiEffectsLoading) kalkiEffectsLoading.hidden = false;
+        kalkiEffectsFrame.setAttribute('aria-busy', 'true');
+        let source = kalkiEffectsFrame.dataset.src;
+        if (retry) {
+          const retryUrl = new URL(source, window.location.href);
+          retryUrl.searchParams.set('retry', String(Date.now()));
+          source = retryUrl.href;
         }
+        kalkiEffectsFrame.setAttribute('src', source);
+        window.clearTimeout(kalkiEffectsLoadTimer);
+        kalkiEffectsLoadTimer = window.setTimeout(() => {
+          if (kalkiEffectsReady) return;
+          kalkiEffectsFailed = true;
+          if (kalkiEffectsLoading) kalkiEffectsLoading.hidden = true;
+          if (kalkiEffectsError) kalkiEffectsError.hidden = false;
+          kalkiEffectsFrame.setAttribute('aria-busy', 'false');
+        }, 20000);
       }
       sendKalkiEffectsState();
+    }
+    window.ensureKalkiEffects = function ensureKalkiEffects() {
+      if (!kalkiEffectsPanel?.hidden) startKalkiEffects(kalkiEffectsFailed);
       return Promise.resolve(kalkiEffectsFrame);
     };
     kalkiEffectsFrame?.addEventListener('load', () => {
-      if (kalkiEffectsFrame.getAttribute('src') !== 'about:blank' && kalkiEffectsError) kalkiEffectsError.hidden = true;
+      if (kalkiEffectsFrame.getAttribute('src') === 'about:blank') return;
       sendKalkiEffectsState();
     });
     kalkiEffectsFrame?.addEventListener('error', () => {
+      kalkiEffectsFailed = true;
+      window.clearTimeout(kalkiEffectsLoadTimer);
+      if (kalkiEffectsLoading) kalkiEffectsLoading.hidden = true;
       if (kalkiEffectsError) kalkiEffectsError.hidden = false;
+      kalkiEffectsFrame.setAttribute('aria-busy', 'false');
     });
     window.addEventListener('message', event => {
       if (event.source !== kalkiEffectsFrame?.contentWindow || event.origin !== window.location.origin) return;
       if (event.data?.type === 'kalki-effects-ready') {
+        kalkiEffectsReady = true;
+        kalkiEffectsFailed = false;
+        window.clearTimeout(kalkiEffectsLoadTimer);
+        kalkiEffectsFrame.setAttribute('aria-busy', 'false');
         if (kalkiEffectsError) kalkiEffectsError.hidden = true;
+        if (kalkiEffectsLoading) kalkiEffectsLoading.hidden = true;
         sendKalkiEffectsState();
       } else if (event.data?.type === 'kalki-effects-resize') {
         const height = Number(event.data.height);
-        if (Number.isFinite(height) && height > 0 && height < 10000) {
-          kalkiEffectsFrame.style.height = `${Math.max(1800, Math.ceil(height))}px`;
+        if (Number.isFinite(height) && height >= 1 && height <= 15000) {
+          kalkiEffectsFrame.style.height = `${Math.max(720, Math.ceil(height) + 4)}px`;
         }
       }
     });

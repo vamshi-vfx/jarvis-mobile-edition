@@ -4,6 +4,8 @@ on:
     branches: [main]
     paths:
       - 'website/**'
+      - 'frontend/index.html'
+      - 'frontend/kalki-effects.css'
       - '.github/workflows/kalki-site.yml'
   workflow_dispatch:
 permissions:

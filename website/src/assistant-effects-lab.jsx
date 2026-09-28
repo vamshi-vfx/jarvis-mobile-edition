@@ -1,8 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useReducedMotion } from 'framer-motion';
-import { ImageGeneration } from 'img-fx';
-import { Liquid } from 'liquid-gooey';
-import { MetalFx } from 'metal-fx';
 
 const logoAsset = new URL('../1789578396977-559ec457.jpg', window.location.href).href;
 const imagePresets = [
@@ -20,7 +17,7 @@ function PanelCard({ id, eyebrow, title, children, className = '' }) {
   </section>;
 }
 
-function GooeyDemo({ reduced }) {
+function GooeyDemo({ reduced, Liquid }) {
   const [open, setOpen] = useState(false);
   return <PanelCard id="gooey" eyebrow="LIQUID GOOEY" title="A menu that melts together">
     <p className="kalki-effect-copy">Open the controls to see the liquid merge-and-move transition. All buttons remain ordinary keyboard-accessible controls.</p>
@@ -44,7 +41,7 @@ function GooeyDemo({ reduced }) {
   </PanelCard>;
 }
 
-function ImageRevealDemo({ reduced }) {
+function ImageRevealDemo({ reduced, ImageGeneration }) {
   const [preset, setPreset] = useState(imagePresets[0].id);
   const [image, setImage] = useState(logoAsset);
   const [fileUrl, setFileUrl] = useState('');
@@ -80,7 +77,7 @@ function ImageRevealDemo({ reduced }) {
   </PanelCard>;
 }
 
-export default function AssistantEffectsLab({ assistantState, voiceState, ThinkingOrb, BorderBeam, VoiceBeam, BotAvatar }) {
+export default function AssistantEffectsLab({ assistantState, voiceState, ThinkingOrb, BorderBeam, VoiceBeam, BotAvatar, Liquid, MetalFx, ImageGeneration }) {
   const reduced = useReducedMotion();
   const [orbState, setOrbState] = useState('solving');
   const [beamActive, setBeamActive] = useState(true);
@@ -102,13 +99,13 @@ export default function AssistantEffectsLab({ assistantState, voiceState, Thinki
         <p className="kalki-effect-hint">Preview all nine thought states here; this orb demo never sends a request or starts a background task.</p>
       </PanelCard>
 
-      <PanelCard id="border-beam" eyebrow="BORDER BEAM" title="An animated edge for the composer">
-        <p className="kalki-effect-copy">Preview the Libraries.dev beam around a composer-style card. Opening this demo does not alter or send your chat message.</p>
+      <PanelCard id="border-beam" eyebrow="BORDER BEAM" title="Animated beam preview">
+        <p className="kalki-effect-copy">See the Libraries.dev beam around a separate composer-style card. This demo does not surround the live message composer or alter or send your chat message.</p>
         <div className="kalki-beam-preview-wrap"><BorderBeam size="md" colorVariant="ocean" theme="dark" strength={0.8} active={beamActive && !reduced}><div className="kalki-beam-preview">KALKI · READY FOR YOUR MESSAGE</div></BorderBeam></div>
         <button className="kalki-effects-button" type="button" aria-pressed={beamActive} onClick={() => setBeamActive(value => !value)}>{beamActive ? 'Pause beam' : 'Resume beam'}</button>
       </PanelCard>
 
-      <GooeyDemo reduced={Boolean(reduced)} />
+      <GooeyDemo reduced={Boolean(reduced)} Liquid={Liquid} />
 
       <PanelCard id="voice-glow" eyebrow="VOICE GLOW" title="Voice-reactive light, without another mic">
         <p className="kalki-effect-copy">{liveVoice ? (liveListening ? 'KALKI is listening now; the glow follows that live state.' : 'KALKI voice mode is active; the glow follows that live state.') : 'Voice mode is idle. Use the slider for a visual-only demo; it does not access a microphone.'}</p>
@@ -133,7 +130,7 @@ export default function AssistantEffectsLab({ assistantState, voiceState, Thinki
         <div className="kalki-metal-stage"><MetalFx preset={metalPreset} strength={0.82} variant="circle" theme="dark" innerShadow paused={Boolean(reduced)}><button type="button" className="kalki-metal-button" aria-label="Example liquid-metal action">✦</button></MetalFx></div>
       </PanelCard>
 
-      <ImageRevealDemo reduced={Boolean(reduced)} />
+      <ImageRevealDemo reduced={Boolean(reduced)} ImageGeneration={ImageGeneration} />
     </div>
   </div>;
 }

@@ -25,6 +25,7 @@ try {
 const effectsOut = path.join(repo, 'frontend', 'effects');
 await rm(effectsOut, { recursive: true, force: true });
 await mkdir(path.dirname(effectsOut), { recursive: true });
-await cp(effectsDist, effectsOut, { recursive: true });
+await mkdir(effectsOut, { recursive: true });
+await cp(path.join(effectsDist, 'assets'), path.join(effectsOut, 'assets'), { recursive: true });
 await copyFile(effectsEntry, path.join(effectsOut, 'index.html'));
-console.log(`Published product site (${(await readdir(outAssets)).length} assets) and assistant effects page (${(await readdir(effectsOut)).length} files).`);
+console.log(`Published product site (${(await readdir(outAssets)).length} assets) and assistant effects page (${(await readdir(path.join(effectsOut, 'assets'))).length} assets).`);

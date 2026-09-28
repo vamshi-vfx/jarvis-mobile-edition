@@ -19,11 +19,6 @@ export default defineConfig({
     target: 'es2020',
     rollupOptions: {
       input: resolve(here, 'assistant-effects.html'),
-      output: {
-        entryFileNames: 'assets/[name]-[hash].js',
-        chunkFileNames: 'assets/[name]-[hash].js',
-        assetFileNames: 'assets/[name]-[hash][extname]',
-      },
     },
   },
 });

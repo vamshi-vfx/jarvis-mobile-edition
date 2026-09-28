@@ -4,6 +4,9 @@ import { BotAvatar } from 'bot-avatars';
 import { BorderBeam } from 'border-beam';
 import { ThinkingOrb } from 'thinking-orbs';
 import { VoiceBeam } from 'voice-glow';
+import { Liquid } from 'liquid-gooey';
+import { MetalFx } from 'metal-fx';
+import { ImageGeneration } from 'img-fx';
 import AssistantEffectsLab from './assistant-effects-lab.jsx';
 import './assistant-effects-frame.css';
 import '../../frontend/kalki-effects.css';
@@ -25,8 +28,18 @@ function EffectsApp() {
   const [voiceState, setVoiceState] = useState({ active: false, listening: false, processing: false });
 
   useEffect(() => {
+    let resizeFrame = 0;
     const reportHeight = () => {
-      window.parent?.postMessage({ type: 'kalki-effects-resize', height: document.documentElement.scrollHeight }, window.location.origin);
+      cancelAnimationFrame(resizeFrame);
+      resizeFrame = requestAnimationFrame(() => {
+        const root = document.getElementById('root');
+        const height = Math.ceil(Math.max(
+          document.documentElement.scrollHeight,
+          document.body?.scrollHeight || 0,
+          root?.getBoundingClientRect().height || 0
+        ));
+        window.parent?.postMessage({ type: 'kalki-effects-resize', height }, window.location.origin);
+      });
     };
     const onMessage = event => {
       if (event.source !== window.parent || event.origin !== window.location.origin) return;
@@ -59,6 +72,9 @@ function EffectsApp() {
       BorderBeam={BorderBeam}
       VoiceBeam={VoiceBeam}
       BotAvatar={BotAvatar}
+      Liquid={Liquid}
+      MetalFx={MetalFx}
+      ImageGeneration={ImageGeneration}
     />
   </EffectsErrorBoundary>;
 }
