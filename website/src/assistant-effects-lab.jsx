@@ -26,16 +26,16 @@ function GooeyDemo({ reduced }) {
     <p className="kalki-effect-copy">Open the controls to see the liquid merge-and-move transition. All buttons remain ordinary keyboard-accessible controls.</p>
     <div className={`kalki-gooey-stage ${open ? 'is-open' : ''}`}>
       <Liquid blur={7} contrast={19} fill="#85e0e9" shadow="0 4px 16px rgba(25, 184, 210, .25)">
-        <Liquid.Item x={open ? -54 : 0} y={open ? -20 : 0} transition={reduced ? { duration: 0, ease: 'linear' } : 'bouncy'} delay={0}>
+        <Liquid.Item className="kalki-gooey-item" x={open ? -54 : 0} y={open ? -20 : 0} transition={reduced ? { duration: 0, ease: 'linear' } : 'bouncy'} delay={0}>
           <button className="kalki-gooey-action" type="button" tabIndex={open ? 0 : -1} aria-label="Show settings" onClick={() => setOpen(false)}>⚙</button>
         </Liquid.Item>
-        <Liquid.Item x={open ? 0 : 0} y={open ? -64 : 0} transition={reduced ? { duration: 0, ease: 'linear' } : 'bouncy'} delay={36}>
+        <Liquid.Item className="kalki-gooey-item" x={open ? 0 : 0} y={open ? -64 : 0} transition={reduced ? { duration: 0, ease: 'linear' } : 'bouncy'} delay={36}>
           <button className="kalki-gooey-action" type="button" tabIndex={open ? 0 : -1} aria-label="Show favorites" onClick={() => setOpen(false)}>★</button>
         </Liquid.Item>
-        <Liquid.Item x={open ? 54 : 0} y={open ? -20 : 0} transition={reduced ? { duration: 0, ease: 'linear' } : 'bouncy'} delay={72}>
+        <Liquid.Item className="kalki-gooey-item" x={open ? 54 : 0} y={open ? -20 : 0} transition={reduced ? { duration: 0, ease: 'linear' } : 'bouncy'} delay={72}>
           <button className="kalki-gooey-action" type="button" tabIndex={open ? 0 : -1} aria-label="Show messages" onClick={() => setOpen(false)}>✦</button>
         </Liquid.Item>
-        <Liquid.Item>
+        <Liquid.Item className="kalki-gooey-item">
           <button className="kalki-gooey-action kalki-gooey-toggle" type="button" aria-expanded={open} aria-label={open ? 'Close gooey menu' : 'Open gooey menu'} onClick={() => setOpen(value => !value)}>{open ? '×' : '+'}</button>
         </Liquid.Item>
       </Liquid>

@@ -46,8 +46,9 @@ body.utility-mode-active .kalki-effects-panel:not([hidden]){display:block!import
 .kalki-beam-preview-wrap{margin:17px 0 14px;padding:3px;border-radius:14px}
 .kalki-beam-preview{display:grid;place-items:center;min-height:74px;padding:12px;border:1px solid #333948;border-radius:12px;background:#10141e;color:#dfe6f1;font-size:11px;letter-spacing:.04em;text-align:center}
 .kalki-beam-preview-wrap [class*=beam]{pointer-events:none}
-.kalki-gooey-stage{position:relative;min-height:155px;display:grid;place-items:center;margin:14px 0 0;border:1px solid rgba(146,157,190,.13);border-radius:13px;background:radial-gradient(circle at 50% 58%,rgba(57,174,196,.12),transparent 54%),#0e111a}
+.kalki-gooey-stage{position:relative;min-height:180px;display:grid;place-items:center;margin:14px 0 0;border:1px solid rgba(146,157,190,.13);border-radius:13px;background:radial-gradient(circle at 50% 58%,rgba(57,174,196,.12),transparent 54%),#0e111a}
 .kalki-gooey-stage>div{position:relative;display:grid;place-items:center;width:220px;height:122px}
+.kalki-gooey-item{position:absolute!important;left:50%;top:50%;margin:-24px 0 0 -24px}
 .kalki-gooey-action{display:grid;place-items:center;width:48px;height:48px;border:1px solid rgba(231,255,255,.48);border-radius:50%;background:linear-gradient(145deg,#9aebed,#48b8ce);color:#09232b;font-size:19px;font-weight:700;box-shadow:0 4px 15px rgba(40,186,208,.25);cursor:pointer}
 .kalki-gooey-toggle{position:relative;z-index:2;width:54px;height:54px;background:linear-gradient(145deg,#d0befc,#9180e4);color:#1d1639}
 .kalki-image-actions,.kalki-image-presets,.kalki-avatar-states{display:flex;flex-wrap:wrap;gap:7px;margin-top:13px}
