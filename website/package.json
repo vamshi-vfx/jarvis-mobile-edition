@@ -4,17 +4,22 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "build": "vite build && node publish.mjs",
-    "check": "node --check publish.mjs && node --check vite.config.js && node check.mjs"
+    "build": "vite build && vite build --config vite.effects.config.js && node publish.mjs",
+    "check": "node --check publish.mjs && node --check vite.config.js && node --check vite.effects.config.js && node check.mjs"
   },
   "dependencies": {
+    "border-beam": "^1.4.1",
     "bot-avatars": "^0.1.1",
     "framer-motion": "^12.23.12",
     "img-fx": "^0.5.1",
+    "liquid-gooey": "^0.2.2",
     "lucide-react": "^0.468.0",
+    "metal-fx": "^2.0.11",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "three": "^0.186.1"
+    "thinking-orbs": "^0.3.2",
+    "three": "^0.186.1",
+    "voice-glow": "^0.2.1"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^5.0.2",

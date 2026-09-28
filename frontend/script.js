@@ -1,3 +1,11 @@
+window.kalkiAssistantState = window.kalkiAssistantState || "idle";
+window.kalkiVoiceState = window.kalkiVoiceState || { active: false, listening: false, processing: false, status: "" };
+function publishKalkiAssistantState(state) {
+    window.kalkiAssistantState = state;
+    window.dispatchEvent(new CustomEvent("kalki:assistant-state", { detail: { state } }));
+    if (state === "solving") window.ensureKalkiEffects?.();
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     const chatBox = document.getElementById("chat");
     const messageInput = document.getElementById("msg");
@@ -628,6 +636,7 @@ document.addEventListener("DOMContentLoaded", () => {
         messageInput.disabled = true;
         sendButton.disabled = true;
         sendButton.textContent = "...";
+        publishKalkiAssistantState("solving");
 
         try {
             const interaction = await analyzeInteraction(userText);
@@ -638,6 +647,7 @@ document.addEventListener("DOMContentLoaded", () => {
             console.error("JARVIS AI Error:", error);
             showMessage("SYSTEM", error.message, "ai");
         } finally {
+            publishKalkiAssistantState("idle");
             messageInput.disabled = false;
             sendButton.disabled = false;
             sendButton.textContent = "SEND";
@@ -655,6 +665,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function setVoiceModeStatus(message, active = voiceConversationActive) {
+        const voiceState = {
+            active: Boolean(active),
+            listening: Boolean(active && isListening && !voiceTurnPending),
+            processing: Boolean(active && voiceTurnPending),
+            status: String(message || "")
+        };
+        window.kalkiVoiceState = voiceState;
+        window.dispatchEvent(new CustomEvent("kalki:voice-state", { detail: voiceState }));
+        if (active) window.ensureKalkiEffects?.();
         if (voiceModeStatus) {
             voiceModeStatus.textContent = message;
             voiceModeStatus.classList.toggle("is-active", active);

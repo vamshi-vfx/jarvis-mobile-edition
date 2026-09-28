@@ -1,17 +1,14 @@
 import React, { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { BotAvatar } from 'bot-avatars';
 import {
   ArrowDown, ArrowRight, ArrowUpRight, AudioLines, Check, ChevronDown,
-  CircleDot, Code2, Eye, Fingerprint, Image as ImageIcon, Menu, MessageCircle, Mic,
+  CircleDot, Code2, Eye, Fingerprint, Menu, MessageCircle, Mic,
   ShieldCheck, Sparkles, WandSparkles, X, Zap
 } from 'lucide-react';
 import './styles.css';
 import logoAsset from './assets/kalki-logo.jpg';
 
-// Keep Three.js and the WebGL effect out of the initial page bundle until requested.
-const ImageGeneration = React.lazy(() => import('img-fx').then(module => ({ default: module.ImageGeneration })));
 const APP = '/jarvis-mobile-edition/frontend/';
 const LOGO = logoAsset;
 
@@ -22,8 +19,6 @@ const capabilities = [
   { icon: WandSparkles, number: '04', title: 'Creator ideas, shaped', copy: 'The creator workspace prepares a brief, script outline, metadata and asset ideas. It does not render a video or upload / publish content.', status: 'PLANNING PREVIEW', tone: 'violet', href: APP },
   { icon: CircleDot, number: '05', title: 'Automation, safely explored', copy: 'The social-agent workspace is a browser-local simulator. Meta / Instagram connection, live triggers and sending are not configured.', status: 'SIMULATOR ONLY', tone: 'rose', href: APP },
   { icon: ShieldCheck, number: '06', title: 'You stay in the loop', copy: 'KALKI is built around explicit commands. This product site does not start listening, connect accounts, send messages, or run tasks in the background.', status: 'USER CONTROLLED', tone: 'cyan', href: '#control' },
-  { icon: ImageIcon, number: '07', title: 'Image generation effect', copy: 'Try a WebGL pixel-mosaic reveal on the KALKI logo. It animates an existing image; it does not generate new artwork.', status: 'VISUAL DEMO', tone: 'violet', href: '#image-effect' },
-  { icon: Sparkles, number: '08', title: 'Living bot avatars', copy: 'Give each agent a distinct character. Preview the Ghost avatar plus idle, working and sleeping states.', status: 'INTERACTIVE DEMO', tone: 'gold', href: '#bot-avatars' },
 ];
 
 const statusItems = [
@@ -53,7 +48,7 @@ function CardSpotlight({ children, className = '', href, icon: Icon, number, tit
 
 function Nav() {
   const [open, setOpen] = useState(false);
-  const links = [['Product', '#product'], ['Capabilities', '#capabilities'], ['Image effect', '#image-effect'], ['Bot avatars', '#bot-avatars'], ['Status', '#status'], ['FAQ', '#faq']];
+  const links = [['Product', '#product'], ['Capabilities', '#capabilities'], ['Status', '#status'], ['FAQ', '#faq']];
   return <header className="site-header">
     <nav className="nav shell" aria-label="Main navigation">
       <a className="brand" href="#top" aria-label="KALKI home"><img src={LOGO} alt="" /><span>KALKI<span className="brand-dot">.</span></span></a>
@@ -137,106 +132,6 @@ function CapabilitySection() {
   </section>;
 }
 
-const imagePresets = [
-  { id: 'pixels-organic', label: 'Organic pixels' },
-  { id: 'pixels-mechanic', label: 'Mechanic pixels' },
-  { id: 'sweep-gradient', label: 'Gradient sweep' },
-];
-
-function ImageEffectSection() {
-  const reduced = useReducedMotion();
-  const [preset, setPreset] = useState('pixels-organic');
-  const [running, setRunning] = useState(false);
-  const [runId, setRunId] = useState(0);
-  const replay = () => { setRunning(true); setRunId(id => id + 1); };
-  const choosePreset = id => { setPreset(id); replay(); };
-
-  return <section className="image-effect-section section-pad" id="image-effect">
-    <div className="shell image-effect-grid">
-      <Reveal className="image-effect-copy">
-        <div className="eyebrow"><span className="eyebrow-line" />IMAGE REVEAL · WEBGL</div>
-        <h2>See an image<br /><span>resolve into view.</span></h2>
-        <p>Choose a pixel-mosaic style and preview it on the KALKI logo. This is an image-reveal effect for an existing image—not an AI image generator.</p>
-        <div className="image-preset-list" role="group" aria-label="Choose an image reveal preset">
-          {imagePresets.map(option => <button key={option.id} type="button" className={`image-preset ${preset === option.id ? 'is-active' : ''}`} aria-pressed={preset === option.id} onClick={() => choosePreset(option.id)}>{option.label}</button>)}
-        </div>
-        <div className="image-effect-actions">
-          <button className="button primary" type="button" onClick={replay}><Sparkles size={15} />{running ? 'Replay effect' : 'Play effect'}</button>
-          {running && <button className="image-effect-stop" type="button" onClick={() => setRunning(false)}>Stop preview</button>}
-        </div>
-        <p className="image-effect-note" role="status" aria-live="polite">{reduced ? 'Reduced motion is enabled; the image stays still.' : 'WebGL preview starts only when you press Play.'}</p>
-      </Reveal>
-      <Reveal className="image-effect-visual" delay={0.12}>
-        <div className="image-effect-stage">
-          <span className="image-effect-stage-label">KALKI · IMAGE LAB</span>
-          {running ? <React.Suspense fallback={<div className="image-effect-loading" role="status">Preparing WebGL preview…</div>}><ImageGeneration key={`${preset}-${runId}`} preset={preset} images={[LOGO]} autoReveal={!reduced} className="image-effect-renderer">
-            <div className="image-effect-canvas" role="img" aria-label="KALKI logo image reveal preview" />
-          </ImageGeneration></React.Suspense> : <button type="button" className="image-effect-placeholder" onClick={replay} aria-label="Play image reveal preview">
-            <img src={LOGO} alt="KALKI logo" /><span><Sparkles size={15} /> Play image reveal</span>
-          </button>}
-          <span className="image-effect-footnote">PRESET · {imagePresets.find(item => item.id === preset)?.label.toUpperCase()}</span>
-        </div>
-      </Reveal>
-    </div>
-  </section>;
-}
-
-const botAvatarTypes = [
-  'ghost', 'clover', 'flower', 'triangle', 'square', 'blob', 'circle', 'drop', 'star',
-  'droid', 'mech', 'alien', 'hexagon', 'cat', 'cloud', 'pill', 'pebble', 'puddle',
-];
-const botAvatarStates = [
-  { id: 'default', label: 'Idle' },
-  { id: 'working', label: 'Working' },
-  { id: 'sleeping', label: 'Sleeping' },
-];
-const botAvatarRoster = [
-  { name: 'KALKI guide', type: 'ghost', state: 'default', face: 'mouth', seed: 0.12 },
-  { name: 'Idea scout', type: 'star', state: 'working', face: 'mouth', seed: 0.34 },
-  { name: 'Creator', type: 'flower', state: 'working', face: 'mouth', seed: 0.57 },
-  { name: 'Night monitor', type: 'droid', state: 'sleeping', face: 'eyes', seed: 0.81 },
-];
-
-function BotAvatarsSection() {
-  const [type, setType] = useState('ghost');
-  const [state, setState] = useState('default');
-  return <section className="bot-avatar-section section-pad" id="bot-avatars">
-    <div className="shell">
-      <Reveal className="bot-avatar-heading">
-        <div><div className="eyebrow"><span className="eyebrow-line" />BOT AVATARS · 2D CANVAS</div><h2>Give each agent<br /><span>a living face.</span></h2></div>
-        <p>Pick a shape and state for the featured Ghost bot, then see a small roster of agents with distinct personalities.</p>
-      </Reveal>
-      <div className="bot-avatar-grid">
-        <Reveal className="bot-avatar-feature-card">
-          <div className="bot-avatar-feature-stage">
-            <span className="bot-avatar-stage-label">FEATURED · {type.toUpperCase()}</span>
-            <BotAvatar type={type} face="mouth" state={state} size={108} seed={0.37} theme="dark" aria-label={`${type} bot avatar, ${state} state`} />
-            <span className="bot-avatar-feature-caption">{type} bot · {state === 'default' ? 'idle' : state}</span>
-          </div>
-          <div className="bot-avatar-controls">
-            <label className="bot-avatar-shape-control"><span>Avatar shape</span><select value={type} onChange={event => setType(event.target.value)}>{botAvatarTypes.map(shape => <option key={shape} value={shape}>{shape.charAt(0).toUpperCase() + shape.slice(1)}</option>)}</select></label>
-            <div className="bot-avatar-state-control" role="group" aria-label="Choose avatar state">
-              {botAvatarStates.map(option => <button key={option.id} type="button" aria-pressed={state === option.id} className={state === option.id ? 'is-active' : ''} onClick={() => setState(option.id)}>{option.label}</button>)}
-            </div>
-            <p className="bot-avatar-interaction-note">Move your pointer nearby or click the featured avatar to make it react.</p>
-          </div>
-        </Reveal>
-        <Reveal className="bot-avatar-roster-panel" delay={0.1}>
-          <div className="bot-avatar-roster-heading"><div><span>AGENT ROSTER</span><small>Different shapes, staggered motion</small></div><Sparkles size={17} aria-hidden="true" /></div>
-          <div className="bot-avatar-roster-list">
-            {botAvatarRoster.map(agent => <article className="bot-avatar-roster-card" key={agent.name}>
-              <BotAvatar type={agent.type} face={agent.face} state={agent.state} size={48} seed={agent.seed} theme="dark" interactive={false} aria-label={`${agent.name}, ${agent.state}`} />
-              <div><strong>{agent.name}</strong><small>{agent.type} · {agent.state}</small></div>
-              <span className={`bot-avatar-status state-${agent.state}`}>{agent.state === 'default' ? 'IDLE' : agent.state.toUpperCase()}</span>
-            </article>)}
-          </div>
-          <p className="bot-avatar-library-note">Canvas-drawn, no WebGL. The avatar motion respects your reduced-motion setting.</p>
-        </Reveal>
-      </div>
-    </div>
-  </section>;
-}
-
 function ControlSection() {
   return <section className="control-section section-pad" id="control">
     <div className="shell control-panel">
@@ -287,7 +182,7 @@ function Footer() {
 }
 
 function App() {
-  return <><a className="skip-link" href="#main">Skip to content</a><div className="top-note"><span className="top-dot" /> PRIVATE BETA <span className="top-divider">/</span> Capabilities are evolving; integrations are not generally available.</div><Nav /><main id="main"><Hero /><StatusTicker /><ProductSection /><CapabilitySection /><ImageEffectSection /><BotAvatarsSection /><ControlSection /><StatusSection /><FAQ /><section className="closing"><Spotlight /><div className="shell closing-inner"><Reveal><div className="closing-emblem"><img src={LOGO} alt="" /></div><div className="eyebrow"><span className="eyebrow-line" />THE NEXT CHAPTER</div><h2>Meet your assistant.<br /><span>Keep the final say.</span></h2><p>Explore the current KALKI private beta—then tell us what a more thoughtful personal AI should feel like.</p><a className="button primary" href={APP}>Enter KALKI <ArrowUpRight size={17} /></a><div className="closing-fine">No billing configured · No account connection required to view the product site</div></Reveal></div></section></main><Footer /></>;
+  return <><a className="skip-link" href="#main">Skip to content</a><div className="top-note"><span className="top-dot" /> PRIVATE BETA <span className="top-divider">/</span> Capabilities are evolving; integrations are not generally available.</div><Nav /><main id="main"><Hero /><StatusTicker /><ProductSection /><CapabilitySection /><ControlSection /><StatusSection /><FAQ /><section className="closing"><Spotlight /><div className="shell closing-inner"><Reveal><div className="closing-emblem"><img src={LOGO} alt="" /></div><div className="eyebrow"><span className="eyebrow-line" />THE NEXT CHAPTER</div><h2>Meet your assistant.<br /><span>Keep the final say.</span></h2><p>Explore the current KALKI private beta—then tell us what a more thoughtful personal AI should feel like.</p><a className="button primary" href={APP}>Enter KALKI <ArrowUpRight size={17} /></a><div className="closing-fine">No billing configured · No account connection required to view the product site</div></Reveal></div></section></main><Footer /></>;
 }
 
 createRoot(document.getElementById('root')).render(<React.StrictMode><App /></React.StrictMode>);

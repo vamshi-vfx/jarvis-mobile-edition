@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const dist = path.join(here, 'dist');
+const effectsDist = path.join(here, 'assistant-effects-dist');
 const repo = path.resolve(here, '..');
 const rootIndex = path.join(dist, 'index.html');
 const html = await readFile(rootIndex, 'utf8');
@@ -15,4 +16,14 @@ const outAssets = path.join(repo, 'assets', 'kalki-site');
 await rm(outAssets, { recursive: true, force: true });
 await mkdir(path.dirname(outAssets), { recursive: true });
 await cp(path.join(dist, 'assets', 'kalki-site'), outAssets, { recursive: true });
-console.log(`Published Vite static output to repository root (${(await readdir(outAssets)).length} KALKI assets).`);
+const effectsEntry = path.join(effectsDist, 'assistant-effects.js');
+try {
+  await readFile(effectsEntry);
+} catch {
+  throw new Error('The assistant effects bundle is missing; run the effects Vite build first.');
+}
+const effectsOut = path.join(repo, 'frontend', 'effects');
+await rm(effectsOut, { recursive: true, force: true });
+await mkdir(path.dirname(effectsOut), { recursive: true });
+await cp(effectsDist, effectsOut, { recursive: true });
+console.log(`Published product site (${(await readdir(outAssets)).length} assets) and assistant effects bundle (${(await readdir(effectsOut)).length} files).`);

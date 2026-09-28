@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="social-agent.css?v=local-preview-1">
   <link rel="stylesheet" href="professional-ui.css?v=scroll-fix-1">
   <link rel="stylesheet" href="motion-enhancements.css?v=0.1.0">
+  <link rel="stylesheet" href="kalki-effects.css?v=1">
   <style>.advanced-intelligence-panel{margin:18px auto 0;max-width:760px;border:1px solid rgba(176,164,255,.28);border-radius:18px;background:linear-gradient(145deg,rgba(25,29,42,.92),rgba(12,15,24,.9));box-shadow:0 14px 40px #0004;overflow:hidden}.ai-panel-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px}.ai-panel-head strong,.ai-panel-head small{display:block}.ai-panel-head small{color:var(--muted);font-size:10px;margin-top:4px}.ai-collapse{border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--text);font-size:18px}.ai-panel-body{padding:0 16px 16px}.ai-status-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.ai-status-grid span{padding:8px;border:1px solid var(--line);border-radius:10px;background:#ffffff05}.ai-status-grid b,.ai-status-grid em{display:block;font-size:10px}.ai-status-grid b{text-transform:capitalize;color:var(--muted)}.ai-status-grid em{font-style:normal;color:#f0b48c;margin-top:3px}.ai-status-grid em.on{color:var(--green)}.ai-actions{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}.ai-actions button,.ai-plan button{border:1px solid var(--line);border-radius:10px;padding:9px;background:#ffffff08;color:var(--text);font-size:11px}.ai-plan label{display:block;color:var(--muted);font-size:11px;margin-bottom:5px}.ai-plan textarea{width:100%;box-sizing:border-box;resize:vertical;border:1px solid var(--line);border-radius:10px;padding:9px;background:#090b11;color:var(--text);font:inherit;font-size:12px}.ai-plan button{margin-top:7px}.ai-unavailable{color:var(--muted);font-size:10px;line-height:1.4;margin:12px 0 0}@media(max-width:560px){.ai-status-grid{grid-template-columns:repeat(2,1fr)}.ai-actions button{flex:1 1 45%}}</style>
 </head>
 <body>
@@ -19,6 +20,7 @@
     <header class="app-header">
       <button class="icon-button menu-button" type="button" aria-label="Open menu">☰</button>
       <div class="brand-lockup">
+        <div id="kalki-avatar-root" aria-label="KALKI assistant avatar"></div>
         <div class="brand-mark" aria-hidden="true"><img src="1789578396977-559ec457.jpg" alt="KALKI"></div>
         <div><h1>KALKI</h1><p><span class="status-dot"></span> Voice assistant · talk or type</p></div>
       </div>
@@ -55,7 +57,13 @@
         </div>
         <small>Preview only. Choose an action to prepare a draft; nothing is sent or executed without your approval.</small>
       </section>
+      <div id="kalki-thinking-root" aria-live="polite"></div>
       <section id="chat" class="chat" aria-live="polite" aria-label="Conversation"></section>
+      <section id="kalki-effects-panel" class="kalki-effects-panel" hidden aria-labelledby="kalki-effects-title">
+        <header class="kalki-effects-panel-head"><div><p class="eyebrow">KALKI · ASSISTANT UI</p><h2 id="kalki-effects-title" tabindex="-1">Visual effects</h2></div><button id="kalki-effects-close" class="kalki-effects-back" type="button">← Back to chat</button></header>
+        <p id="kalki-effects-load-error" class="kalki-effects-load-error" role="status" hidden>Visual effects could not be loaded. Check your connection and try opening this panel again.</p>
+        <div id="kalki-effects-react-root"></div>
+      </section>
       <section id="creator-agent-panel" class="creator-agent-panel" hidden aria-labelledby="creator-agent-title">
         <div class="creator-agent-head"><div><p class="eyebrow">KALKI CREATOR AGENT</p><h2 id="creator-agent-title">Short-video studio</h2><p>Prepare a Telugu/Teluglish creator brief in stages. Nothing is rendered, uploaded, or published here.</p></div><span class="creator-safe-badge">EXPLICIT ONLY</span></div>
         <div class="creator-stagebar" role="list" aria-label="Creator workflow stages"><span class="is-active" data-creator-stage="brief">1 Brief</span><span data-creator-stage="script">2 Script</span><span data-creator-stage="assets">3 Assets</span><span data-creator-stage="edit">4 Edit plan</span><span data-creator-stage="preview">5 Preview</span><span data-creator-stage="export">6 Export</span></div>
@@ -94,6 +102,7 @@
 
     <div class="composer-wrap">
       <div class="composer" role="group" aria-label="Message composer">
+        <div id="kalki-composer-effects-root" aria-hidden="true"></div>
         <button id="attach-btn" class="composer-icon" type="button" aria-label="Attach a file" aria-expanded="false">＋</button>
         <input id="img-input" type="file" accept="image/*,.pdf,.txt,.doc,.docx" hidden>
         <input id="msg" type="text" placeholder="Talk or message KALKI..." autocomplete="off" enterkeyhint="send">
@@ -112,6 +121,7 @@
     <button class="sheet-link" type="button">＋ New conversation</button>
     <a class="sheet-link" href="connectors.html">◇ Connectors</a>
     <a class="sheet-link" href="../" target="_blank" rel="noopener noreferrer" aria-label="Open the KALKI product website in a new tab">ⓘ KALKI product site ↗</a>
+    <a class="sheet-link" href="#kalki-effects-panel" id="kalki-effects-link">✧ KALKI Visual Effects</a>
     <a class="sheet-link" href="#creator-agent-panel" id="creator-agent-link">✦ Creator Agent</a><a class="sheet-link" href="#social-agent-panel" id="social-agent-link">◎ Social Automation Agent</a><a class="sheet-link" href="#everyday-tools" id="tools-menu-link">⌁ Tools</a><button id="settings-toggle" class="sheet-link" type="button" aria-expanded="false">⚙ Settings</button>
     <section id="voice-settings" class="voice-settings" hidden aria-label="Settings">
       <section class="voice-output-settings" aria-labelledby="tts-settings-title">
@@ -153,12 +163,29 @@
   <script src="advanced-intelligence.js"></script>
   <script src="social-agent.js?v=local-preview-1"></script>
   <script>
+    let kalkiEffectsPromise = null;
+    window.ensureKalkiEffects = function ensureKalkiEffects() {
+      if (!kalkiEffectsPromise) {
+        const errorBox = document.getElementById('kalki-effects-load-error');
+        if (errorBox) errorBox.hidden = true;
+        kalkiEffectsPromise = import('./effects/assistant-effects.js?v=1')
+          .then((module) => module.mountKalkiEffects?.())
+          .catch((error) => {
+            console.error('KALKI visual effects could not load.', error);
+            if (errorBox) errorBox.hidden = false;
+            kalkiEffectsPromise = null;
+            return null;
+          });
+      }
+      return kalkiEffectsPromise;
+    };
     const menu = document.querySelector('.menu-button'), sheet = document.querySelector('.side-sheet'), backdrop = document.querySelector('.sheet-backdrop');
     function toggleMenu(open) { document.body.classList.toggle('menu-open', open); }
     menu?.addEventListener('click', () => toggleMenu(true));
     document.querySelector('.sheet-close')?.addEventListener('click', () => toggleMenu(false));
     backdrop?.addEventListener('click', () => toggleMenu(false));
     const chatSurface = document.getElementById('chat');
+    const effectsPanel = document.getElementById('kalki-effects-panel');
     const composerWrap = document.querySelector('.composer-wrap');
     const welcomeSurface = document.querySelector('.welcome');
     const sharePreview = document.getElementById('kalki-share-preview');
@@ -167,6 +194,7 @@
       const creator = surface === 'creator';
       const tools = surface === 'tools';
       const social = surface === 'social';
+      const effects = surface === 'effects';
       document.body.classList.remove('kalki-mode-active');
       document.body.classList.toggle('utility-mode-active', !assistant);
       if (welcomeSurface) welcomeSurface.hidden = !assistant && !tools;
@@ -175,7 +203,10 @@
       if (creatorPanel) creatorPanel.hidden = !creator;
       if (toolsSection) toolsSection.hidden = !tools;
       if (socialAgentPanel) socialAgentPanel.hidden = !social;
+      if (effectsPanel) effectsPanel.hidden = !effects;
       if (composerWrap) composerWrap.hidden = !assistant;
+      window.dispatchEvent(new CustomEvent('kalki:surface-change', {detail: {surface}}));
+      if (effects || assistant) window.ensureKalkiEffects?.();
       window.scrollTo({top: 0, behavior: 'smooth'});
     }
     const creatorPanel = document.getElementById('creator-agent-panel');
@@ -188,6 +219,8 @@
     function showCreatorAgent() { toggleMenu(false); setSurface('creator'); creatorPanel?.focus?.({preventScroll:true}); }
     creatorLink?.addEventListener('click', (event) => { event.preventDefault(); showCreatorAgent(); });
     document.getElementById('social-agent-link')?.addEventListener('click', (event) => { event.preventDefault(); toggleMenu(false); setSurface('social'); socialAgentPanel?.scrollIntoView({behavior:'smooth',block:'start'}); });
+    document.getElementById('kalki-effects-link')?.addEventListener('click', (event) => { event.preventDefault(); toggleMenu(false); setSurface('effects'); document.getElementById('kalki-effects-title')?.focus({preventScroll:true}); });
+    document.getElementById('kalki-effects-close')?.addEventListener('click', () => { setSurface('assistant'); document.getElementById('msg')?.focus({preventScroll:true}); });
     document.getElementById('tools-menu-link')?.addEventListener('click', () => toggleMenu(false));
     creatorForm?.addEventListener('submit', (event) => { event.preventDefault(); const topic=document.getElementById('creator-topic').value.trim(); if(!topic)return; const lang=document.getElementById('creator-language').value, length=document.getElementById('creator-length').value, style=document.getElementById('creator-style').value, audience=document.getElementById('creator-audience').value||'Telugu viewers'; const esc=(v)=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c])); const cards=[['Hook + script plan',`${lang} hook: “${esc(topic)} గురించి 3 quick points — చివరి tip miss అవ్వకండి.”\n\nBeat 1 (0–3s): Curiosity hook\nBeat 2 (3–${length==='30 seconds'?'20':'35'}s): Explain one useful idea with a clear example\nBeat 3: Recap + soft CTA for ${esc(audience)}`],['Metadata',`Title: ${esc(topic)} — Telugu creator short\nDescription: A concise ${esc(lang)} explainer for ${esc(audience)}. Verify every claim before recording.\nTags: ${esc(topic)}, Telugu AI, creator tips, Shorts, ${esc(style)}`],['Assets + voice',`Footage search keywords: ${esc(topic)}, creator desk, abstract technology, phone screen (use only original/licensed/permissioned media).\nVoiceover: ${esc(lang)}, warm and energetic, ${length}.\nSubtitles: burn-in-safe Telugu/Teluglish captions; Music: royalty-free or original only.`],['Thumbnail prompt',`Vertical thumbnail concept: cinematic ${esc(style)} creator setup, bold Telugu headline about “${esc(topic)}”, high contrast, clean subject, no logos or copyrighted characters, 9:16-safe composition.`]]; document.getElementById('creator-output-title').textContent=`${topic} · ${length}`; document.getElementById('creator-cards').replaceChildren(...cards.map(([t,b])=>{const d=document.createElement('article');d.className='creator-card';d.innerHTML=`<h3>${t}</h3><p>${b.replace(/\n/g,'<br>')}</p>`;return d;})); document.getElementById('creator-workflow').textContent=`Brief → ${lang} script + hook → approved/licensed assets → ${esc(style)} edit plan → review-only preview → explicit export approval. Upload/publish remains unavailable.`; creatorOutput.hidden=false; creatorApproval.checked=false; creatorExport.disabled=true; creatorPanel.querySelectorAll('[data-creator-stage]').forEach((x,i)=>x.classList.toggle('is-active',i===5)); });
     creatorApproval?.addEventListener('change',()=>{creatorExport.disabled=!creatorApproval.checked;});
