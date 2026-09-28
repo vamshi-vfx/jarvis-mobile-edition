@@ -41,13 +41,13 @@ assert.match(effectsBuild, /process\.env\.NODE_ENV.*production/, 'browser librar
 assert.match(publish, /assistant-effects-dist/,'the publisher must use the standalone effects build');
 assert.match(publish, /copyFile\(effectsEntry, path\.join\(effectsOut, 'index\.html'\)\)/, 'the standalone app must be copied to the assistant effects route');
 assert.match(appHtml, /id="kalki-effects-panel"/, 'the real assistant needs an Effects panel');
-assert.match(appHtml, /<iframe id="kalki-effects-frame"[\s\S]*data-src="effects\/index\.html\?v=standalone-1"/, 'the real assistant must embed the standalone effects app');
+assert.match(appHtml, /<iframe id="kalki-effects-frame"[\s\S]*scrolling="no"[\s\S]*data-src="effects\/index\.html\?v=standalone-1"/, 'the real assistant must embed the standalone effects app without nested frame scrolling');
 assert.match(appHtml, /kalki-effects-ready[\s\S]*sendKalkiEffectsState/, 'the real assistant must bridge app state to the iframe');
 assert.match(appHtml, /kalki:assistant-state[\s\S]*kalki:voice-state/, 'assistant and voice status changes must reach the effects frame');
 assert.match(appScript, /publishKalkiAssistantState\("solving"\)[\s\S]*publishKalkiAssistantState\("idle"\)/, 'Gemini work must publish solving and idle states');
 assert.match(appScript, /kalki:voice-state[\s\S]*ensureKalkiEffects/, 'voice status must synchronize without opening another microphone');
 assert.match(assistantCss, /prefers-reduced-motion:\s*reduce/, 'assistant effects CSS must respect reduced motion');
-assert.match(assistantCss, /\.kalki-effects-frame[\s\S]*width:100%/, 'the embedded standalone app must fill its assistant panel');
+assert.match(assistantCss, /\.kalki-effects-frame[\s\S]*width:100%[\s\S]*min-height:1900px;height:1900px/, 'the embedded standalone app must fill its panel and expand for natural page scrolling');
 assert.match(assistantCss, /\.kalki-gooey-item\{position:absolute!important/, 'gooey action items must share a center point so the open-state layout stays inside its stage');
 assert.match(assistantCss, /\.kalki-image-canvas\{display:block;[\s\S]*object-fit:cover\}/, 'the image effect should keep its selected image visible beneath the reveal shader');
 assert.match(frameCss, /prefers-reduced-motion:reduce/, 'the effects page frame must respect reduced-motion preferences');

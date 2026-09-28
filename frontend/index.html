@@ -60,7 +60,7 @@
       <section id="kalki-effects-panel" class="kalki-effects-panel" hidden aria-labelledby="kalki-effects-title">
         <header class="kalki-effects-panel-head"><div><p class="eyebrow">KALKI · ASSISTANT UI</p><h2 id="kalki-effects-title" tabindex="-1">Visual effects</h2></div><button id="kalki-effects-close" class="kalki-effects-back" type="button">← Back to chat</button></header>
         <p id="kalki-effects-load-error" class="kalki-effects-load-error" role="status" hidden>The visual effects lab could not be opened. Check your connection and try again.</p>
-        <iframe id="kalki-effects-frame" class="kalki-effects-frame" title="KALKI visual effects lab" loading="eager" src="about:blank" data-src="effects/index.html?v=standalone-1"></iframe>
+        <iframe id="kalki-effects-frame" class="kalki-effects-frame" title="KALKI visual effects lab" loading="eager" scrolling="no" src="about:blank" data-src="effects/index.html?v=standalone-1"></iframe>
       </section>
       <section id="creator-agent-panel" class="creator-agent-panel" hidden aria-labelledby="creator-agent-title">
         <div class="creator-agent-head"><div><p class="eyebrow">KALKI CREATOR AGENT</p><h2 id="creator-agent-title">Short-video studio</h2><p>Prepare a Telugu/Teluglish creator brief in stages. Nothing is rendered, uploaded, or published here.</p></div><span class="creator-safe-badge">EXPLICIT ONLY</span></div>
@@ -197,7 +197,7 @@
       } else if (event.data?.type === 'kalki-effects-resize') {
         const height = Number(event.data.height);
         if (Number.isFinite(height) && height > 0 && height < 10000) {
-          kalkiEffectsFrame.style.height = `${Math.max(600, Math.ceil(height))}px`;
+          kalkiEffectsFrame.style.height = `${Math.max(1800, Math.ceil(height))}px`;
         }
       }
     });
