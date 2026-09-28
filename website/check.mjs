@@ -33,6 +33,8 @@ for (const marker of ['ThinkingOrb', 'BorderBeam', 'VoiceBeam', 'BotAvatar', '<L
 }
 assert.match(lab, /new URL\('\.\.\/1789578396977-559ec457\.jpg', window\.location\.href\)/, 'the image reveal must load the KALKI logo from the assistant path');
 assert.match(lab, /URL\.createObjectURL\(file\)/, 'selected images must remain local browser object URLs');
+assert.match(lab, /theme="dark" cardBg="#0b1018" images=\{\[image\]\} revealInitialDelay=\{0\}[\s\S]*revealHoldMs=\{5000\}/, 'the reveal should start promptly and keep the actual image visible between cycles');
+assert.match(lab, /<img className="kalki-image-canvas" src=\{image\} alt="Local image reveal preview" \/>/, 'the reveal renderer must retain a local-image fallback beneath the effect');
 assert.match(frameHtml, /src="\/src\/assistant-effects-standalone\.jsx"/, 'the effects page must boot the standalone React app');
 assert.match(effectsBuild, /assistant-effects\.html/, 'the effects build must produce a standalone HTML page');
 assert.match(effectsBuild, /process\.env\.NODE_ENV.*production/, 'browser libraries must use production mode without a Node process global');
@@ -47,6 +49,7 @@ assert.match(appScript, /kalki:voice-state[\s\S]*ensureKalkiEffects/, 'voice sta
 assert.match(assistantCss, /prefers-reduced-motion:\s*reduce/, 'assistant effects CSS must respect reduced motion');
 assert.match(assistantCss, /\.kalki-effects-frame[\s\S]*width:100%/, 'the embedded standalone app must fill its assistant panel');
 assert.match(assistantCss, /\.kalki-gooey-item\{position:absolute!important/, 'gooey action items must share a center point so the open-state layout stays inside its stage');
+assert.match(assistantCss, /\.kalki-image-canvas\{display:block;[\s\S]*object-fit:cover\}/, 'the image effect should keep its selected image visible beneath the reveal shader');
 assert.match(frameCss, /prefers-reduced-motion:reduce/, 'the effects page frame must respect reduced-motion preferences');
 assert.ok(!/ImageEffectSection|BotAvatarsSection|ImageGeneration|BotAvatar|image-effect|bot-avatars/.test(product), 'Libraries.dev demos belong in the assistant, not the product website');
 assert.ok(!/image-effect|bot-avatar/.test(assistantCss), 'marketing-site demo styles should be removed');

@@ -72,8 +72,8 @@ function ImageRevealDemo({ reduced }) {
       {imagePresets.map(option => <button key={option.id} className="kalki-effects-button" type="button" aria-pressed={preset === option.id} onClick={() => { setPreset(option.id); if (running) play(); }}>{option.label}</button>)}
     </div>
     <div className="kalki-image-stage">
-      {running ? <ImageGeneration key={`${preset}-${run}`} preset={preset} images={[image]} autoReveal={!reduced} paused={Boolean(reduced)} className="kalki-image-renderer">
-        <div className="kalki-image-canvas" role="img" aria-label="Local image reveal preview" />
+      {running ? <ImageGeneration key={`${preset}-${run}`} preset={preset} theme="dark" cardBg="#0b1018" images={[image]} revealInitialDelay={0} revealDelayRange={[1, 2]} revealHoldMs={5000} autoReveal={!reduced} paused={Boolean(reduced)} className="kalki-image-renderer">
+        <img className="kalki-image-canvas" src={image} alt="Local image reveal preview" />
       </ImageGeneration> : <button className="kalki-image-placeholder" type="button" onClick={play} aria-label="Play image reveal using the current local image"><img src={image} alt="Current local reveal source" /><span>Play image reveal</span></button>}
     </div>
     <p className="kalki-effect-hint" role="status" aria-live="polite">Preset: {imagePresets.find(option => option.id === preset)?.label}. {reduced ? 'Reduced motion is enabled; the reveal stays still. ' : ''}Image files never leave this page.</p>
