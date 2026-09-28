@@ -77,3 +77,5 @@ body.utility-mode-active .kalki-effects-panel:not([hidden]){display:block!import
 @keyframes kalki-effects-fade{from{opacity:0}to{opacity:1}}
 @media(max-width:700px){#kalki-effects-panel{padding:18px 14px 80px}.kalki-effects-grid{grid-template-columns:1fr}.kalki-effects-panel-head{align-items:center}.kalki-effect-card{padding:15px}}
 @media(prefers-reduced-motion:reduce){.kalki-effects-ready .kalki-effects-loading{animation:none}.kalki-effects-button{transition:none}}
+.kalki-effects-frame{display:block;width:100%;min-height:900px;height:900px;border:0;border-radius:0;background:#0b0d12;overflow:hidden}
+@media(max-width:700px){.kalki-effects-frame{min-height:1080px;height:1080px}}

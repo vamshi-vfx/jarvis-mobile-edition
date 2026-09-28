@@ -16,14 +16,15 @@ const outAssets = path.join(repo, 'assets', 'kalki-site');
 await rm(outAssets, { recursive: true, force: true });
 await mkdir(path.dirname(outAssets), { recursive: true });
 await cp(path.join(dist, 'assets', 'kalki-site'), outAssets, { recursive: true });
-const effectsEntry = path.join(effectsDist, 'assistant-effects.js');
+const effectsEntry = path.join(effectsDist, 'assistant-effects.html');
 try {
-  await readFile(effectsEntry);
+  await readFile(effectsEntry, 'utf8');
 } catch {
-  throw new Error('The assistant effects bundle is missing; run the effects Vite build first.');
+  throw new Error('The assistant effects page is missing; run the effects Vite build first.');
 }
 const effectsOut = path.join(repo, 'frontend', 'effects');
 await rm(effectsOut, { recursive: true, force: true });
 await mkdir(path.dirname(effectsOut), { recursive: true });
 await cp(effectsDist, effectsOut, { recursive: true });
-console.log(`Published product site (${(await readdir(outAssets)).length} assets) and assistant effects bundle (${(await readdir(effectsOut)).length} files).`);
+await copyFile(effectsEntry, path.join(effectsOut, 'index.html'));
+console.log(`Published product site (${(await readdir(outAssets)).length} assets) and assistant effects page (${(await readdir(effectsOut)).length} files).`);
