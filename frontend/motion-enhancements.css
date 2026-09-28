@@ -1,0 +1,184 @@
+/* KALKI motion layer: lightweight CSS adaptations inspired by Libraries.dev effects.
+   Keep the app dependency-free and friendly to reduced-motion settings. */
+:root {
+  --kalki-motion-ease: cubic-bezier(.2,.75,.25,1);
+  --kalki-motion-accent: #a99cff;
+}
+
+/* Orb: a calm, breathing welcome mark; the voice orb keeps its existing
+   listening-state behavior and pulse. */
+.welcome-orb {
+  position: relative;
+  isolation: isolate;
+  animation: kalki-orb-float 5.6s ease-in-out infinite;
+  box-shadow: 0 12px 35px #7569d522, 0 0 24px #a99cff12;
+}
+.welcome-orb::before {
+  content: "";
+  position: absolute;
+  inset: -7px;
+  z-index: -1;
+  border: 1px solid #a99cff35;
+  border-radius: 24px;
+  opacity: .45;
+  animation: kalki-orb-halo 4.2s ease-in-out infinite;
+}
+@keyframes kalki-orb-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+@keyframes kalki-orb-halo {
+  0%, 100% { transform: scale(.96); opacity: .24; }
+  50% { transform: scale(1.06); opacity: .62; }
+}
+
+/* Beam: a moving highlight appears only while the message composer is focused. */
+.composer {
+  position: relative;
+  isolation: isolate;
+  transition: box-shadow .22s var(--kalki-motion-ease), border-color .22s ease;
+}
+.composer::before {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  top: -1px;
+  left: 10%;
+  width: 56px;
+  height: 2px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, transparent, #a99cff, #fff, transparent);
+  opacity: 0;
+  pointer-events: none;
+}
+.composer:focus-within {
+  box-shadow: 0 0 0 1px #a99cff33, 0 10px 32px #0005, 0 0 24px #8f83e81c;
+}
+.composer:focus-within::before {
+  opacity: .9;
+  animation: kalki-beam-sweep 2.6s linear infinite;
+}
+@keyframes kalki-beam-sweep {
+  from { transform: translateX(0); }
+  to { transform: translateX(min(68vw, 500px)); }
+}
+
+/* Gooey-style feedback: short, soft press/release motion on touch controls. */
+.composer-icon,
+.send-button,
+.suggestions button,
+.tool-grid button,
+.voice-mode-actions button,
+.creator-primary,
+.social-primary {
+  transition: transform .18s var(--kalki-motion-ease), box-shadow .2s ease,
+              background-color .2s ease, border-color .2s ease;
+  transform-origin: center;
+}
+.composer-icon:active,
+.send-button:active,
+.suggestions button:active,
+.tool-grid button:active,
+.voice-mode-actions button:active,
+.creator-primary:active,
+.social-primary:active {
+  transform: scale(.96);
+}
+.voice-conversation-toggle[aria-pressed="true"] {
+  box-shadow: 0 0 0 4px #a99cff20, 0 0 18px #a99cff38;
+  animation: kalki-soft-pulse 1.8s ease-in-out infinite;
+}
+@keyframes kalki-soft-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px #a99cff18, 0 0 14px #a99cff24; }
+  50% { box-shadow: 0 0 0 6px #a99cff10, 0 0 23px #a99cff42; }
+}
+
+/* Metal: restrained specular sweep on the primary send control. */
+.send-button {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.send-button::after {
+  content: "";
+  position: absolute;
+  inset: -35% auto -35% -65%;
+  width: 42%;
+  transform: rotate(22deg);
+  background: linear-gradient(90deg, transparent, #fff7, transparent);
+  opacity: 0;
+  pointer-events: none;
+}
+@media (hover: hover) {
+  .send-button:hover::after { animation: kalki-metal-sheen .72s ease-out; }
+  .send-button:hover { box-shadow: 0 5px 18px #8f83e83d; }
+  .suggestions button:hover,
+  .tool-grid button:hover,
+  .voice-mode-actions button:hover,
+  .creator-primary:hover,
+  .social-primary:hover { transform: translateY(-2px); }
+}
+@keyframes kalki-metal-sheen {
+  0% { transform: translateX(0) rotate(22deg); opacity: 0; }
+  18% { opacity: .8; }
+  100% { transform: translateX(390%) rotate(22deg); opacity: 0; }
+}
+
+/* Image: gentle depth on the logo and any shared image preview. */
+.brand-mark img,
+.share-files img {
+  transition: transform .24s var(--kalki-motion-ease), filter .24s ease;
+  transform-style: preserve-3d;
+}
+@media (hover: hover) {
+  .brand-mark:hover img,
+  .share-files img:hover {
+    transform: translateY(-2px) scale(1.025);
+    filter: drop-shadow(0 7px 14px #8f83e82b);
+  }
+}
+
+/* Motion polish for incoming content and interactive cards. */
+.chat .msg { animation: kalki-message-in .22s var(--kalki-motion-ease) both; }
+.share-preview,
+.creator-output:not([hidden]),
+.social-preview:not([hidden]) {
+  animation: kalki-panel-in .26s var(--kalki-motion-ease) both;
+}
+.agent-card,
+.workflow-card,
+.social-card,
+.workspace-card {
+  transition: transform .2s var(--kalki-motion-ease),
+              border-color .2s ease, box-shadow .2s ease, background-color .2s ease;
+}
+@media (hover: hover) {
+  .agent-card:hover,
+  .workflow-card:hover,
+  .social-card:hover,
+  .workspace-card:hover { transform: translateY(-2px); }
+}
+.agent-card:focus-visible,
+.workflow-card:focus-visible,
+.social-card:focus-within,
+.workspace-card:focus-within {
+  outline: 2px solid #a99cff88;
+  outline-offset: 2px;
+}
+@keyframes kalki-message-in {
+  from { opacity: 0; transform: translateY(7px) scale(.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes kalki-panel-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+  }
+}
