@@ -401,8 +401,8 @@ var nh;
 function Kf() {
   return nh || (nh = 1, uf.exports = _p()), uf.exports;
 }
-var gt = Kf();
-const Jf = /* @__PURE__ */ Hp(gt), Yf = { current: null }, bb = { current: !1 }, Dp = typeof window < "u";
+var mt = Kf();
+const Jf = /* @__PURE__ */ Hp(mt), Yf = { current: null }, bb = { current: !1 }, Dp = typeof window < "u";
 function Rp() {
   if (bb.current = !0, !!Dp)
     if (window.matchMedia) {
@@ -413,7 +413,7 @@ function Rp() {
 }
 function Xp() {
   !bb.current && Rp();
-  const [r] = gt.useState(Yf.current);
+  const [r] = mt.useState(Yf.current);
   return r;
 }
 var cf = { exports: {} }, gr = {}, sf = { exports: {} }, ff = {};
@@ -3090,14 +3090,14 @@ Error generating stack: ` + l.message + `
       return T === null || T.tag !== 6 ? (T = rc(H, A.mode, I), T.return = A, T) : (T = n(T, H), T.return = A, T);
     }
     function x(A, T, H, I) {
-      var mt = H.type;
-      return mt === K ? (A = D(
+      var gt = H.type;
+      return gt === K ? (A = D(
         A,
         T,
         H.props.children,
         I,
         H.key
-      ), Rl(A, H), A) : T !== null && (T.elementType === mt || typeof mt == "object" && mt !== null && mt.$$typeof === F && Cn(mt) === T.type) ? (T = n(T, H.props), Rl(T, H), T.return = A, T) : (T = Kr(
+      ), Rl(A, H), A) : T !== null && (T.elementType === gt || typeof gt == "object" && gt !== null && gt.$$typeof === F && Cn(gt) === T.type) ? (T = n(T, H.props), Rl(T, H), T.return = A, T) : (T = Kr(
         H.type,
         H.key,
         H.props,
@@ -3109,12 +3109,12 @@ Error generating stack: ` + l.message + `
     function O(A, T, H, I) {
       return T === null || T.tag !== 4 || T.stateNode.containerInfo !== H.containerInfo || T.stateNode.implementation !== H.implementation ? (T = uc(H, A.mode, I), T.return = A, T) : (T = n(T, H.children || []), T.return = A, T);
     }
-    function D(A, T, H, I, mt) {
+    function D(A, T, H, I, gt) {
       return T === null || T.tag !== 7 ? (T = xn(
         H,
         A.mode,
         I,
-        mt
+        gt
       ), T.return = A, T) : (T = n(T, H), T.return = A, T);
     }
     function P(A, T, H) {
@@ -3164,20 +3164,20 @@ Error generating stack: ` + l.message + `
       return null;
     }
     function C(A, T, H, I) {
-      var mt = T !== null ? T.key : null;
+      var gt = T !== null ? T.key : null;
       if (typeof H == "string" && H !== "" || typeof H == "number" || typeof H == "bigint")
-        return mt !== null ? null : b(A, T, "" + H, I);
+        return gt !== null ? null : b(A, T, "" + H, I);
       if (typeof H == "object" && H !== null) {
         switch (H.$$typeof) {
           case L:
-            return H.key === mt ? x(A, T, H, I) : null;
+            return H.key === gt ? x(A, T, H, I) : null;
           case k:
-            return H.key === mt ? O(A, T, H, I) : null;
+            return H.key === gt ? O(A, T, H, I) : null;
           case F:
             return H = Cn(H), C(A, T, H, I);
         }
         if (tt(H) || Y(H))
-          return mt !== null ? null : D(A, T, H, I, null);
+          return gt !== null ? null : D(A, T, H, I, null);
         if (typeof H.then == "function")
           return C(
             A,
@@ -3196,37 +3196,37 @@ Error generating stack: ` + l.message + `
       }
       return null;
     }
-    function N(A, T, H, I, mt) {
+    function N(A, T, H, I, gt) {
       if (typeof I == "string" && I !== "" || typeof I == "number" || typeof I == "bigint")
-        return A = A.get(H) || null, b(T, A, "" + I, mt);
+        return A = A.get(H) || null, b(T, A, "" + I, gt);
       if (typeof I == "object" && I !== null) {
         switch (I.$$typeof) {
           case L:
             return A = A.get(
               I.key === null ? H : I.key
-            ) || null, x(T, A, I, mt);
+            ) || null, x(T, A, I, gt);
           case k:
             return A = A.get(
               I.key === null ? H : I.key
-            ) || null, O(T, A, I, mt);
+            ) || null, O(T, A, I, gt);
           case F:
             return I = Cn(I), N(
               A,
               T,
               H,
               I,
-              mt
+              gt
             );
         }
         if (tt(I) || Y(I))
-          return A = A.get(H) || null, D(T, A, I, mt, null);
+          return A = A.get(H) || null, D(T, A, I, gt, null);
         if (typeof I.then == "function")
           return N(
             A,
             T,
             H,
             i0(I),
-            mt
+            gt
           );
         if (I.$$typeof === it)
           return N(
@@ -3234,14 +3234,14 @@ Error generating stack: ` + l.message + `
             T,
             H,
             e0(T, I),
-            mt
+            gt
           );
         o0(T, I);
       }
       return null;
     }
     function dt(A, T, H, I) {
-      for (var mt = null, qt = null, xt = T, St = T = 0, Se = null; xt !== null && St < H.length; St++) {
+      for (var gt = null, qt = null, xt = T, St = T = 0, Se = null; xt !== null && St < H.length; St++) {
         xt.index > St ? (Se = xt, xt = null) : Se = xt.sibling;
         var jt = C(
           A,
@@ -3253,18 +3253,18 @@ Error generating stack: ` + l.message + `
           xt === null && (xt = Se);
           break;
         }
-        t && xt && jt.alternate === null && e(A, xt), T = o(jt, T, St), qt === null ? mt = jt : qt.sibling = jt, qt = jt, xt = Se;
+        t && xt && jt.alternate === null && e(A, xt), T = o(jt, T, St), qt === null ? gt = jt : qt.sibling = jt, qt = jt, xt = Se;
       }
       if (St === H.length)
-        return a(A, xt), _t && fl(A, St), mt;
+        return a(A, xt), _t && fl(A, St), gt;
       if (xt === null) {
         for (; St < H.length; St++)
           xt = P(A, H[St], I), xt !== null && (T = o(
             xt,
             T,
             St
-          ), qt === null ? mt = xt : qt.sibling = xt, qt = xt);
-        return _t && fl(A, St), mt;
+          ), qt === null ? gt = xt : qt.sibling = xt, qt = xt);
+        return _t && fl(A, St), gt;
       }
       for (xt = l(xt); St < H.length; St++)
         Se = N(
@@ -3277,45 +3277,45 @@ Error generating stack: ` + l.message + `
           Se,
           T,
           St
-        ), qt === null ? mt = Se : qt.sibling = Se, qt = Se);
+        ), qt === null ? gt = Se : qt.sibling = Se, qt = Se);
       return t && xt.forEach(function(en) {
         return e(A, en);
-      }), _t && fl(A, St), mt;
+      }), _t && fl(A, St), gt;
     }
     function vt(A, T, H, I) {
       if (H == null) throw Error(c(151));
-      for (var mt = null, qt = null, xt = T, St = T = 0, Se = null, jt = H.next(); xt !== null && !jt.done; St++, jt = H.next()) {
+      for (var gt = null, qt = null, xt = T, St = T = 0, Se = null, jt = H.next(); xt !== null && !jt.done; St++, jt = H.next()) {
         xt.index > St ? (Se = xt, xt = null) : Se = xt.sibling;
         var en = C(A, xt, jt.value, I);
         if (en === null) {
           xt === null && (xt = Se);
           break;
         }
-        t && xt && en.alternate === null && e(A, xt), T = o(en, T, St), qt === null ? mt = en : qt.sibling = en, qt = en, xt = Se;
+        t && xt && en.alternate === null && e(A, xt), T = o(en, T, St), qt === null ? gt = en : qt.sibling = en, qt = en, xt = Se;
       }
       if (jt.done)
-        return a(A, xt), _t && fl(A, St), mt;
+        return a(A, xt), _t && fl(A, St), gt;
       if (xt === null) {
         for (; !jt.done; St++, jt = H.next())
-          jt = P(A, jt.value, I), jt !== null && (T = o(jt, T, St), qt === null ? mt = jt : qt.sibling = jt, qt = jt);
-        return _t && fl(A, St), mt;
+          jt = P(A, jt.value, I), jt !== null && (T = o(jt, T, St), qt === null ? gt = jt : qt.sibling = jt, qt = jt);
+        return _t && fl(A, St), gt;
       }
       for (xt = l(xt); !jt.done; St++, jt = H.next())
         jt = N(xt, A, St, jt.value, I), jt !== null && (t && (Se = jt.alternate, Se !== null && xt.delete(
           Se.key === null ? St : Se.key
-        )), T = o(jt, T, St), qt === null ? mt = jt : qt.sibling = jt, qt = jt);
+        )), T = o(jt, T, St), qt === null ? gt = jt : qt.sibling = jt, qt = jt);
       return t && xt.forEach(function(Op) {
         return e(A, Op);
-      }), _t && fl(A, St), mt;
+      }), _t && fl(A, St), gt;
     }
     function Ot(A, T, H, I) {
       if (typeof H == "object" && H !== null && H.type === K && H.key === null && H.props.ref === void 0 && (H = H.props.children), typeof H == "object" && H !== null) {
         switch (H.$$typeof) {
           case L:
             t: {
-              for (var mt = H.key; T !== null; ) {
-                if (T.key === mt) {
-                  if (mt = H.type, mt === K) {
+              for (var gt = H.key; T !== null; ) {
+                if (T.key === gt) {
+                  if (gt = H.type, gt === K) {
                     if (T.tag === 7) {
                       a(
                         A,
@@ -3326,7 +3326,7 @@ Error generating stack: ` + l.message + `
                       ), Rl(I, H), I.return = A, A = I;
                       break t;
                     }
-                  } else if (T.elementType === mt || typeof mt == "object" && mt !== null && mt.$$typeof === F && Cn(mt) === T.type) {
+                  } else if (T.elementType === gt || typeof gt == "object" && gt !== null && gt.$$typeof === F && Cn(gt) === T.type) {
                     a(
                       A,
                       T.sibling
@@ -3355,8 +3355,8 @@ Error generating stack: ` + l.message + `
             return s(A);
           case k:
             t: {
-              for (mt = H.key; T !== null; ) {
-                if (T.key === mt)
+              for (gt = H.key; T !== null; ) {
+                if (T.key === gt)
                   if (T.tag === 4 && T.stateNode.containerInfo === H.containerInfo && T.stateNode.implementation === H.implementation) {
                     a(
                       A,
@@ -3389,8 +3389,8 @@ Error generating stack: ` + l.message + `
             I
           );
         if (Y(H)) {
-          if (mt = Y(H), typeof mt != "function") throw Error(c(150));
-          return H = mt.call(H), vt(
+          if (gt = Y(H), typeof gt != "function") throw Error(c(150));
+          return H = gt.call(H), vt(
             A,
             T,
             H,
@@ -3418,13 +3418,13 @@ Error generating stack: ` + l.message + `
     return function(A, T, H, I) {
       try {
         Lo = 0;
-        var mt = Ot(
+        var gt = Ot(
           A,
           T,
           H,
           I
         );
-        return $i = null, mt;
+        return $i = null, gt;
       } catch (xt) {
         if (xt === Si || xt === l0) throw xt;
         var qt = Je(29, xt, null, A.mode);
@@ -9226,20 +9226,20 @@ Error generating stack: ` + l.message + `
         }
         t: {
           if (C = O ? El(O) : window, N = C.nodeName && C.nodeName.toLowerCase(), N === "select" || N === "input" && C.type === "file")
-            var mt = v1;
+            var gt = v1;
           else if (m1(C))
             if (y1)
-              mt = Xg;
+              gt = Xg;
             else {
-              mt = Dg;
+              gt = Dg;
               var qt = _g;
             }
           else
-            N = C.nodeName, !N || N.toLowerCase() !== "input" || C.type !== "checkbox" && C.type !== "radio" ? O && pe(O.elementType) && (mt = v1) : mt = Rg;
-          if (mt && (mt = mt(t, O))) {
+            N = C.nodeName, !N || N.toLowerCase() !== "input" || C.type !== "checkbox" && C.type !== "radio" ? O && pe(O.elementType) && (gt = v1) : gt = Rg;
+          if (gt && (gt = gt(t, O))) {
             p1(
               P,
-              mt,
+              gt,
               a,
               D
             );
@@ -10275,8 +10275,8 @@ Error generating stack: ` + l.message + `
           if (0 < vt.length)
             return C = Promise.race([
               Promise.all(vt),
-              new Promise(function(mt) {
-                return setTimeout(mt, 500);
+              new Promise(function(gt) {
+                return setTimeout(gt, 500);
               })
             ]).then(n, n), (N ? Promise.allSettled([N.finished, C]) : C).then(o, o);
           if (n(), N)
@@ -10299,14 +10299,14 @@ Error generating stack: ` + l.message + `
             if (Ot != null && Ot.startsWith("::view-transition")) {
               P.push(dt), dt = vt.getKeyframes();
               for (var A = Ot = void 0, T = !0, H = 0; H < dt.length; H++) {
-                var I = dt[H], mt = I.width;
-                if (Ot === void 0) Ot = mt;
-                else if (Ot !== mt) {
+                var I = dt[H], gt = I.width;
+                if (Ot === void 0) Ot = gt;
+                else if (Ot !== gt) {
                   T = !1;
                   break;
                 }
-                if (mt = I.height, A === void 0) A = mt;
-                else if (A !== mt) {
+                if (gt = I.height, A === void 0) A = gt;
+                else if (A !== gt) {
                   T = !1;
                   break;
                 }
@@ -13024,7 +13024,7 @@ function Zh(r) {
   let i = Vh.get(r);
   return i || (i = new Path2D(r), Vh.set(r, i)), i;
 }
-const $f = () => typeof matchMedia == "function" && matchMedia("(prefers-reduced-motion: reduce)").matches, Ob = gt.forwardRef(function({
+const $f = () => typeof matchMedia == "function" && matchMedia("(prefers-reduced-motion: reduce)").matches, Ob = mt.forwardRef(function({
   type: r = "clover",
   face: i,
   state: u = "default",
@@ -13071,11 +13071,11 @@ const $f = () => typeof matchMedia == "function" && matchMedia("(prefers-reduced
   "aria-label": Y,
   ...lt
 }, st) {
-  const tt = gt.useRef(null);
-  gt.useImperativeHandle(st, () => tt.current);
-  const J = gt.useId(), at = Au[r] ?? Au.clover, ht = i ?? at.face, yt = d ?? at.color, Mt = h === 1 && p === 1 ? yt : wa(yt, (Math.min(2, Math.max(0, h)) - 1) * 0.35, (Math.min(2, Math.max(0, p)) - 1) * 0.5), $t = f ?? Wp(Mt), wt = Math.min(1, Math.max(0, y ?? L3(J))), pt = u in fh ? u : "default", Dt = z || !(g > 0), Gt = m === !0 ? "crisp" : m === !1 ? "flat" : m, Et = gt.useRef(null), Ht = gt.useRef(null), Jt = gt.useRef(0), Vt = gt.useRef(g);
+  const tt = mt.useRef(null);
+  mt.useImperativeHandle(st, () => tt.current);
+  const J = mt.useId(), at = Au[r] ?? Au.clover, ht = i ?? at.face, yt = d ?? at.color, Mt = h === 1 && p === 1 ? yt : wa(yt, (Math.min(2, Math.max(0, h)) - 1) * 0.35, (Math.min(2, Math.max(0, p)) - 1) * 0.5), $t = f ?? Wp(Mt), wt = Math.min(1, Math.max(0, y ?? L3(J))), pt = u in fh ? u : "default", Dt = z || !(g > 0), Gt = m === !0 ? "crisp" : m === !1 ? "flat" : m, Et = mt.useRef(null), Ht = mt.useRef(null), Jt = mt.useRef(0), Vt = mt.useRef(g);
   Vt.current = g;
-  const oe = gt.useRef(G);
+  const oe = mt.useRef(G);
   oe.current = G, Ht.current = {
     path: typeof Path2D > "u" ? null : Zh(dh[r] ?? dh.clover),
     face: ht,
@@ -13119,7 +13119,7 @@ const $f = () => typeof matchMedia == "function" && matchMedia("(prefers-reduced
     const de = Et.current ? Et.current.pose : Mh(pt);
     Lh(da, kt, de, Lt);
   };
-  gt.useLayoutEffect(() => {
+  mt.useLayoutEffect(() => {
     if (Et.current ? Et.current.setState(pt) : Et.current = new n3(wt, pt), Et.current.setTurn(Xa(Q, 0, 2)), Et.current.setJump({ height: k, time: Math.max(0.2, K), stretch: V, spin: Math.max(0, Math.round(rt)), lean: nt, every: it, land: R, squash: et, squashTime: Math.max(0.05, Z), squashEase: ot, groundTime: Math.max(0, F), groundEase: ct, riseTime: Math.max(0.05, ft), riseEase: bt, clickSquashTime: Math.max(0.05, M) }), $f()) {
       const Yt = tt.current;
       if (Yt && Ht.current && Ht.current.path) {
@@ -13134,14 +13134,14 @@ const $f = () => typeof matchMedia == "function" && matchMedia("(prefers-reduced
       return;
     }
     Ht.current && tt.current && (Ht.current.theme = re(tt.current)), Nt();
-  }), gt.useEffect(() => {
+  }), mt.useEffect(() => {
     var Yt;
     if (Gt !== "plastic" || !((Yt = Ht.current) != null && Yt.path)) return;
     const Lt = Ht.current.path, kt = (typeof c == "number" ? c : 64) * Math.min(2, typeof devicePixelRatio == "number" && devicePixelRatio || 1), se = (typeof requestIdleCallback == "function" ? requestIdleCallback : (ge) => setTimeout(ge, 1))(() => m3(r, Lt, kt, w));
     return () => {
       typeof cancelIdleCallback == "function" ? cancelIdleCallback(se) : clearTimeout(se);
     };
-  }, [Gt, r, c, w]), gt.useEffect(() => {
+  }, [Gt, r, c, w]), mt.useEffect(() => {
     if (Dt || $f()) return;
     const Yt = tt.current;
     if (!Yt) return;
@@ -15323,8 +15323,8 @@ function vv(r, i) {
   };
 }
 function yv() {
-  const [r, i] = gt.useState(() => typeof window > "u" || window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-  return gt.useEffect(() => {
+  const [r, i] = mt.useState(() => typeof window > "u" || window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  return mt.useEffect(() => {
     if (typeof window > "u") return;
     const u = window.matchMedia("(prefers-color-scheme: dark)"), c = (d) => {
       i(d.matches ? "dark" : "light");
@@ -15335,7 +15335,7 @@ function yv() {
 function xv(r, i) {
   return r === "auto" ? i : r;
 }
-const Rb = gt.forwardRef(
+const Rb = mt.forwardRef(
   function({
     children: r,
     size: i = "md",
@@ -15358,8 +15358,8 @@ const Rb = gt.forwardRef(
     onAnimationEnd: G,
     ...Q
   }, j) {
-    const q = gt.useId().replace(/:/g, "-"), W = yv(), _ = gt.useRef(null), [E, L] = gt.useState(h), [k, K] = gt.useState(!1), [V, rt] = gt.useState(!0), [nt, it] = gt.useState(null), [R, et] = gt.useState({ x: 1, y: 1 });
-    gt.useEffect(() => {
+    const q = mt.useId().replace(/:/g, "-"), W = yv(), _ = mt.useRef(null), [E, L] = mt.useState(h), [k, K] = mt.useState(!1), [V, rt] = mt.useState(!0), [nt, it] = mt.useState(null), [R, et] = mt.useState({ x: 1, y: 1 });
+    mt.useEffect(() => {
       if (p != null) return;
       const ht = _.current;
       if (!ht) return;
@@ -15372,9 +15372,9 @@ const Rb = gt.forwardRef(
       yt();
       const Mt = new MutationObserver(yt);
       return Mt.observe(ht, { childList: !0, subtree: !1 }), () => Mt.disconnect();
-    }, [p, r]), gt.useEffect(() => {
+    }, [p, r]), mt.useEffect(() => {
       h && !E && !k ? L(!0) : !h && E && !k && K(!0);
-    }, [h, E, k]), gt.useEffect(() => {
+    }, [h, E, k]), mt.useEffect(() => {
       const ht = _.current;
       if (!ht || typeof IntersectionObserver > "u") return;
       const yt = new IntersectionObserver(
@@ -15385,7 +15385,7 @@ const Rb = gt.forwardRef(
         { rootMargin: "256px" }
       );
       return yt.observe(ht), () => yt.disconnect();
-    }, []), gt.useEffect(() => {
+    }, []), mt.useEffect(() => {
       if (i !== "pulse-outside") {
         et({ x: 1, y: 1 });
         return;
@@ -15406,13 +15406,13 @@ const Rb = gt.forwardRef(
       const Et = new ResizeObserver(Dt);
       return Et.observe(Gt), () => Et.disconnect();
     }, [i, r]);
-    const Z = gt.useCallback(
+    const Z = mt.useCallback(
       (ht) => {
         const yt = ht.animationName;
         yt.includes("fade-out") ? (L(!1), K(!1), U?.()) : yt.includes("fade-in") && $?.(), G?.(ht);
       },
       [$, U, G]
-    ), ot = xv(c, W), F = j3[i][ot], ct = B3[i], ft = i === "pulse-inner" || i === "pulse-outside", bt = p ?? nt ?? ct.borderRadius, M = f ?? (i === "line" ? 3.1 : ft ? 2.3 : 1.96), B = z ?? F.saturation, ut = g ?? F.brightness ?? 1.3, Y = i === "line" ? Math.min(y, 13) : y, lt = u === "mono" ? !0 : d, st = gt.useMemo(
+    ), ot = xv(c, W), F = j3[i][ot], ct = B3[i], ft = i === "pulse-inner" || i === "pulse-outside", bt = p ?? nt ?? ct.borderRadius, M = f ?? (i === "line" ? 3.1 : ft ? 2.3 : 1.96), B = z ?? F.saturation, ut = g ?? F.brightness ?? 1.3, Y = i === "line" ? Math.min(y, 13) : y, lt = u === "mono" ? !0 : d, st = mt.useMemo(
       () => uv({
         id: q,
         borderRadius: bt,
@@ -15451,18 +15451,18 @@ const Rb = gt.forwardRef(
         m,
         ot
       ]
-    ), tt = gt.useMemo(
+    ), tt = mt.useMemo(
       () => ft ? rv(i, ot, M, Y, lt, q) : null,
       [ft, i, ot, M, Y, lt, q]
     );
-    gt.useEffect(() => {
+    mt.useEffect(() => {
       var ht;
       if (!tt || !(E || k) || !V) return;
       const yt = _.current;
       if (yt && !(typeof window < "u" && (ht = window.matchMedia) != null && ht.call(window, "(prefers-reduced-motion: reduce)").matches))
         return vv(yt, tt);
     }, [tt, E, k, V]);
-    const J = gt.useCallback(
+    const J = mt.useCallback(
       (ht) => {
         _.current = ht, typeof j == "function" ? j(ht) : j && (j.current = ht);
       },
@@ -16076,8 +16076,8 @@ function Wv() {
   return typeof matchMedia > "u" || matchMedia("(prefers-color-scheme: dark)").matches;
 }
 function Kv(r, i) {
-  const [u, c] = gt.useState(!0);
-  return gt.useEffect(() => {
+  const [u, c] = mt.useState(!0);
+  return mt.useEffect(() => {
     if (r === "dark") {
       c(!0);
       return;
@@ -16104,8 +16104,8 @@ function Kv(r, i) {
   }, [r, i]), u;
 }
 function Jv() {
-  const [r, i] = gt.useState(!1);
-  return gt.useEffect(() => {
+  const [r, i] = mt.useState(!1);
+  return mt.useEffect(() => {
     if (typeof matchMedia > "u") return;
     const u = matchMedia("(prefers-reduced-motion: reduce)");
     i(u.matches);
@@ -16410,14 +16410,14 @@ function Kb({
   "aria-label": v,
   ...S
 }) {
-  const w = gt.useRef(null), X = g ? JSON.stringify(g) : "", $ = Kv(u, w), U = y ? JSON.stringify(y) : "";
-  gt.useEffect(() => {
+  const w = mt.useRef(null), X = g ? JSON.stringify(g) : "", $ = Kv(u, w), U = y ? JSON.stringify(y) : "";
+  mt.useEffect(() => {
     const Q = w.current;
     if (!(!Q || !y))
       return Iv(Q, y === !0 ? !0 : y);
   }, [U]);
   const G = Jv();
-  return gt.useEffect(() => {
+  return mt.useEffect(() => {
     const Q = w.current;
     if (!Q) return;
     const j = Math.min(2, typeof devicePixelRatio < "u" && devicePixelRatio || 1);
@@ -17458,16 +17458,16 @@ const pu = {
   return !!r && typeof r.filter == "string";
 })();
 function f6() {
-  const [r, i] = gt.useState(() => typeof window > "u" || window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-  return gt.useEffect(() => {
+  const [r, i] = mt.useState(() => typeof window > "u" || window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  return mt.useEffect(() => {
     if (typeof window > "u") return;
     const u = window.matchMedia("(prefers-color-scheme: dark)"), c = (d) => i(d.matches ? "dark" : "light");
     return u.addEventListener("change", c), () => u.removeEventListener("change", c);
   }, []), r;
 }
 function d6() {
-  const [r, i] = gt.useState(() => typeof window > "u" || !window.matchMedia ? !1 : window.matchMedia("(prefers-reduced-motion: reduce)").matches);
-  return gt.useEffect(() => {
+  const [r, i] = mt.useState(() => typeof window > "u" || !window.matchMedia ? !1 : window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  return mt.useEffect(() => {
     if (typeof window > "u" || !window.matchMedia) return;
     const u = window.matchMedia("(prefers-reduced-motion: reduce)"), c = (d) => i(d.matches);
     return u.addEventListener("change", c), () => u.removeEventListener("change", c);
@@ -17476,7 +17476,7 @@ function d6() {
 function h6(r, i) {
   return r === "auto" ? i : r;
 }
-const eg = gt.forwardRef(
+const eg = mt.forwardRef(
   function({
     children: r,
     type: i = "default",
@@ -17556,8 +17556,8 @@ const eg = gt.forwardRef(
     onAnimationEnd: de,
     ...$l
   }, ha) {
-    const Ee = gt.useId().replace(/:/g, "-"), ba = f6(), Ne = h6(L, ba), sn = _ ? _.join("|") : "", ti = E ? [E.core, E.above, E.mid, E.below].join("|") : "", zt = o6(i, Ne), ie = Math.max(0.05, u ?? zt.scale), Le = Z ?? zt.glowSize, Ea = ot ?? zt.strokeOpacity, Be = F ?? zt.innerOpacity, Ar = ct ?? zt.bloomOpacity, Or = $ ?? zt.processingDuration, Hr = U ?? zt.processingLevel, fn = G ?? zt.processingTravel, dn = Q ?? zt.processingCurve, hn = j ?? zt.cornerFollow, Ba = z ?? zt.idle, bn = m ?? zt.reach, Tl = v ?? zt.spread, co = (w ?? zt.flow) * ie, Nr = (ft ?? zt.bend) * ie, so = bt ?? zt.bandStrength, ei = (M ?? zt.bandWidth) * ie, wl = B ?? zt.bandPosition, Yr = ut ?? zt.bandCurve, fo = Y ?? zt.bandSpread, ho = lt ?? zt.bandSkew, bo = (st ?? zt.bandOffset) * ie, ai = tt ?? zt.bandTail, li = J ?? zt.bandTailPosition, go = at ?? zt.bandTailCurve, mo = (ht ?? zt.bandTailOverflow) * ie, ga = yt ?? zt.bandAberration, $e = Mt ?? zt.distortion, Ye = ($t ?? zt.distortionDetail) / ie, ll = (wt ?? zt.glowWidth) * ie, po = (pt ?? zt.glowHeight) * ie, _r = (Dt ?? zt.lobeSpacing) * ie, ni = (Gt ?? zt.rangeWidth) * ie, gn = (Et ?? zt.rangeHeight) * ie, Cl = Ht ?? zt.softness, mn = (Jt ?? zt.coreSize) * ie, ja = Math.max(0, Math.min(3, Vt ?? zt.coreLight)), ka = oe ?? zt.coreLightWidth, nl = re ?? zt.coreLightHeight, El = Nt ?? zt.strokeScale, il = Zt ?? zt.innerScale, me = Qt ?? zt.innerHeight, vo = ne ?? zt.bloomScale, yo = fa ?? zt.bloomHeight, xo = d6(), ea = gt.useRef(null), [We, Dr] = gt.useState(rt), [Aa, zo] = gt.useState(!1), [Mo, Bt] = gt.useState(!0), [Rr, ii] = gt.useState(null), [oi, Oa] = gt.useState(0);
-    gt.useEffect(() => {
+    const Ee = mt.useId().replace(/:/g, "-"), ba = f6(), Ne = h6(L, ba), sn = _ ? _.join("|") : "", ti = E ? [E.core, E.above, E.mid, E.below].join("|") : "", zt = o6(i, Ne), ie = Math.max(0.05, u ?? zt.scale), Le = Z ?? zt.glowSize, Ea = ot ?? zt.strokeOpacity, Be = F ?? zt.innerOpacity, Ar = ct ?? zt.bloomOpacity, Or = $ ?? zt.processingDuration, Hr = U ?? zt.processingLevel, fn = G ?? zt.processingTravel, dn = Q ?? zt.processingCurve, hn = j ?? zt.cornerFollow, Ba = z ?? zt.idle, bn = m ?? zt.reach, Tl = v ?? zt.spread, co = (w ?? zt.flow) * ie, Nr = (ft ?? zt.bend) * ie, so = bt ?? zt.bandStrength, ei = (M ?? zt.bandWidth) * ie, wl = B ?? zt.bandPosition, Yr = ut ?? zt.bandCurve, fo = Y ?? zt.bandSpread, ho = lt ?? zt.bandSkew, bo = (st ?? zt.bandOffset) * ie, ai = tt ?? zt.bandTail, li = J ?? zt.bandTailPosition, go = at ?? zt.bandTailCurve, mo = (ht ?? zt.bandTailOverflow) * ie, ga = yt ?? zt.bandAberration, $e = Mt ?? zt.distortion, Ye = ($t ?? zt.distortionDetail) / ie, ll = (wt ?? zt.glowWidth) * ie, po = (pt ?? zt.glowHeight) * ie, _r = (Dt ?? zt.lobeSpacing) * ie, ni = (Gt ?? zt.rangeWidth) * ie, gn = (Et ?? zt.rangeHeight) * ie, Cl = Ht ?? zt.softness, mn = (Jt ?? zt.coreSize) * ie, ja = Math.max(0, Math.min(3, Vt ?? zt.coreLight)), ka = oe ?? zt.coreLightWidth, nl = re ?? zt.coreLightHeight, El = Nt ?? zt.strokeScale, il = Zt ?? zt.innerScale, me = Qt ?? zt.innerHeight, vo = ne ?? zt.bloomScale, yo = fa ?? zt.bloomHeight, xo = d6(), ea = mt.useRef(null), [We, Dr] = mt.useState(rt), [Aa, zo] = mt.useState(!1), [Mo, Bt] = mt.useState(!0), [Rr, ii] = mt.useState(null), [oi, Oa] = mt.useState(0);
+    mt.useEffect(() => {
       if (!hb) return;
       const ue = ea.current;
       if (!ue) return;
@@ -17567,7 +17567,7 @@ const eg = gt.forwardRef(
       return ma.observe(ue), () => ma.disconnect();
     }, []);
     const ye = hb && oi > c6 ? 0 : $e;
-    gt.useEffect(() => {
+    mt.useEffect(() => {
       if (it != null) return;
       const ue = ea.current;
       if (!ue) return;
@@ -17580,9 +17580,9 @@ const eg = gt.forwardRef(
       pe();
       const ma = new MutationObserver(pe);
       return ma.observe(ue, { childList: !0, subtree: !1 }), () => ma.disconnect();
-    }, [it, r]), gt.useEffect(() => {
+    }, [it, r]), mt.useEffect(() => {
       rt && !We && !Aa ? Dr(!0) : !rt && We && !Aa && zo(!0);
-    }, [rt, We, Aa]), gt.useEffect(() => {
+    }, [rt, We, Aa]), mt.useEffect(() => {
       const ue = ea.current;
       if (!ue || typeof IntersectionObserver > "u") return;
       const pe = new IntersectionObserver(
@@ -17593,13 +17593,13 @@ const eg = gt.forwardRef(
       );
       return pe.observe(ue), () => pe.disconnect();
     }, []);
-    const Xr = gt.useCallback(
+    const Xr = mt.useCallback(
       (ue) => {
         const pe = ue.animationName;
         pe.includes("fade-out") ? (Dr(!1), zo(!1), da?.()) : pe.includes("fade-in") && ge?.(), de?.(ue);
       },
       [ge, da, de]
-    ), aa = h4[Ne], Al = it ?? Rr ?? u6, ri = n6(i, Ne), Uu = La ?? ri.strength ?? aa.strength ?? 1, ke = K ?? aa.hueRange ?? 24, ui = V ?? aa.hueDuration ?? 12, So = R ?? ri.brightness ?? aa.brightness, ci = et ?? ri.saturation ?? aa.saturation, ol = gt.useMemo(
+    ), aa = h4[Ne], Al = it ?? Rr ?? u6, ri = n6(i, Ne), Uu = La ?? ri.strength ?? aa.strength ?? 1, ke = K ?? aa.hueRange ?? 24, ui = V ?? aa.hueDuration ?? 12, So = R ?? ri.brightness ?? aa.brightness, ci = et ?? ri.saturation ?? aa.saturation, ol = mt.useMemo(
       () => y4({
         id: Ee,
         borderRadius: Al,
@@ -17663,7 +17663,7 @@ const eg = gt.forwardRef(
         Cl,
         ye > 0
       ]
-    ), $o = gt.useMemo(
+    ), $o = mt.useMemo(
       () => ({
         id: Ee,
         sensitivity: Math.max(0, f),
@@ -17764,10 +17764,10 @@ const eg = gt.forwardRef(
         xo,
         nt
       ]
-    ), To = gt.useRef(d);
+    ), To = mt.useRef(d);
     To.current = d;
-    const Ga = gt.useRef(se);
-    Ga.current = se, gt.useEffect(() => {
+    const Ga = mt.useRef(se);
+    Ga.current = se, mt.useEffect(() => {
       if (!(We || Aa) || !Mo) return;
       const ue = ea.current;
       return ue ? P4(ue, $o, { stream: c, getLevel: () => {
@@ -17778,7 +17778,7 @@ const eg = gt.forwardRef(
         return (ma = Ga.current) == null ? void 0 : ma.call(Ga, pe);
       }) : void 0;
     }, [$o, c, We, Aa, Mo]);
-    const qu = gt.useCallback(
+    const qu = mt.useCallback(
       (ue) => {
         ea.current = ue, typeof ha == "function" ? ha(ue) : ha && (ha.current = ue);
       },
@@ -17860,10 +17860,10 @@ ${kt.split("{id}").join(Ee)}` : ol }),
       )
     ] });
   }
-), b6 = Jf.lazy(() => import("./assistant-effects-lab-BYjDKAGV.js"));
+), b6 = Jf.lazy(() => import("./assistant-effects-lab-DsmjTtxe.js"));
 function g6({ assistantState: r, voiceState: i, reduced: u }) {
-  const [c, d] = gt.useState(!1), f = document.getElementById("kalki-composer-effects-root");
-  if (gt.useEffect(() => {
+  const [c, d] = mt.useState(!1), f = document.getElementById("kalki-composer-effects-root");
+  if (mt.useEffect(() => {
     const z = document.querySelector(".composer");
     if (!z) return;
     const y = () => d(!0), m = () => window.setTimeout(() => {
@@ -17920,33 +17920,29 @@ function m6({ assistantState: r, voiceState: i, reduced: u }) {
     /* @__PURE__ */ Tt.jsx(g6, { assistantState: r, voiceState: i, reduced: u })
   ] });
 }
-function p6() {
-  const r = Xp(), [i, u] = gt.useState(() => window.kalkiAssistantState || "idle"), [c, d] = gt.useState(() => window.kalkiVoiceState || { active: !1, listening: !1, message: "" }), [f, h] = gt.useState(() => {
-    const p = document.getElementById("kalki-effects-panel");
-    return !!(p && !p.hidden);
-  });
-  return gt.useEffect(() => {
-    const p = (y) => u(y.detail?.state || "idle"), g = (y) => d(y.detail || { active: !1, listening: !1, message: "" }), z = () => {
-      const y = document.getElementById("kalki-effects-panel");
-      h(!!(y && !y.hidden));
-    };
-    return window.addEventListener("kalki:assistant-state", p), window.addEventListener("kalki:voice-state", g), window.addEventListener("kalki:surface-change", z), () => {
-      window.removeEventListener("kalki:assistant-state", p), window.removeEventListener("kalki:voice-state", g), window.removeEventListener("kalki:surface-change", z);
+function p6({ panelOpen: r = !1 }) {
+  const i = Xp(), [u, c] = mt.useState(() => window.kalkiAssistantState || "idle"), [d, f] = mt.useState(() => window.kalkiVoiceState || { active: !1, listening: !1, message: "" });
+  return mt.useEffect(() => {
+    const h = (g) => c(g.detail?.state || "idle"), p = (g) => f(g.detail || { active: !1, listening: !1, message: "" });
+    return window.addEventListener("kalki:assistant-state", h), window.addEventListener("kalki:voice-state", p), () => {
+      window.removeEventListener("kalki:assistant-state", h), window.removeEventListener("kalki:voice-state", p);
     };
   }, []), /* @__PURE__ */ Tt.jsxs(Tt.Fragment, { children: [
-    /* @__PURE__ */ Tt.jsx(m6, { assistantState: i, voiceState: c, reduced: r }),
-    f && /* @__PURE__ */ Tt.jsx(Jf.Suspense, { fallback: /* @__PURE__ */ Tt.jsx("div", { className: "kalki-effects-loading", role: "status", children: "Loading KALKI visual effects…" }), children: /* @__PURE__ */ Tt.jsx(b6, { assistantState: i, voiceState: c, ThinkingOrb: Kb, BorderBeam: Rb, VoiceBeam: eg, BotAvatar: Ob }) })
+    /* @__PURE__ */ Tt.jsx(m6, { assistantState: u, voiceState: d, reduced: i }),
+    r && /* @__PURE__ */ Tt.jsx(Jf.Suspense, { fallback: /* @__PURE__ */ Tt.jsx("div", { className: "kalki-effects-loading", role: "status", children: "Loading KALKI visual effects…" }), children: /* @__PURE__ */ Tt.jsx(b6, { assistantState: u, voiceState: d, ThinkingOrb: Kb, BorderBeam: Rb, VoiceBeam: eg, BotAvatar: Ob }) })
   ] });
 }
 let vu = null;
-function v6() {
-  const r = document.getElementById("kalki-effects-react-root");
-  return r ? (vu || (vu = Eu.createRoot(r)), vu.render(/* @__PURE__ */ Tt.jsx(Jf.StrictMode, { children: /* @__PURE__ */ Tt.jsx(p6, {}) })), document.body.classList.add("kalki-effects-ready"), vu) : null;
+function v6(r = {}) {
+  const i = document.getElementById("kalki-effects-react-root");
+  if (!i) return null;
+  const u = document.getElementById("kalki-effects-panel"), c = typeof r.panelOpen == "boolean" ? r.panelOpen : !!(u && !u.hidden);
+  return vu || (vu = Eu.createRoot(i)), vu.render(/* @__PURE__ */ Tt.jsx(Jf.StrictMode, { children: /* @__PURE__ */ Tt.jsx(p6, { panelOpen: c }) })), document.body.classList.add("kalki-effects-ready"), vu;
 }
 export {
   Bp as a,
   Tt as j,
   v6 as m,
-  gt as r,
+  mt as r,
   Xp as u
 };

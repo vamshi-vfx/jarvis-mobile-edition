@@ -1,4 +1,4 @@
-import { m as o } from "./chunks/assistant-effects-j9YrZz1u.js";
+import { m as o } from "./chunks/assistant-effects-BcW7brBL.js";
 export {
   o as mountKalkiEffects
 };
