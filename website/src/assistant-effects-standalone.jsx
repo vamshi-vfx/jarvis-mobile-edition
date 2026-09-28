@@ -17,6 +17,7 @@ class EffectsErrorBoundary extends React.Component {
     this.state = { failed: false };
   }
   static getDerivedStateFromError() { return { failed: true }; }
+  componentDidCatch(error) { console.error('KALKI visual effects lab failed to render.', error); }
   render() {
     if (this.state.failed) return <div className="kalki-effects-load-error" role="alert">A visual effect could not start. Refresh KALKI and try again.</div>;
     return this.props.children;
