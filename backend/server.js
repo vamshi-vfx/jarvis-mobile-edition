@@ -7,7 +7,7 @@ const { buildDailyYouTubeAnalytics } = require('./youtube-analytics');
 const { buildDailyAiLaunchUpdate } = require('./ai-launch-updates');
 const { SKILL_HANDLERS, handleSkill } = require('./zapia-skills');
 const { TOOL_REGISTRY, detectEverydayTool, runLocalTool, explicit: everydayExplicit, extractAfter } = require('./everyday-tools');
-const ADVANCED = require('./advanced-intelligence-backend');
+const ADVANCED = require('./advanced-intelligence');
 const INTERACTION = require('./interaction-brain');
 
 const PORT = Number(process.env.PORT || 8787);

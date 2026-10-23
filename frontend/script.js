@@ -49,9 +49,16 @@ document.addEventListener("DOMContentLoaded", () => {
     let recognitionStarting = false;
     let voiceRestartTimer = null;
     const API_KEY_STORAGE = "jarvis_api_key";
-    const BACKEND_HEALTH_URL = "https://jarvis-mobile-edition-alpha.vercel.app/api/health";
-    const BACKEND_COMMAND_URL = "https://jarvis-mobile-edition-alpha.vercel.app/api/command";
-    const INTERACTION_URL = "https://jarvis-mobile-edition-alpha.vercel.app/api/interaction/analyze";
+    // Backend base: the local demo (served on port 8000 / localhost / file)
+    // talks to the backend on this same machine (:8787). The deployed site
+    // talks to the production Render service.
+    const IS_LOCAL_DEMO = location.protocol === "file:" || location.port === "8000" || ["localhost", "127.0.0.1"].includes(location.hostname);
+    const BACKEND_BASE = IS_LOCAL_DEMO
+        ? `${location.protocol}//${location.hostname || "localhost"}:8787`
+        : "https://jarvis-secure-backend.onrender.com";
+    const BACKEND_HEALTH_URL = `${BACKEND_BASE}/api/health`;
+    const BACKEND_COMMAND_URL = `${BACKEND_BASE}/api/command`;
+    const INTERACTION_URL = `${BACKEND_BASE}/api/interaction/analyze`;
     function conversationPreferences() { try { return Object.assign({}, JSON.parse(localStorage.getItem("kalki.preferences") || "{}"), JSON.parse(localStorage.getItem("kalki.conversation") || "{}")); } catch (_) { return {}; } }
     async function analyzeInteraction(text) {
         try { const prefs = conversationPreferences(); const r = await fetch(INTERACTION_URL, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({text, messages:readMemory().slice(-12), profile:{displayName:prefs.name||"", language:prefs.language||"auto", responseStyle:prefs.style||"short"}, preferences:{askFollowUps:prefs.followUps !== false}})}); return r.ok ? await r.json() : null; } catch (_) { return null; }
@@ -224,7 +231,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const apiKey = getApiKey();
 
         if (!apiKey) {
-            throw new Error("API key enter cheyyaledu.");
+            // No Gemini key? Use the free keyless AI so the demo just works.
+            return askFreeBrain(interaction);
         }
 
         const contents = readMemory()
@@ -285,7 +293,40 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        throw new Error(lastError);
+        // Gemini unavailable/quota? Fall back to the free keyless brain.
+        try {
+            return await askFreeBrain(interaction);
+        } catch (_) {
+            throw new Error(lastError);
+        }
+    }
+
+    // Free, keyless AI (Pollinations) — works without any API key, so the
+    // demo chat works out of the box. Same KALKI personality as the Gemini path.
+    async function askFreeBrain(interaction = null) {
+        const system =
+            "You are KALKI, a warm personal assistant who speaks naturally like a helpful friend, not a robotic list generator. Acknowledge statements, show empathy for emotions, ask at most one relevant follow-up when useful, and offer one sensible next step. Use Telugu/Teluglish naturally when the user does. Never invent calendar, task, weather, connector, or memory facts. External actions remain explicit and confirmation-gated. " +
+            `${interaction?.guidance?.tone || "Match the user's language naturally."} ` +
+            `${interaction?.guidance?.style === "detailed" ? "Give a helpful explanation." : "Prefer concise, human replies."}`;
+        const transcript = readMemory()
+            .filter((item) => item.type === "user" || item.type === "ai")
+            .slice(-20)
+            .map((item) => `${item.type === "user" ? "User" : "KALKI"}: ${item.text}`)
+            .join("\n");
+        const prompt = `${system}\n${transcript}`;
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 20000);
+        try {
+            const r = await fetch(`https://text.pollinations.ai/${encodeURIComponent(prompt)}`, {
+                headers: { Accept: "text/plain" },
+                signal: controller.signal
+            });
+            const text = (await r.text()).trim().replace(/^KALKI:\s*/i, "");
+            if (!r.ok || !text) throw new Error("free AI unreachable");
+            return text;
+        } finally {
+            clearTimeout(timer);
+        }
     }
 
     function resetSpeakButton() {
@@ -624,13 +665,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (handleLocalCommand(userText)) {
             finishVoiceTurn();
-            return;
-        }
-        if (!getApiKey()) {
-            showMessage("KALKI", "I need your Gemini API key before I can generate an AI reply. Settings is open so you can add it locally; no request was sent to Google.", "ai");
-            openApiKeySettings();
-            if (voiceConversationActive) stopVoiceConversation(true, "Voice chat paused. Add your AI key in Settings to continue.");
-            else finishVoiceTurn();
             return;
         }
         messageInput.disabled = true;
