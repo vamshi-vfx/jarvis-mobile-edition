@@ -183,7 +183,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (apiKeyInput) apiKeyInput.value = ""; // Never place a saved secret back into the visible field.
         setApiKeyStatus(getApiKey()
             ? "Key saved locally · not verified with Google."
-            : "No key saved on this device.", getApiKey() ? "saved" : "");
+            : "No key saved — chatting with free AI.", getApiKey() ? "saved" : "");
     }
 
     function saveApiKey() {
